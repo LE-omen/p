@@ -1,0 +1,13 @@
+{
+ "arm": "C",
+ "champion": "C4",
+ "frozen_at": "2026-09-12T13:14:22.609756+00:00",
+ "git_head": "f7ab476864eb92ab1ea8efe3c155027d1845a3fe",
+ "git_branch": "swift/powe-138-arm-c",
+ "descriptor_digest": "6ef6554ea1144b1862f18d6046ca3aa33b61337a3124836934c94ee6150d6f86",
+ "champion_packaging": "external_knowledge common-file append (no skill directory)",
+ "champion_content_digest": "08a8766330d89d832fd3d34a7a93e6d44643a2b3a868a2e4640baee0c91268ac",
+ "r_results_seen_at_freeze": null,
+ "statement": "champion frozen on D5+D10 screening alone; no old-R question has been executed in any ARM-C run at this timestamp (smoke used learning-half q0)",
+ "selection_rule": "J_agent desc -> C desc -> mean S_agent asc -> unknown desc (shared selector)"
+}
