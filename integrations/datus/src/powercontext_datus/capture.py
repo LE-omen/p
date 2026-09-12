@@ -529,3 +529,229 @@ def reconcile(records: list[dict[str, Any]]) -> dict[str, Any]:
             "operations": [],
             "sql_results": [],
         }
+
+
+_PLUMBING_PREFIXES = (
+    "use ",
+    "use`",
+    "use(",
+    "set ",
+    "set(",
+    "commit",
+    "rollback",
+    "begin",
+    "start transaction",
+    "unlock",
+    "flush",
+)
+
+
+def _is_connection_plumbing(sql: str) -> bool:
+    head = (sql or "").lstrip().lstrip("(").lstrip().lower()
+    return any(head.startswith(prefix) for prefix in _PLUMBING_PREFIXES)
+
+
+def _wrapper_starts(
+    records: list[dict[str, Any]], issues: set[str]
+) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+    all_starts = _indexed(records, {"operation_started"}, "operation_id", issues)
+    wrappers: dict[str, dict[str, Any]] = {}
+    for start in all_starts.values():
+        if start.get("online") and start.get("call_id"):
+            if start["call_id"] in wrappers:
+                issues.add("duplicate_wrapper_call_id")
+            wrappers[start["call_id"]] = start
+    return all_starts, wrappers
+
+
+def _collect_tool_actions(
+    records: list[dict[str, Any]], interval: tuple[int | None, int | None], issues: set[str]
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+    """Index online tool-call attempts and their native terminals; no silent dedup."""
+    attempts: dict[str, dict[str, Any]] = {}
+    terminals: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        if record["kind"] != "action_received":
+            continue
+        action = record["action"]
+        if action.get("role") != "tool":
+            continue
+        if not (interval[0] is not None and interval[0] <= record["sequence"] <= interval[1]):
+            issues.add("tool_action_outside_interval")
+            continue
+        action_id = action.get("action_id") or ""
+        if action.get("status") == "processing":
+            if not action_id:
+                issues.add("attempt_without_call_id")
+            elif action_id in attempts:
+                issues.add("duplicate_attempt_call_id")
+            else:
+                attempts[action_id] = record
+        elif action.get("status") in {"success", "failed"}:
+            terminals.setdefault(action_id.removeprefix("complete_"), []).append(record)
+    return attempts, terminals
+
+
+def _reconcile_attempts(
+    attempts: dict[str, dict[str, Any]],
+    terminals: dict[str, list[dict[str, Any]]],
+    wrappers: dict[str, dict[str, Any]],
+    issues: set[str],
+) -> dict[str, int]:
+    """Cross-check attempt/terminal/wrapper lifecycles; count anomalies, never dedupe."""
+    if set(terminals) - set(attempts):
+        issues.add("terminal_without_attempt")
+    if set(wrappers) - set(attempts):
+        issues.add("wrapper_without_attempt")
+
+    counts = {"failed_attempts": 0, "dispatches_without_wrapper": 0}
+    for call_id, attempt in attempts.items():
+        ends = terminals.get(call_id, [])
+        if len(ends) != 1:
+            issues.add("attempt_terminal_cardinality")
+            continue
+        if not attempt["sequence"] < ends[0]["sequence"]:
+            issues.add("attempt_terminal_order")
+        if ends[0]["action"].get("status") == "failed":
+            counts["failed_attempts"] += 1
+        wrapper = wrappers.get(call_id)
+        if wrapper is None:
+            counts["dispatches_without_wrapper"] += 1
+        elif not attempt["sequence"] < wrapper["sequence"]:
+            issues.add("wrapper_dispatch_order")
+    return counts
+
+
+def _sql_secondary_ledger(
+    records: list[dict[str, Any]], all_starts: dict[str, Any], issues: set[str]
+) -> dict[str, int]:
+    sql_started = _indexed(records, {"sql_started"}, "driver_span_id", issues)
+    counts = {
+        "sql_executions": 0,
+        "task_sql_executions": 0,
+        "fixed_node_sql_executions": 0,
+        "dispatched_sql_executions": 0,
+        "introspection_sql_executions": 0,
+        "plumbing_sql_executions": 0,
+    }
+    for record in records:
+        if record["kind"] != "sql_link" or not record.get("online"):
+            continue
+        counts["sql_executions"] += 1
+        statement = (sql_started.get(record["driver_span_id"]) or {}).get("sql") or ""
+        if _is_connection_plumbing(statement):
+            counts["plumbing_sql_executions"] += 1
+            continue
+        parent = all_starts.get(record.get("parent_id"))
+        if parent is not None and parent.get("call_id"):
+            if parent.get("name") == "execute_sql":
+                counts["task_sql_executions"] += 1
+                counts["dispatched_sql_executions"] += 1
+            else:
+                counts["introspection_sql_executions"] += 1
+        else:
+            # No model dispatch owns the span: the graph's fixed ExecuteSQL
+            # node re-executing the final SQL (or an offline-owned span).
+            counts["task_sql_executions"] += 1
+            counts["fixed_node_sql_executions"] += 1
+    return counts
+
+
+def _usage_ledger(records: list[dict[str, Any]]) -> dict[str, int]:
+    counts = {
+        "driver_events": 0,
+        "model_requests": 0,
+        "http_attempts": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+    }
+    for record in records:
+        if record["kind"] == "mysql_command_started" and record.get("online"):
+            counts["driver_events"] += 1
+        elif record["kind"] == "model_started":
+            counts["model_requests"] += 1
+        elif record["kind"] == "http_started":
+            counts["http_attempts"] += 1
+        elif record["kind"] == "model_finished":
+            usage = record.get("usage") or {}
+            counts["input_tokens"] += usage.get("input_tokens") or 0
+            counts["output_tokens"] += usage.get("output_tokens") or 0
+            counts["total_tokens"] += usage.get("total_tokens") or 0
+    return counts
+
+
+def _agent_steps_ledger(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """S_agent plus secondary ledgers over one capture (DESIGN-5 D5-METRIC).
+
+    S_agent counts online model tool-call attempts: independent model retries
+    and failed attempts each count once, and a dispatch rejected before the
+    wrapper opened (for example malformed arguments) still counts through its
+    native action pair. Duplicate, missing or out-of-order call ids are
+    recorded as anomalies and never silently deduplicated; any anomaly or
+    insufficient evidence marks s_agent unknown (None) while the secondary
+    counts below stay informational.
+    """
+    ledger: dict[str, Any] = {
+        "s_agent": None,
+        "s_agent_issues": [],
+        "dispatches_without_wrapper": 0,
+        "failed_attempts": 0,
+        "sql_executions": 0,
+        "task_sql_executions": 0,
+        "fixed_node_sql_executions": 0,
+        "dispatched_sql_executions": 0,
+        "introspection_sql_executions": 0,
+        "plumbing_sql_executions": 0,
+        "driver_events": 0,
+        "model_requests": 0,
+        "http_attempts": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+    }
+    issues: set[str] = set()
+    _validate_capture(records, issues)
+    interval = (
+        next((r["sequence"] for r in records if r["kind"] == "question_injected"), None),
+        next((r["sequence"] for r in records if r["kind"] == "answer_submitted"), None),
+    )
+    if interval[0] is None or interval[1] is None:
+        issues.add("s_agent_interval")
+
+    all_starts, wrappers = _wrapper_starts(records, issues)
+    attempts, terminals = _collect_tool_actions(records, interval, issues)
+    ledger.update(_reconcile_attempts(attempts, terminals, wrappers, issues))
+    ledger.update(_sql_secondary_ledger(records, all_starts, issues))
+    ledger.update(_usage_ledger(records))
+
+    if issues:
+        ledger["s_agent_issues"] = sorted(issues)
+        return ledger
+    ledger["s_agent"] = len(attempts)
+    return ledger
+
+
+def agent_steps(records: list[dict[str, Any]]) -> dict[str, Any]:
+    """Exception-safe S_agent ledger; malformed records stay unknown."""
+    try:
+        return _agent_steps_ledger(records)
+    except (KeyError, ValueError, TypeError):
+        return {
+            "s_agent": None,
+            "s_agent_issues": ["malformed_record"],
+            "dispatches_without_wrapper": 0,
+            "failed_attempts": 0,
+            "sql_executions": 0,
+            "task_sql_executions": 0,
+            "fixed_node_sql_executions": 0,
+            "dispatched_sql_executions": 0,
+            "introspection_sql_executions": 0,
+            "plumbing_sql_executions": 0,
+            "driver_events": 0,
+            "model_requests": 0,
+            "http_attempts": 0,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        }
