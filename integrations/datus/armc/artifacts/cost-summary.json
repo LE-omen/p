@@ -1,0 +1,46 @@
+{
+ "total": {
+  "cases": 110,
+  "model_requests": 253,
+  "total_tokens": 2183266,
+  "task_sql": 334
+ },
+ "stages": {
+  "d10": {
+   "cases": 20,
+   "model_requests": 47,
+   "total_tokens": 449892,
+   "task_sql": 69
+  },
+  "d5": {
+   "cases": 20,
+   "model_requests": 60,
+   "total_tokens": 739245,
+   "task_sql": 114
+  },
+  "r1": {
+   "cases": 23,
+   "model_requests": 46,
+   "total_tokens": 305343,
+   "task_sql": 47
+  },
+  "r2": {
+   "cases": 23,
+   "model_requests": 48,
+   "total_tokens": 334616,
+   "task_sql": 50
+  },
+  "r3": {
+   "cases": 23,
+   "model_requests": 50,
+   "total_tokens": 342019,
+   "task_sql": 52
+  },
+  "smoke": {
+   "cases": 1,
+   "model_requests": 2,
+   "total_tokens": 12151,
+   "task_sql": 2
+  }
+ }
+}

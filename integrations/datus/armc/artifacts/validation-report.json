@@ -1,0 +1,389 @@
+{
+ "arm": "C",
+ "method": "isolated in-memory SQLite with adversarial synthetic rows; IF()->CASE mechanical shim; answers computed by SQL execution, never judged by the generation model",
+ "checks": [
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T03-segment-agg-extremum",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T03-segment-agg-extremum",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T03-segment-agg-extremum",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T03-segment-agg-extremum",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T03-segment-agg-extremum",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T04-peak-month",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T04-peak-month",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T04-peak-month",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T04-peak-month",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T04-peak-month",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T05-conditional-agg",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T05-conditional-agg",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T05-conditional-agg",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T05-conditional-agg",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T05-conditional-agg",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-TEMPLATE",
+   "descriptor": "T08-point-lookup",
+   "claim": "template or explicit form set exists",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-PARAMS",
+   "descriptor": "T08-point-lookup",
+   "claim": "at least one parameter declared",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-CONTRACT",
+   "descriptor": "T08-point-lookup",
+   "claim": "output contract states columns/rounding/distinct",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-EVIDENCE",
+   "descriptor": "T08-point-lookup",
+   "claim": "all cited positive evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "ST-NEGATIVES",
+   "descriptor": "T08-point-lookup",
+   "claim": "all cited negative evidence ids exist in frozen E1",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "CE1-DUPLICATES",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "without DISTINCT the join duplicates rows; with DISTINCT it dedups",
+   "result": "PASS",
+   "detail": "distinct=[['Diesel'], ['Petrol']] nodist=[['Diesel'], ['Petrol'], ['Petrol']]"
+  },
+  {
+   "ce_id": "CE2-NULL-AVG",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "AVG(Price) skips NULL prices (rows with NULL price not counted as 0)",
+   "result": "PASS",
+   "detail": "[[3.0]]"
+  },
+  {
+   "ce_id": "CE2-NULL-SUM",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "SUM over an all-NULL group is NULL, not 0",
+   "result": "PASS",
+   "detail": "[[None]]"
+  },
+  {
+   "ce_id": "CE2-NULL-COUNTX",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "COUNT(col) ignores NULL but COUNT(*) counts rows",
+   "result": "PASS",
+   "detail": "[[2, 3]]"
+  },
+  {
+   "ce_id": "CE3-EMPTY-COUNT",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "COUNT with non-matching filter returns single row 0",
+   "result": "PASS",
+   "detail": "[[0]]"
+  },
+  {
+   "ce_id": "CE3-EMPTY-LIST",
+   "descriptor": "T06-distinct-list-join",
+   "claim": "list query with no matches returns 0 rows, not a fabricated row",
+   "result": "PASS",
+   "detail": ""
+  },
+  {
+   "ce_id": "CE4-GRAIN",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "per-customer grain yields one row per customer (NULL group included); collapsing to one total changes the answer",
+   "result": "PASS",
+   "detail": "per-cust=[[3, 14.0], [4, None], [5, 3.0]] total=[[17.0]]"
+  },
+  {
+   "ce_id": "CE5-ROUNDING",
+   "descriptor": "T05-conditional-agg",
+   "claim": "adding ROUND(...,2) changes the exact value (SME/KAM consumption = 17/30 = 0.5666.. -> 0.57); guard G-NO-ROUND is load-bearing",
+   "result": "PASS",
+   "detail": "raw=[[0.5666666666666667]] rounded=[[0.57]]"
+  },
+  {
+   "ce_id": "CE6-TIME-BOUNDARY",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "Time<'13:00:00' and Time<'12:00:00' differ on a 12:30 synthetic row; the recorded reference boundary (13:00) is load-bearing",
+   "result": "PASS",
+   "detail": "b13=[[3]] b12=[[2]]"
+  },
+  {
+   "ce_id": "CE7-SCOPE-DENOM",
+   "descriptor": "T05-conditional-agg",
+   "claim": "WHERE-scoped COUNT(*) denominator and conditional-SUM scope denominator agree when the WHERE scope equals the conditional scope (both = SVK share here)",
+   "result": "PASS",
+   "detail": "where=[[100.0]] cond=[[100.0]]"
+  },
+  {
+   "ce_id": "CE7b-SCOPE-DENOM",
+   "descriptor": "T05-conditional-agg",
+   "claim": "dividing a scoped numerator by an unscoped COUNT(*) corrupts the share (guard G-SCOPE-DENOM)",
+   "result": "PASS",
+   "detail": "unscoped_denom=[[25.0]] vs scoped=[[100.0]]"
+  },
+  {
+   "ce_id": "CE8-SEMANTIC-BIND",
+   "descriptor": "T07-txn-filtered-aggregate",
+   "claim": "AVG(Price) != AVG(Amount*Price) on synthetic rows; negative-q30 trap is real",
+   "result": "PASS",
+   "detail": "price=[[2.6666666666666665]] amount*price=[[8.833333333333334]]"
+  },
+  {
+   "ce_id": "CE9-DIRECTION",
+   "descriptor": "T02-cust-ym-consumption-extremum",
+   "claim": "ASC and DESC extremum pick different customers on synthetic data (direction param is real)",
+   "result": "PASS",
+   "detail": "max=[[1]] min=[[4]]"
+  },
+  {
+   "ce_id": "CE10-PARAM-TEXT",
+   "descriptor": "T01-dim-filter-count",
+   "claim": "two param bindings produce two distinct SQL texts",
+   "result": "PASS",
+   "detail": ""
+  }
+ ],
+ "summary": {
+  "total": 54,
+  "passed": 54,
+  "failed": 0
+ }
+}

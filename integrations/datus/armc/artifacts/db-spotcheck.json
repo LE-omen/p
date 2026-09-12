@@ -1,0 +1,35 @@
+{
+ "executed_at": "2026-09-12T12:41:13.170323+00:00",
+ "mode": "read-only SELECT spot-check",
+ "results": {
+  "T01 binding A": [
+   [
+    1114
+   ]
+  ],
+  "T01 binding B": [
+   [
+    59
+   ]
+  ],
+  "T02 max": [
+   [
+    603
+   ]
+  ],
+  "T02 min": [
+   [
+    47273
+   ]
+  ],
+  "T05 pct": [
+   [
+    3.480392156862745
+   ]
+  ]
+ },
+ "parameterization_distinct": {
+  "T01": true,
+  "T02_direction": true
+ }
+}

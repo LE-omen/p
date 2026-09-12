@@ -1,0 +1,232 @@
+{
+ "stage": "d5",
+ "runs": {
+  "C1": {
+   "run_id": "powe138-d5-c1",
+   "runner_rc": 0,
+   "summary": {
+    "total": 5,
+    "correct": 1,
+    "incorrect": 3,
+    "unknown": 1,
+    "unknown_reasons": [
+     "run_failed"
+    ],
+    "j_agent_correct_and_within_2": 1,
+    "s_agent_distribution": {
+     "1": 2,
+     "2": 1,
+     "4": 1
+    },
+    "s_agent_unknown": 1,
+    "mean_s_agent": 2.0
+   },
+   "per_case": [
+    {
+     "qid": "N02",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N03",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N11",
+     "correct": true,
+     "s_agent": 2,
+     "in_budget": true,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N17",
+     "correct": null,
+     "s_agent": null,
+     "in_budget": null,
+     "unknown_reason": "run_failed"
+    },
+    {
+     "qid": "N23",
+     "correct": false,
+     "s_agent": 4,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   ]
+  },
+  "C2": {
+   "run_id": "powe138-d5-c2",
+   "runner_rc": 0,
+   "summary": {
+    "total": 5,
+    "correct": 1,
+    "incorrect": 4,
+    "unknown": 0,
+    "unknown_reasons": [],
+    "j_agent_correct_and_within_2": 1,
+    "s_agent_distribution": {
+     "1": 3,
+     "3": 1,
+     "22": 1
+    },
+    "s_agent_unknown": 0,
+    "mean_s_agent": 5.6
+   },
+   "per_case": [
+    {
+     "qid": "N02",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N03",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N11",
+     "correct": true,
+     "s_agent": 1,
+     "in_budget": true,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N17",
+     "correct": false,
+     "s_agent": 22,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N23",
+     "correct": false,
+     "s_agent": 3,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   ]
+  },
+  "C3": {
+   "run_id": "powe138-d5-c3",
+   "runner_rc": 0,
+   "summary": {
+    "total": 5,
+    "correct": 1,
+    "incorrect": 4,
+    "unknown": 0,
+    "unknown_reasons": [],
+    "j_agent_correct_and_within_2": 1,
+    "s_agent_distribution": {
+     "1": 3,
+     "2": 1,
+     "29": 1
+    },
+    "s_agent_unknown": 0,
+    "mean_s_agent": 6.8
+   },
+   "per_case": [
+    {
+     "qid": "N02",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N03",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N11",
+     "correct": true,
+     "s_agent": 1,
+     "in_budget": true,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N17",
+     "correct": false,
+     "s_agent": 29,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N23",
+     "correct": false,
+     "s_agent": 2,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   ]
+  },
+  "C4": {
+   "run_id": "powe138-d5-c4",
+   "runner_rc": 0,
+   "summary": {
+    "total": 5,
+    "correct": 1,
+    "incorrect": 4,
+    "unknown": 0,
+    "unknown_reasons": [],
+    "j_agent_correct_and_within_2": 1,
+    "s_agent_distribution": {
+     "1": 2,
+     "2": 1,
+     "3": 1,
+     "18": 1
+    },
+    "s_agent_unknown": 0,
+    "mean_s_agent": 5.0
+   },
+   "per_case": [
+    {
+     "qid": "N02",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N03",
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N11",
+     "correct": true,
+     "s_agent": 2,
+     "in_budget": true,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N17",
+     "correct": false,
+     "s_agent": 18,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    {
+     "qid": "N23",
+     "correct": false,
+     "s_agent": 3,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   ]
+  }
+ }
+}

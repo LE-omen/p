@@ -1,0 +1,100 @@
+[
+ {
+  "negative_sample_id": "negative-q2",
+  "qid": 2,
+  "question": "In 2012, who had the least consumption in LAM?",
+  "structural_diff": [
+   "agent projected 2 columns vs reference 1"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q8",
+  "qid": 8,
+  "question": "Which segment had the least consumption?",
+  "structural_diff": [
+   "agent added ROUND absent from reference",
+   "agent projected 2 columns vs reference 1"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q10",
+  "qid": 10,
+  "question": "What was the gas consumption peak month for SME customers in 2013?",
+  "structural_diff": [
+   "agent projected 2 columns vs reference 1"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q14",
+  "qid": 14,
+  "question": "Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?",
+  "structural_diff": [
+   "agent projected 4 columns vs reference 1"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q18",
+  "qid": 18,
+  "question": "What percentage of KAM customers pay in euros?",
+  "structural_diff": [
+   "agent added ROUND absent from reference"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q20",
+  "qid": 20,
+  "question": "What percentage of Slovakian gas stations are premium?",
+  "structural_diff": [
+   "agent added ROUND absent from reference"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q22",
+  "qid": 22,
+  "question": "Which SME customer consumed the least in June 2012?",
+  "structural_diff": [
+   "agent projected 3 columns vs reference 1",
+   "agent dropped GROUP BY aggregation shape of reference"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q26",
+  "qid": 26,
+  "question": "Please list the product descriptions of the transactions taken place in the gas stations in the Czech Republic",
+  "structural_diff": [
+   "agent dropped DISTINCT present in reference (duplicate rows)"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q30",
+  "qid": 30,
+  "question": "What is the average total price of the transactions taken place in gas stations in the Czech Republic?",
+  "structural_diff": [
+   "agent multiplied Amount*Price where reference aggregates Price alone"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q34",
+  "qid": 34,
+  "question": "What kind of currency did the customer paid at 16:25:00 in 2012/8/24?",
+  "structural_diff": [
+   "agent dropped DISTINCT present in reference (duplicate rows)"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q36",
+  "qid": 36,
+  "question": "How many transactions were paid in CZK in the morning of 2012/8/26?",
+  "structural_diff": [
+   "time boundary differs: reference ['13:00:00'] vs agent ['12:00:00']"
+  ]
+ },
+ {
+  "negative_sample_id": "negative-q44",
+  "qid": 44,
+  "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+  "structural_diff": [
+   "agent added ROUND absent from reference"
+  ]
+ }
+]

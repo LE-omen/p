@@ -1,0 +1,38 @@
+{
+ "descriptor_digest": "6ef6554ea1144b1862f18d6046ca3aa33b61337a3124836934c94ee6150d6f86",
+ "candidates": {
+  "C1": {
+   "skill_root": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-138-4bd9a6bd6fd2/workdir/experiment/skills/C1",
+   "skill_names": [
+    "birdbench-c-templates"
+   ],
+   "packaging": "required-skill injection (single skill, compact rendering)",
+   "content_digest": "41890361fa02d90f441f7450d7c6cd7f02aa05835b7bb4e90e4690dd41484dde"
+  },
+  "C2": {
+   "skill_root": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-138-4bd9a6bd6fd2/workdir/experiment/skills/C2",
+   "skill_names": [
+    "birdbench-c-templates-ex"
+   ],
+   "packaging": "required-skill injection (single skill, + worked evidence SQL)",
+   "content_digest": "cb1d4169ee8e5cab8928e1a6cb5e4733c98142f18ac9e682e27742e3bbea928d"
+  },
+  "C3": {
+   "skill_root": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-138-4bd9a6bd6fd2/workdir/experiment/skills/C3",
+   "skill_names": [
+    "birdbench-c-dim",
+    "birdbench-c-agg",
+    "birdbench-c-txn"
+   ],
+   "packaging": "required-skill injection (three split skills)",
+   "content_digest": "27532645319bbb580a042d376856bb774b6a82b119f76222f121c24a27c96cd2"
+  },
+  "C4": {
+   "common_override": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-138-4bd9a6bd6fd2/workdir/experiment/common-c4.txt",
+   "skill_root": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-138-4bd9a6bd6fd2/workdir/powercontext-empty-skills-placeholder",
+   "skill_names": [],
+   "packaging": "external_knowledge common-file append (no skill directory)",
+   "content_digest": "08a8766330d89d832fd3d34a7a93e6d44643a2b3a868a2e4640baee0c91268ac"
+  }
+ }
+}

@@ -1,0 +1,724 @@
+{
+ "rows": [
+  {
+   "run": "r1",
+   "qid": "1",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12604,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "11",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12898,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "13",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 14069,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "15",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12739,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "17",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13705,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "19",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 15445,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "21",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13267,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "23",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 12381,
+   "in_budget": false
+  },
+  {
+   "run": "r1",
+   "qid": "25",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 13349,
+   "in_budget": false
+  },
+  {
+   "run": "r1",
+   "qid": "27",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12436,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "29",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12917,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "3",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 12770,
+   "in_budget": false
+  },
+  {
+   "run": "r1",
+   "qid": "31",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13042,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "33",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13392,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "35",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12805,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "37",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12919,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "39",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13572,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "41",
+   "family": "T06-distinct-list-join",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13568,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "43",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13513,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "45",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12946,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "5",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13881,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "7",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13623,
+   "in_budget": true
+  },
+  {
+   "run": "r1",
+   "qid": "9",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13502,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "1",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12724,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "11",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12739,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "13",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13927,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "15",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13185,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "17",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13187,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "19",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 19081,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "21",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12603,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "23",
+   "family": "native_fallback",
+   "s_agent": 2,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 17132,
+   "in_budget": false
+  },
+  {
+   "run": "r2",
+   "qid": "25",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 12983,
+   "in_budget": false
+  },
+  {
+   "run": "r2",
+   "qid": "27",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12941,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "29",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 24059,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "3",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 13391,
+   "in_budget": false
+  },
+  {
+   "run": "r2",
+   "qid": "31",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13352,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "33",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12935,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "35",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13183,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "37",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12879,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "39",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 14863,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "41",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13456,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "43",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13982,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "45",
+   "family": "native_fallback",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 21790,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "5",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 14034,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "7",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13167,
+   "in_budget": true
+  },
+  {
+   "run": "r2",
+   "qid": "9",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13023,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "1",
+   "family": "T05-conditional-agg",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 19818,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "11",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12450,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "13",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12867,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "15",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13453,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "17",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13348,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "19",
+   "family": "T05-conditional-agg",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13140,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "21",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12607,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "23",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 12965,
+   "in_budget": false
+  },
+  {
+   "run": "r3",
+   "qid": "25",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 13496,
+   "in_budget": false
+  },
+  {
+   "run": "r3",
+   "qid": "27",
+   "family": "T06-distinct-list-join",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12922,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "29",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 3,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 23279,
+   "in_budget": false
+  },
+  {
+   "run": "r3",
+   "qid": "3",
+   "family": "native_fallback",
+   "s_agent": 2,
+   "correct": false,
+   "model_requests": 2,
+   "total_tokens": 19493,
+   "in_budget": false
+  },
+  {
+   "run": "r3",
+   "qid": "31",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12591,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "33",
+   "family": "native_fallback",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 21432,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "35",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13142,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "37",
+   "family": "T08-point-lookup",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13470,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "39",
+   "family": "T07-txn-filtered-aggregate",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13815,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "41",
+   "family": "T06-distinct-list-join",
+   "s_agent": 2,
+   "correct": true,
+   "model_requests": 3,
+   "total_tokens": 21279,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "43",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 12975,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "45",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13190,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "5",
+   "family": "native_fallback",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13828,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "7",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13169,
+   "in_budget": true
+  },
+  {
+   "run": "r3",
+   "qid": "9",
+   "family": "T02-cust-ym-consumption-extremum",
+   "s_agent": 1,
+   "correct": true,
+   "model_requests": 2,
+   "total_tokens": 13290,
+   "in_budget": true
+  }
+ ],
+ "template_hits": {
+  "n": 44,
+  "mean_s_agent": 1.16,
+  "mean_tokens": 14058,
+  "correct": 41,
+  "j": 40
+ },
+ "native_fallback": {
+  "n": 25,
+  "mean_s_agent": 1.16,
+  "mean_tokens": 14538,
+  "correct": 19,
+  "j": 19
+ },
+ "unclassified": {
+  "n": 0,
+  "mean_s_agent": null,
+  "mean_tokens": null,
+  "correct": 0,
+  "j": 0
+ },
+ "fallback_rate": 0.362,
+ "by_family": {
+  "T05-conditional-agg": 8,
+  "native_fallback": 25,
+  "T02-cust-ym-consumption-extremum": 12,
+  "T06-distinct-list-join": 9,
+  "T07-txn-filtered-aggregate": 9,
+  "T08-point-lookup": 6
+ }
+}

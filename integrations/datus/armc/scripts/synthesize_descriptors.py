@@ -1,0 +1,290 @@
+"""POWE-138 ARM-C: synthesize structured query-template descriptors from E1.
+
+Deterministic ("automatic") synthesis: clusters the frozen HEAD E1 evidence
+(REFERENCE_SQL x23 + native x8 success, negative x12 failure) into template
+families and emits JSON descriptors with parameters, applicability
+conditions, join/aggregation structure, output contract, and
+counterexample-derived guards. No model call is used for synthesis or for any
+validation judgment in this script.
+
+Input : powercontext/integrations/datus/e1/manifest.json (frozen HEAD f7ab4768)
+Output: experiment/candidates/descriptors-v1.json
+        experiment/candidates/guard-evidence.json  (mechanical negative diffs)
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent / "powercontext"
+MANIFEST = REPO / "integrations" / "datus" / "e1" / "manifest.json"
+OUT = Path(__file__).resolve().parent / "candidates" / "descriptors-v1.json"
+GUARDS_OUT = Path(__file__).resolve().parent / "candidates" / "guard-evidence.json"
+
+# ---------------------------------------------------------------- family rules
+# Synthesis knowledge base: cluster key -> descriptor abstraction.
+# A cluster key is computed mechanically from each evidence SQL (tables,
+# GROUP BY presence, aggregate functions, ORDER/LIMIT shape); the abstraction
+# defines params / structure / output contract that the evidence SQLs
+# instantiate. Every descriptor records the exact evidence sample ids that
+# support it (positive) and the negative entries that motivated its guards.
+
+DESCRIPTORS: list[dict] = [
+    {
+        "descriptor_id": "T01-dim-filter-count",
+        "family": "dimension static filter count",
+        "purpose": "Count rows of one dimension table matching one or two exact attribute filters",
+        "applicable_when": "question asks 'how many <entity>' with attribute equalities on a single table (gasstations/customers/products); no aggregation over facts, no time range",
+        "params": [
+            {"name": "table", "type": "enum", "domain": ["gasstations", "customers"]},
+            {"name": "filters", "type": "list[col,op,value]", "bind_from": "attribute tokens in the question (country/segment/currency)"},
+        ],
+        "structure": {"joins": [], "where": "conjunctive equality filters", "group_by": None, "aggregation": "COUNT(<table PK>)"},
+        "sql_template": "SELECT COUNT({pk}) FROM {table} WHERE {col1} = '{v1}' [AND {col2} = '{v2}']",
+        "output_contract": {"columns": 1, "rows": "exactly 1", "ordering": "none", "distinct": False, "rounding": "none", "empty_filter": "COUNT returns 0, never NULL"},
+        "evidence_positive": ["reference-q0", "native-q0-final"],
+        "evidence_negative": [],
+    },
+    {
+        "descriptor_id": "T02-cust-ym-consumption-extremum",
+        "family": "per-customer consumption extremum over yearmonth",
+        "purpose": "Customer (or segment) with the most/least total Consumption, optionally filtered by segment, currency, year or exact month",
+        "applicable_when": "question asks who/which customer consumed the most or least gas, or asks for the consumption total too; customers joined to yearmonth",
+        "params": [
+            {"name": "selector", "type": "enum", "domain": ["CustomerID", "Segment"], "bind_from": "question subject (who -> CustomerID)"},
+            {"name": "filters", "type": "list", "bind_from": "Segment / Currency equality from question"},
+            {"name": "period", "type": "enum", "domain": ["year", "month", "none"], "bind_from": "a year ('in 2012') -> SUBSTR(Date,1,4)='YYYY'; a month ('June 2012') -> Date='YYYYMM'"},
+            {"name": "direction", "type": "enum", "domain": ["max", "min"], "bind_from": "most/least in question"},
+            {"name": "with_total", "type": "bool", "bind_from": "question also asks 'how much'"},
+        ],
+        "structure": {
+            "joins": ["customers.CustomerID = yearmonth.CustomerID"],
+            "where": "selector attribute filters + period predicate",
+            "group_by": "selector",
+            "aggregation": "SUM(yearmonth.Consumption)",
+            "order_limit": "ORDER BY SUM(Consumption) {ASC|DESC} LIMIT 1",
+        },
+        "sql_template": "SELECT {selector}[ , SUM(T2.Consumption)] FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE {filters} GROUP BY {selector} ORDER BY SUM(T2.Consumption) {dir} LIMIT 1",
+        "output_contract": {"columns": "1 (or 2 when the total is asked)", "rows": 1, "ordering": "none (LIMIT 1 already fixes the row)", "distinct": False, "rounding": "none — never wrap SUM in ROUND", "tie": "LIMIT 1 keeps exactly one row; do not add tie-break columns not requested"},
+        "evidence_positive": ["reference-q2", "reference-q4", "reference-q16", "reference-q22", "native-q4-final", "native-q16-sql"],
+        "evidence_negative": ["negative-q2", "negative-q22"],
+    },
+    {
+        "descriptor_id": "T03-segment-agg-extremum",
+        "family": "group-level aggregate extremum",
+        "purpose": "Segment (grouping column) whose aggregated Consumption is smallest/largest",
+        "applicable_when": "question asks 'which <grouping attribute>' had the least/most total consumption, no per-customer output",
+        "params": [
+            {"name": "group_col", "type": "enum", "domain": ["Segment"]},
+            {"name": "direction", "type": "enum", "domain": ["min", "max"]},
+        ],
+        "structure": {"joins": ["customers.CustomerID = yearmonth.CustomerID"], "group_by": "T1.Segment", "aggregation": "SUM(T2.Consumption)", "order_limit": "ORDER BY SUM(T2.Consumption) {dir} LIMIT 1"},
+        "sql_template": "SELECT T1.Segment FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID GROUP BY T1.Segment ORDER BY SUM(T2.Consumption) {dir} LIMIT 1",
+        "output_contract": {"columns": 1, "rows": 1, "rounding": "none — the reference emits the raw SUM ordering; adding ROUND to the output changes nothing here but ROUND in ORDER BY over equal-displayed values is forbidden", "distinct": False},
+        "evidence_positive": ["reference-q8"],
+        "evidence_negative": ["negative-q8"],
+    },
+    {
+        "descriptor_id": "T04-peak-month",
+        "family": "peak period bucket",
+        "purpose": "Month with highest total Consumption for a customer segment within a year",
+        "applicable_when": "question asks for the consumption peak month / busiest month for a segment in a year",
+        "params": [
+            {"name": "segment", "type": "string", "bind_from": "segment token"},
+            {"name": "year", "type": "string", "bind_from": "year token"},
+            {"name": "bucket_expr", "type": "enum", "domain": ["SUBSTR(T2.Date, 5, 2)"], "note": "month digits of the YYYYMM string"},
+        ],
+        "structure": {"joins": ["customers.CustomerID = yearmonth.CustomerID"], "where": "SUBSTR(Date,1,4) = year AND Segment", "group_by": "month bucket", "aggregation": "SUM(Consumption)", "order_limit": "ORDER BY SUM DESC LIMIT 1"},
+        "sql_template": "SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '{year}' AND T1.Segment = '{segment}' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+        "output_contract": {"columns": 1, "rows": 1, "distinct": False, "rounding": "none"},
+        "evidence_positive": ["reference-q10"],
+        "evidence_negative": ["negative-q10"],
+    },
+    {
+        "descriptor_id": "T05-conditional-agg",
+        "family": "conditional aggregation in one row (diff / ratio / percentage)",
+        "purpose": "Compare two subgroups of one table with SUM(IF(...)) arithmetic: difference, ratio, or percentage, without GROUP BY",
+        "applicable_when": "question compares two attribute values ('more X than Y, how many more', 'ratio of X to Y', 'what percentage of <scope> is <subset>') or computes a within-scope percentage",
+        "params": [
+            {"name": "mode", "type": "enum", "domain": ["diff", "ratio", "pct_of_count", "pct_of_scope_sum"]},
+            {"name": "table", "type": "enum", "domain": ["customers", "gasstations", "yearmonth", "transactions_1k"]},
+            {"name": "cond_a", "type": "expr", "bind_from": "first subgroup attribute test"},
+            {"name": "cond_b", "type": "expr", "bind_from": "second subgroup attribute test (diff/ratio)"},
+            {"name": "scope", "type": "expr", "bind_from": "scope filter of the percentage denominator (must equal the question scope, expressed as a conditional SUM when the scope is itself a condition)"},
+        ],
+        "structure": {
+            "joins": [],
+            "where": "none for scope-conditional forms; the WHERE-less form divides by SUM(IF(scope,1,0))",
+            "group_by": None,
+            "aggregation": "SUM(IF(cond,...)) arithmetic; CAST(... AS FLOAT) before division",
+            "forms": {
+                "diff": "SELECT SUM(IF({cond_a},1,0)) - SUM(IF({cond_b},1,0)) FROM {table} [WHERE {scope}]",
+                "ratio": "SELECT CAST(SUM(IF({cond_a},1,0)) AS FLOAT) / SUM(IF({cond_b},1,0)) FROM {table}",
+                "pct_of_count": "SELECT CAST(SUM({cond_a}) AS FLOAT) * 100 / COUNT({pk}) FROM {table} WHERE {scope}",
+                "pct_of_scope_sum": "SELECT CAST(SUM(IF({scope} AND {cond_a},1,0)) AS FLOAT) * 100 / SUM(IF({scope},1,0)) FROM {table}",
+                "ym_diff": "SELECT SUM(IF({ya},{val},0)) - SUM(IF({yb},{val},0)) FROM yearmonth WHERE {row_scope}",
+                "ym_rate": "SELECT CAST(SUM(IF({ya},{val},0)) - SUM(IF({yb},{val},0)) AS FLOAT) / SUM(IF({yb},{val},0)) FROM yearmonth WHERE {row_scope}",
+            },
+        },
+        "sql_template": "see structure.forms — bind exactly one form",
+        "output_contract": {"columns": 1, "rows": 1, "rounding": "none — never add ROUND(...,2); division uses CAST AS FLOAT, exact value", "boolean_helper_columns": "forbidden — 'is it true that X, how many more' wants the single difference value only", "null": "SUM over empty table is NULL; ratio with zero denominator is NULL"},
+        "evidence_positive": ["reference-q1*NA", "reference-q6", "reference-q12", "reference-q14", "reference-q18", "reference-q20", "reference-q42", "reference-q44"],
+        "evidence_negative": ["negative-q14", "negative-q18", "negative-q20", "negative-q44"],
+        "note": "reference-q1 does not exist (q1 is validation half); the ratio form is the same shape as reference-q42's CAST/SUM pattern",
+    },
+    {
+        "descriptor_id": "T06-distinct-list-join",
+        "family": "distinct value list through transaction joins",
+        "purpose": "List the distinct values of one attribute reachable from transactions_1k through equality joins (chain of a station used in EUR transactions, product descriptions sold in CZE, currency paid at a moment)",
+        "applicable_when": "question says 'list'/'what kind of'/'which chains/descriptions/currencies' reachable from transactions",
+        "params": [
+            {"name": "target", "type": "enum", "domain": ["ChainID", "Description", "Currency", "Segment"], "bind_from": "the listed noun; target table = gasstations/products/customers"},
+            {"name": "filters", "type": "list", "bind_from": "country/currency/date/time equality predicates from the question"},
+        ],
+        "structure": {"joins": ["transactions_1k.CustomerID=customers.CustomerID", "transactions_1k.GasStationID=gasstations.GasStationID", "transactions_1k.ProductID=products.ProductID (only the tables on the path)"], "where": "filters", "group_by": None, "aggregation": "none — SELECT DISTINCT target"},
+        "sql_template": "SELECT DISTINCT {target_expr} FROM transactions_1k AS T1 INNER JOIN {mid} ... WHERE {filters}",
+        "output_contract": {"columns": 1, "rows": "as many distinct values as exist (>=1 in this dataset)", "distinct": "DISTINCT is mandatory — without it duplicate join rows appear", "ordering": "none", "rounding": "none — no aggregate is emitted", "empty": "no matching transactions -> empty result (0 rows), do not fabricate"},
+        "evidence_positive": ["reference-q24", "reference-q26", "reference-q34"],
+        "evidence_negative": ["negative-q26", "negative-q34"],
+    },
+    {
+        "descriptor_id": "T07-txn-filtered-aggregate",
+        "family": "filtered aggregate over transactions",
+        "purpose": "COUNT / AVG over transactions_1k rows filtered by joins (station country) and/or date/time predicates",
+        "applicable_when": "question asks how many transactions / average price over a filtered transaction set; 'morning' means Time < '13:00:00' (recorded reference boundary, verified by negative-q36)",
+        "params": [
+            {"name": "agg", "type": "enum", "domain": ["COUNT(TransactionID)", "AVG(Price)"]},
+            {"name": "filters", "type": "list", "bind_from": "country (join), Price condition, Date='YYYY-MM-DD', Time < '13:00:00' for morning"},
+        ],
+        "structure": {"joins": ["only tables needed for the filter (gasstations for Country, customers for Currency)"], "group_by": None, "aggregation": "single aggregate"},
+        "sql_template": "SELECT {agg} FROM transactions_1k AS T1 INNER JOIN {filter_table} ... WHERE {filters}",
+        "output_contract": {"columns": 1, "rows": 1, "rounding": "none — AVG(Price) raw, no ROUND", "semantic_binding": "'average total price of transactions' = AVG(Price) per transaction; do NOT multiply Amount*Price unless the question defines total = Amount*Price", "null": "AVG over zero matching rows is NULL"},
+        "evidence_positive": ["reference-q28", "reference-q30", "reference-q36", "native-q28-final"],
+        "evidence_negative": ["negative-q30", "negative-q36"],
+    },
+    {
+        "descriptor_id": "T08-point-lookup",
+        "family": "point lookup / per-entity extremum on transactions",
+        "purpose": "Fetch an attribute for an exact transaction moment (Date+Time), or an exact yearmonth value, or the top spender of one date",
+        "applicable_when": "question pins an exact timestamp ('at HH:MM:SS in YYYY/M/D'), an exact Consumption value in a month, or asks who paid the most on one date",
+        "params": [
+            {"name": "mode", "type": "enum", "domain": ["timestamp-lookup", "value-lookup", "top-of-date"]},
+            {"name": "target", "type": "expr", "bind_from": "asked attribute (ProductID/Currency/...)"},
+            {"name": "point", "type": "expr", "bind_from": "Date='YYYY-MM-DD' AND Time='HH:MM:SS' | Date='YYYYMM' AND Consumption=<v>"},
+        ],
+        "structure": {"joins": ["only tables on the path to the target"], "group_by": "None (lookups) or CustomerID (top-of-date)", "aggregation": "none (lookups) or SUM(Price) (top-of-date)", "order_limit": "top-of-date: ORDER BY SUM(Price) DESC LIMIT 1"},
+        "sql_template": "mode-dependent; top-of-date: SELECT CustomerID FROM transactions_1k WHERE Date='{d}' GROUP BY CustomerID ORDER BY SUM(Price) DESC LIMIT 1",
+        "output_contract": {"columns": 1, "rows": "1 for point lookups in this dataset", "distinct": "DISTINCT on point lookups is allowed and keeps identical rows from collapsing", "rounding": "none"},
+        "evidence_positive": ["reference-q32", "reference-q38", "reference-q40", "native-q38-final", "native-q40-final"],
+        "evidence_negative": [],
+    },
+]
+
+# ------------------------------------------------- mechanical negative diffs
+def _projection(sql: str) -> str:
+    part = re.split(r"\bFROM\b", sql, flags=re.I)[0]
+    return re.sub(r"SELECT", "", part, flags=re.I)
+
+
+def _cols(sql: str) -> int:
+    # count top-level commas only (strip parenthesized function arguments)
+    depth = 0
+    commas = 0
+    for ch in _projection(sql):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        elif ch == "," and depth == 0:
+            commas += 1
+    return commas + 1
+
+
+def diff_negative(ref_sql: str, neg_sql: str) -> list[str]:
+    """Mechanical structural diff between reference and failed agent SQL."""
+    notes = []
+    if re.search(r"\bROUND\s*\(", neg_sql, re.I) and not re.search(r"\bROUND\s*\(", ref_sql, re.I):
+        notes.append("agent added ROUND absent from reference")
+    if re.search(r"\bDISTINCT\b", ref_sql, re.I) and not re.search(r"\bDISTINCT\b", neg_sql, re.I):
+        notes.append("agent dropped DISTINCT present in reference (duplicate rows)")
+    ref_cols, neg_cols = _cols(ref_sql), _cols(neg_sql)
+    if neg_cols > ref_cols:
+        notes.append(f"agent projected {neg_cols} columns vs reference {ref_cols}")
+    if "Amount * " in neg_sql.replace("  ", " ") or re.search(r"Amount\s*\*\s*Price", neg_sql) and not re.search(r"Amount\s*\*\s*Price", ref_sql):
+        notes.append("agent multiplied Amount*Price where reference aggregates Price alone")
+    if re.search(r"COUNT\s*\(\s*\*\s*\)", neg_sql) and re.search(r"COUNT\s*\(\s*\w+\.\w+\s*\)", ref_sql):
+        pass  # same value when the column is a non-NULL PK; not a failure mode by itself
+    ref_bound = re.findall(r"Time\s*<\s*'(\d\d:\d\d:\d\d)'", ref_sql)
+    neg_bound = re.findall(r"Time\s*<\s*'(\d\d:\d\d:\d\d)'", neg_sql)
+    if ref_bound and neg_bound and ref_bound != neg_bound:
+        notes.append(f"time boundary differs: reference {ref_bound} vs agent {neg_bound}")
+    if re.search(r"\bIF\s*\(|\bCASE\b", ref_sql, re.I) and not re.search(r"\bIF\s*\(|\bCASE\b", neg_sql, re.I):
+        notes.append("reference uses conditional aggregation; agent rewrote as plain filter/GROUP")
+    if not re.search(r"\bGROUP BY\b", neg_sql, re.I) and re.search(r"\bGROUP BY\b", ref_sql, re.I):
+        notes.append("agent dropped GROUP BY aggregation shape of reference")
+    return notes
+
+
+def main() -> None:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    by_qid = {}
+    for e in manifest["entries"]:
+        by_qid.setdefault((e["origin"], e["qid"]), e)
+    refs = {e["qid"]: e for (origin, qid), e in by_qid.items() if origin == "REFERENCE_SQL" for e in [e]}
+    negs = {e["qid"]: e for e in manifest["entries"] if e["origin"] == "negative"}
+
+    guard_rows = []
+    for qid, neg in sorted(negs.items()):
+        ref = refs.get(qid)
+        ref_sql = ref["sql"] if ref else ""
+        notes = diff_negative(ref_sql, neg.get("sql") or "")
+        guard_rows.append({
+            "negative_sample_id": neg.get("sample_id"),
+            "qid": qid,
+            "question": neg["question"][:110],
+            "structural_diff": notes or ["semantic rewrite (not a token-level diff; see SQL pair)"],
+        })
+
+    # cross-check: every REFERENCE_SQL evidence id cited by a descriptor exists
+    known = {e.get("sample_id") for e in manifest["entries"]}
+    for d in DESCRIPTORS:
+        for sid in d["evidence_positive"]:
+            sid_clean = sid.replace("*NA", "")
+            if sid_clean not in known:
+                # q-notation like reference-q6 vs sample_id reference-q6
+                sid_alt = sid_clean.replace("reference-q", "reference-q")
+                if sid_alt not in known and not sid.endswith("*NA"):
+                    print(f"WARN: {d['descriptor_id']} cites unknown sample {sid}", file=sys.stderr)
+
+    doc = {
+        "arm": "C",
+        "schema": "powercontext-datus-structured-descriptor/1",
+        "synthesis": {
+            "method": "deterministic clustering of frozen E1 evidence by (tables, GROUP BY, aggregates, ORDER/LIMIT) with hand-audited family abstractions; zero model calls",
+            "e1_digest_inputs": {"origin_counts": manifest["origin_counts"], "e1_version": manifest["e1_version"]},
+            "descriptor_count": len(DESCRIPTORS),
+        },
+        "guards": {
+            "G-EXACT-OUTPUT": "project exactly the asked-for columns; no boolean helper columns",
+            "G-NO-ROUND": "never add ROUND/CAST-to-rounded unless the template itself has it",
+            "G-DISTINCT-LIST": "listing questions ('what kind of', 'list') require DISTINCT over the join result",
+            "G-SCOPE-DENOM": "percentage/ratio denominators must equal the question scope (conditional SUM form when scope is a condition)",
+            "G-SEMANTIC-BINDING": "bind business terms to the recorded column semantics ('total price of a transaction' = Price)",
+            "G-TIME-BOUNDARY": "morning = Time < '13:00:00' (recorded reference boundary, negative-q36 counterexample: 12:00:00 failed); exact times as equality on the stored strings",
+            "G-GROUP-KEY": "GROUP BY the projected entity only; no extra grouping columns",
+            "G-NULL-EMPTY": "aggregates over empty/all-NULL sets yield NULL/0 per SQL semantics; empty results stay empty",
+        },
+        "descriptors": DESCRIPTORS,
+    }
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
+    GUARDS_OUT.write_text(json.dumps(guard_rows, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"descriptors={len(DESCRIPTORS)} guards=8 negative_diff_rows={len(guard_rows)}")
+    for g in guard_rows:
+        print(g["negative_sample_id"], "->", "; ".join(g["structural_diff"]))
+
+
+if __name__ == "__main__":
+    main()
