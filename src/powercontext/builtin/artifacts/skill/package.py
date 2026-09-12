@@ -216,7 +216,10 @@ def build_instruction_skill_package(content: SkillContent, /) -> SkillPackageSna
     if content.license is not None:
         frontmatter["license"] = content.license
     if content.compatibility is not None:
-        frontmatter["compatibility"] = content.compatibility
+        # Agent consumers (e.g. the Datus SkillMetadata schema) document
+        # compatibility as a map; emit the summary as a single-entry mapping so
+        # delivered packages parse under map-typed consumers.
+        frontmatter["compatibility"] = {"summary": content.compatibility}
     if content.metadata:
         frontmatter["metadata"] = content.metadata
     if content.allowed_tools is not None:
@@ -397,7 +400,7 @@ def _parse_skill_markdown(  # noqa: C901
         raise SkillPackageError("Agent Skill name must match its package directory")
     description = _required_string(parsed, "description", maximum=1_024)
     license_name = _optional_string(parsed, "license", maximum=512)
-    compatibility = _optional_string(parsed, "compatibility", maximum=500)
+    compatibility = _compatibility_string(parsed, maximum=500)
     allowed_tools = _optional_string(parsed, "allowed-tools", maximum=2_000)
     raw_metadata = parsed.get("metadata", {})
     if not isinstance(raw_metadata, Mapping) or any(
@@ -431,6 +434,27 @@ def _required_string(values: Mapping[str, object], field: str, *, maximum: int) 
     if not isinstance(value, str) or not value.strip() or value != value.strip() or len(value) > maximum:
         raise SkillPackageError(
             f"Agent Skill {field} must be a non-empty trimmed string of at most {maximum} characters"
+        )
+    return value
+
+
+def _compatibility_string(values: Mapping[str, object], *, maximum: int) -> str | None:
+    """Accept a plain compatibility string or its map-serialized form."""
+    value = values.get("compatibility")
+    if value is None:
+        return None
+    if isinstance(value, Mapping):
+        if any(not isinstance(key, str) or not isinstance(item, str) for key, item in value.items()):
+            raise SkillPackageError("Agent Skill compatibility map must map strings to strings")
+        if not value:
+            raise SkillPackageError("Agent Skill compatibility map must not be empty")
+        value = value.get("summary") if set(value) == {"summary"} else "; ".join(
+            f"{key}: {item}" for key, item in value.items()
+        )
+    if not isinstance(value, str) or not value.strip() or value != value.strip() or len(value) > maximum:
+        raise SkillPackageError(
+            "Agent Skill compatibility must be a non-empty trimmed string of at most "
+            f"{maximum} characters"
         )
     return value
 
