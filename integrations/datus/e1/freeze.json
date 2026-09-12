@@ -1,0 +1,49 @@
+{
+  "freeze_id": "POWE-3-D5-PREP-1",
+  "frozen_at": "2026-09-12",
+  "branch": "swift/powe-132",
+  "code_head": "f52be648fe277c3969cbf29ca573e8644e94d22e",
+  "baseline_head": "9f72f65bf0fe9db7c9c940f99191d82f9fea3e09",
+  "push_policy": "local only; swift/powe-131 and successors are never pushed (user instruction 2026-09-12)",
+  "non_secret_config": {
+    "model": {
+      "model": "deepseek-v4-flash-0731",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "temperature": 0,
+      "max_retry": 1
+    },
+    "db": {
+      "host": "t7qse7zfed4cg-mi.cn-hangzhou.oceanbase.aliyuncs.com",
+      "port": 3306,
+      "user": "mock_data_readonly",
+      "database": "birdbench",
+      "access": "read-only"
+    },
+    "runner": {
+      "workflow": [
+        "gen_sql",
+        "execute_sql",
+        "output"
+      ],
+      "max_turns": 8,
+      "timeout_s": 420,
+      "concurrency": 3,
+      "sql_read_only": true
+    },
+    "generation": {
+      "model_env": "POWERCONTEXT_SERVER_INFERENCE_GENERATION_MODEL",
+      "api_key_source": "/home/rongfeng.frf/workspace/.env (never committed, never printed)"
+    }
+  },
+  "artifacts": {
+    "csv_sha256": "c4507c1cd1d167a4c2b05d4cfad7f48226b45e216f2826127070b562e89bda84",
+    "e1_manifest_sha256": "0018502ee539594aec8cbad3a6ea7fae6402be25b53543681f48432303bc2808",
+    "e1_expected_rows_sha256": "40ce8a73e299c04f83da34584db7134055b042e92e1ac2202c628181b55303dd"
+  },
+  "shared_rules": {
+    "primary_step_metric": "s_agent (capture.agent_steps): online model tool-call attempts; unknown on evidence gaps",
+    "comparator": "trace_learning.rows_equal (column-count checked, duplicate-preserving unordered multiset, ordered on explicit demand)",
+    "final_binding": "trace_learning.final_sql_result (strict span binding; failure = unknown)",
+    "scorer": "powercontext_datus.scoring.score_case / summarize_cases"
+  }
+}

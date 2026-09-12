@@ -1,0 +1,324 @@
+{
+ "note": "reference rows from the independent controlled execution; scorer input for the learning half",
+ "expected": {
+  "0": {
+   "columns": [
+    "COUNT(GasStationID)"
+   ],
+   "rows": [
+    [
+     1114
+    ]
+   ]
+  },
+  "2": {
+   "columns": [
+    "CustomerID"
+   ],
+   "rows": [
+    [
+     47273
+    ]
+   ]
+  },
+  "4": {
+   "columns": [
+    "CustomerID"
+   ],
+   "rows": [
+    [
+     603
+    ]
+   ]
+  },
+  "6": {
+   "columns": [
+    "SUM(IF(T1.Currency = 'CZK', T2.Consumption, 0)) - SUM(IF(T1.Currency = 'EUR', T2.Consumption, 0))"
+   ],
+   "rows": [
+    [
+     402524570.16999084
+    ]
+   ]
+  },
+  "8": {
+   "columns": [
+    "Segment"
+   ],
+   "rows": [
+    [
+     "LAM"
+    ]
+   ]
+  },
+  "10": {
+   "columns": [
+    "SUBSTR(T2.Date, 5, 2)"
+   ],
+   "rows": [
+    [
+     "04"
+    ]
+   ]
+  },
+  "12": {
+   "columns": [
+    "SUM(IF(Country = 'CZE', 1, 0)) - SUM(IF(Country = 'SVK', 1, 0))"
+   ],
+   "rows": [
+    [
+     176.0
+    ]
+   ]
+  },
+  "14": {
+   "columns": [
+    "SUM(Currency = 'CZK') - SUM(Currency = 'EUR')"
+   ],
+   "rows": [
+    [
+     23505.0
+    ]
+   ]
+  },
+  "16": {
+   "columns": [
+    "CustomerID",
+    "SUM(T2.Consumption)"
+   ],
+   "rows": [
+    [
+     12459,
+     16130041.819999998
+    ]
+   ]
+  },
+  "18": {
+   "columns": [
+    "CAST(SUM(Currency = 'EUR') AS FLOAT) * 100 / COUNT(CustomerID)"
+   ],
+   "rows": [
+    [
+     3.4803921569
+    ]
+   ]
+  },
+  "20": {
+   "columns": [
+    "CAST(SUM(IF(Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / COUNT(GasStationID)"
+   ],
+   "rows": [
+    [
+     35.6818181818
+    ]
+   ]
+  },
+  "22": {
+   "columns": [
+    "CustomerID"
+   ],
+   "rows": [
+    [
+     27338
+    ]
+   ]
+  },
+  "24": {
+   "columns": [
+    "ChainID"
+   ],
+   "rows": [
+    [
+     35
+    ],
+    [
+     4
+    ],
+    [
+     61
+    ],
+    [
+     70
+    ],
+    [
+     76
+    ],
+    [
+     77
+    ],
+    [
+     98
+    ],
+    [
+     130
+    ],
+    [
+     219
+    ],
+    [
+     246
+    ]
+   ]
+  },
+  "26": {
+   "columns": [
+    "Description"
+   ],
+   "rows": [
+    [
+     "Nafta"
+    ],
+    [
+     "Natural"
+    ],
+    [
+     "Diesel +"
+    ],
+    [
+     "LPG"
+    ],
+    [
+     "Autokosmet."
+    ],
+    [
+     "Provoz.nápl."
+    ],
+    [
+     "Nemrz.kapal."
+    ],
+    [
+     "Mytí vozidel"
+    ],
+    [
+     "Oleje,tuky"
+    ],
+    [
+     "Natural Plus"
+    ],
+    [
+     "Autoprísluš."
+    ],
+    [
+     "Zpr.nakupu"
+    ],
+    [
+     "Natural Spec"
+    ],
+    [
+     "Natural +"
+    ],
+    [
+     "Zboží nesp."
+    ],
+    [
+     "Obcerstvení"
+    ],
+    [
+     "Potraviny"
+    ],
+    [
+     "Dalnic.popl."
+    ],
+    [
+     "Additivum"
+    ],
+    [
+     "Nafta Plus"
+    ],
+    [
+     "Knihy,nov."
+    ]
+   ]
+  },
+  "28": {
+   "columns": [
+    "COUNT(T1.TransactionID)"
+   ],
+   "rows": [
+    [
+     56
+    ]
+   ]
+  },
+  "30": {
+   "columns": [
+    "AVG(T1.Price)"
+   ],
+   "rows": [
+    [
+     453.1503108253
+    ]
+   ]
+  },
+  "32": {
+   "columns": [
+    "CustomerID"
+   ],
+   "rows": [
+    [
+     19182
+    ]
+   ]
+  },
+  "34": {
+   "columns": [
+    "Currency"
+   ],
+   "rows": [
+    [
+     "CZK"
+    ]
+   ]
+  },
+  "36": {
+   "columns": [
+    "COUNT(T1.TransactionID)"
+   ],
+   "rows": [
+    [
+     68
+    ]
+   ]
+  },
+  "38": {
+   "columns": [
+    "ProductID"
+   ],
+   "rows": [
+    [
+     2
+    ]
+   ]
+  },
+  "40": {
+   "columns": [
+    "Currency"
+   ],
+   "rows": [
+    [
+     "CZK"
+    ]
+   ]
+  },
+  "42": {
+   "columns": [
+    "CAST(SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0)) - SUM(IF(SUBSTR(Date, 1, 4) = '2013', Consumption, 0)) AS FLOAT) / SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0))"
+   ],
+   "rows": [
+    [
+     -5.8152424853
+    ]
+   ]
+  },
+  "44": {
+   "columns": [
+    "CAST(SUM(IF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IF(Country = 'SVK', 1, 0))"
+   ],
+   "rows": [
+    [
+     35.6818181818
+    ]
+   ]
+  }
+ }
+}

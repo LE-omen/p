@@ -1,0 +1,693 @@
+{
+ "e1_version": 1,
+ "created_at": "2026-09-12T10:19:57.887438+00:00",
+ "base_head": "f52be648fe277c3969cbf29ca573e8644e94d22e",
+ "csv": {
+  "path": "/home/rongfeng.frf/tmp/debit_card_specializing_accuracy_qa_detailed.csv",
+  "sha256": "c4507c1cd1d167a4c2b05d4cfad7f48226b45e216f2826127070b562e89bda84"
+ },
+ "db": {
+  "host": "t7qse7zfed4cg-mi.cn-hangzhou.oceanbase.aliyuncs.com",
+  "port": 3306,
+  "user": "mock_data_readonly",
+  "database": "birdbench"
+ },
+ "row_cap": 10000,
+ "learning_qids": [
+  0,
+  2,
+  4,
+  6,
+  8,
+  10,
+  12,
+  14,
+  16,
+  18,
+  20,
+  22,
+  24,
+  26,
+  28,
+  30,
+  32,
+  34,
+  36,
+  38,
+  40,
+  42,
+  44
+ ],
+ "validation_qids_excluded": [
+  1,
+  3,
+  5,
+  7,
+  9,
+  11,
+  13,
+  15,
+  17,
+  19,
+  21,
+  23,
+  25,
+  27,
+  29,
+  31,
+  33,
+  35,
+  37,
+  39,
+  41,
+  43,
+  45
+ ],
+ "rules": {
+  "origin": {
+   "REFERENCE_SQL": "judgment-CSV example_sql for the learning half, independently executed read-only/SELECT-only",
+   "native": "preserved E0 evidence (8 historical items), re-verified under the unified comparator",
+   "negative": "complete run with bound final SQL whose rows differ from the reference rows",
+   "unverified": "cannot be mechanically certified (incomplete trace or binding failure); never generation input"
+  },
+  "comparator": "trace_learning.rows_equal: column-count checked, unordered row multiset preserving duplicate counts, ordered only on explicit demand",
+  "final_binding": "trace_learning.final_sql_result: strict binding to the executed final SQL span; failure is unknown, no intermediate fallback"
+ },
+ "coverage_note": "23 reference + 8 native source records cover at most 23 learning questions; they are not independent samples.",
+ "native_eligible_unselected": [
+  24
+ ],
+ "origin_counts": {
+  "REFERENCE_SQL": 23,
+  "native": 8,
+  "negative": 12,
+  "unverified": 2
+ },
+ "entries": [
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 0,
+   "sample_id": "reference-q0",
+   "question": "How many gas stations in CZE has Premium gas?",
+   "sql": "SELECT COUNT(GasStationID) FROM gasstations WHERE Country = 'CZE' AND Segment = 'Premium'",
+   "result_digest": "d109237858032cb3be88572639d481d02d510b7040549d39119fc4e5ebf4f748",
+   "native_receipt_digest": "c91ff58e66cf4da830c68f90219cfe3a2fece159490d0db71bde257b15c8a2b6",
+   "source_manifest_digest": "cd8c9dabd8408064d95ddabe3e9fa465266eb43010ab7e7da9b5b76bf5f2597c",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "COUNT(GasStationID)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 2,
+   "sample_id": "reference-q2",
+   "question": "In 2012, who had the least consumption in LAM?",
+   "sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM' AND SUBSTR(T2.Date, 1, 4) = '2012' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+   "result_digest": "a45af9257c409ba70d339684e60d8629d19d9b5e2494b1f4986a2055108a7c51",
+   "native_receipt_digest": "76124f65d30080b4db5d927f0ee920e1ba9f50b8a2ba50cb521069f19fedf671",
+   "source_manifest_digest": "6c9b603001b1e51091bf6210f1f2c34195b39c8f7e9983a7c9023483d77bacd2",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CustomerID"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 4,
+   "sample_id": "reference-q4",
+   "question": "Which customers, paying in CZK, consumed the most gas in 2011?",
+   "sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'CZK' AND T2.Date BETWEEN 201101 AND 201112 GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+   "result_digest": "1c87a88211bfe49997e6816c54e3897e1d346cd8e92b37f788cb6eb1255c13b1",
+   "native_receipt_digest": "27e3038f303ac94b14dad8ff8e20c4b4801808d80bddee9e4bb0b98775a17787",
+   "source_manifest_digest": "bfcfdd7b19f358098601adc790d051828faf22eb7b9be9a245718a6c7e58ebda",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CustomerID"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 6,
+   "sample_id": "reference-q6",
+   "question": "What was the difference in gas consumption between CZK-paying customers and EUR-paying customers in 2012?",
+   "sql": "SELECT SUM(IF(T1.Currency = 'CZK', T2.Consumption, 0)) - SUM(IF(T1.Currency = 'EUR', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2012'",
+   "result_digest": "e2c7d44ad170611e812f103bde0d87618c0dbb8e4340024cc8ccfa9f7a6d15ec",
+   "native_receipt_digest": "a0abd86aa5c832e1fbb1bfc5f2534283369a77806375efb384befc8deb882004",
+   "source_manifest_digest": "c142d47544eb0598b3c2b757abc914aec48cdecbeeb94fbb0cd92658185403b6",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "SUM(IF(T1.Currency = 'CZK', T2.Consumption, 0)) - SUM(IF(T1.Currency = 'EUR', T2.Consumption, 0))"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 8,
+   "sample_id": "reference-q8",
+   "question": "Which segment had the least consumption?",
+   "sql": "SELECT T1.Segment FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID GROUP BY T1.Segment ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+   "result_digest": "87d50b922cceff1465807fd0ec2dfd46f186a2d24c2a80e5935b5bde37e970a3",
+   "native_receipt_digest": "4d6cf55b35a6313197488f578b212b654fa458a87ad380ff346fa6379fc73ee4",
+   "source_manifest_digest": "66b3feb24b5d17056ade56a84313d59f9ee089521e0d02f22f76fc26a1e35b6f",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "Segment"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 10,
+   "sample_id": "reference-q10",
+   "question": "What was the gas consumption peak month for SME customers in 2013?",
+   "sql": "SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+   "result_digest": "15ad3924b8867f6607c4276dcc1e314b34cca05564560176d2e4f19f2db2a021",
+   "native_receipt_digest": "cbf824288e50dda9d5177dd33bd98d339b69b41e5a1858bd98d87a71d62f2cae",
+   "source_manifest_digest": "5d78d1f3e439a8828326df1e4d575924a6ce7cc9e9a460daba1c3b3e9da001c3",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "SUBSTR(T2.Date, 5, 2)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 12,
+   "sample_id": "reference-q12",
+   "question": "How many more \"discount\" gas stations does the Czech Republic have compared to Slovakia?",
+   "sql": "SELECT SUM(IF(Country = 'CZE', 1, 0)) - SUM(IF(Country = 'SVK', 1, 0)) FROM gasstations WHERE Segment = 'Discount'",
+   "result_digest": "9be8b12ccbb0223aac1ec76d47c9428b90bcea851d40efe8d377837a6849448a",
+   "native_receipt_digest": "4b07f03dc1ad4986dfed2bf27bd861737963b3390289422b4c376b1664861203",
+   "source_manifest_digest": "9963e25e269378bb5bc28039ad8f63507bb0f7850358741c0c8dd0e0f78ad8cc",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "SUM(IF(Country = 'CZE', 1, 0)) - SUM(IF(Country = 'SVK', 1, 0))"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 14,
+   "sample_id": "reference-q14",
+   "question": "Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?",
+   "sql": "SELECT SUM(Currency = 'CZK') - SUM(Currency = 'EUR') FROM customers WHERE Segment = 'SME'",
+   "result_digest": "c9960f02e420efd645a03c3b430852031a6289f8b39a13f5057183a14d962e4e",
+   "native_receipt_digest": "c0d014c9776b094d0f2a174d09037fb66a8068a2cf4061b68a67b9d428351073",
+   "source_manifest_digest": "08a9a21bca3d4e6af67adb456e488884cc6dfc90cf2458dcb1baed3f96736f5d",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "SUM(Currency = 'CZK') - SUM(Currency = 'EUR')"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 16,
+   "sample_id": "reference-q16",
+   "question": "Who among KAM's customers consumed the most? How much did it consume?",
+   "sql": "SELECT T2.CustomerID, SUM(T2.Consumption) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'KAM' GROUP BY T2.CustomerID ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+   "result_digest": "abd3679ff48786da75c6387acd399632ede1305d07529b7f49c7d8550f5ae0f4",
+   "native_receipt_digest": "876cc99055b68f9bfcfc0b8cbc8ae2e14f1e02ce954360de8531631ccaa231bc",
+   "source_manifest_digest": "810796bad334d959a6c6a3cab3bd3b6d5bc9352901f3ec3b337e972c62c53a59",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CustomerID",
+    "SUM(T2.Consumption)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 18,
+   "sample_id": "reference-q18",
+   "question": "What percentage of KAM customers pay in euros?",
+   "sql": "SELECT CAST(SUM(Currency = 'EUR') AS FLOAT) * 100 / COUNT(CustomerID) FROM customers WHERE Segment = 'KAM'",
+   "result_digest": "e6f813ba262cf09ae8b68b5a3e88b7918ab4e0a3d0277697b4dc12aae8869ee0",
+   "native_receipt_digest": "5767437292cbc544cb86c1a04189ed0d4ad639b9b232adb2a1979329e5c95046",
+   "source_manifest_digest": "f7dcd96774e3edc2e36153d33828e9d3c0cd9e2e96554b9707c6b809a10a1bcd",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CAST(SUM(Currency = 'EUR') AS FLOAT) * 100 / COUNT(CustomerID)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 20,
+   "sample_id": "reference-q20",
+   "question": "What percentage of Slovakian gas stations are premium?",
+   "sql": "SELECT CAST(SUM(IF(Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / COUNT(GasStationID) FROM gasstations WHERE Country = 'SVK'",
+   "result_digest": "98a32b90cfc17946192a71f8218ca9d141aa4bb602d2da621f4b6b8bd94f96e5",
+   "native_receipt_digest": "7ee1723c24f5b64a642592b03b306605b4498a308de9e45e1d1cd2d1c785f67d",
+   "source_manifest_digest": "e4258093b8844dd4ec3390a82ce793d6d84f7671611e54aa43fe52ea4cfbd7fe",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CAST(SUM(IF(Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / COUNT(GasStationID)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 22,
+   "sample_id": "reference-q22",
+   "question": "Which SME customer consumed the least in June 2012?",
+   "sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T2.Date = '201206' AND T1.Segment = 'SME' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+   "result_digest": "c9488b3e08c4c26ef7c11f6004023fe9f9dba1e4030c2a22e5f8ef303fbdb50a",
+   "native_receipt_digest": "00b19aa0f7612d7b1500dcddc80dc2afa2c8d054339f0591c6b69fb1e08336fe",
+   "source_manifest_digest": "d3c191868e2c1c0adc3464f428637b649425a6d8df0f2d40eb35d82715a3fb0a",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CustomerID"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 24,
+   "sample_id": "reference-q24",
+   "question": "Please list the chains of the gas stations with transactions in euro.",
+   "sql": "SELECT DISTINCT T3.ChainID FROM transactions_1k AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID INNER JOIN gasstations AS T3 ON T1.GasStationID = T3.GasStationID WHERE T2.Currency = 'EUR'",
+   "result_digest": "682eb578d3b0d6099f9fcf81790b22b921a9b0137d18faaa093bfa9ba441ccad",
+   "native_receipt_digest": "8870ac806946e2f997e6e39859d20b4ccbc425f2a4e528488ce6c9be658380bd",
+   "source_manifest_digest": "3f62ca23cfdc890213d6f4e9898f0dd93162964e1622d0b96e07aac7457c1b10",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "ChainID"
+   ],
+   "row_count": 10
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 26,
+   "sample_id": "reference-q26",
+   "question": "Please list the product descriptions of the transactions taken place in the gas stations in the Czech Republic.",
+   "sql": "SELECT DISTINCT T3.Description FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN products AS T3 ON T1.ProductID = T3.ProductID WHERE T2.Country = 'CZE'",
+   "result_digest": "89c539b002679c44272fef02d7ac43e2bab0a07937b5e41f67fe35c66a0aaab2",
+   "native_receipt_digest": "b788f439ef88b9841abe555db74d6b13fe12692169d220d89534f6681614e483",
+   "source_manifest_digest": "f92471e571843c5c9619febdb645b8d557e13e1d76184b58e43f947001772889",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "Description"
+   ],
+   "row_count": 21
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 28,
+   "sample_id": "reference-q28",
+   "question": "How many transactions taken place in the gas station in the Czech Republic are with a price of over 1000?",
+   "sql": "SELECT COUNT(T1.TransactionID) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.Country = 'CZE' AND T1.Price > 1000",
+   "result_digest": "2b508a00a17e7b0bf2e770ee643f293e325dc19678f73a01e1929917220849af",
+   "native_receipt_digest": "0a8b5fd74582028f290108178f812edca77c6957ba9024c4ab89ab4c1c39e2dc",
+   "source_manifest_digest": "2efa0e758716848fe1775548d1d1d20dea5a9ab8b293c9662856fc6c36354a35",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "COUNT(T1.TransactionID)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 30,
+   "sample_id": "reference-q30",
+   "question": "What is the average total price of the transactions taken place in gas stations in the Czech Republic?",
+   "sql": "SELECT AVG(T1.Price) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.Country = 'CZE'",
+   "result_digest": "69271b27d2332c2f0432e26a2c19137b661303deac29e7e0bca97d624861a110",
+   "native_receipt_digest": "e57722b9db4044bb9379d26ae64ad58a421ef6262eee955d2468c26cc3e1b1af",
+   "source_manifest_digest": "d4c696648b726b2dd5faa1ecddb61e9ba36ce46bad84f900c25b3939a82fe5d1",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "AVG(T1.Price)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 32,
+   "sample_id": "reference-q32",
+   "question": "Which customer paid the most in 2012/8/25?",
+   "sql": "SELECT CustomerID FROM transactions_1k WHERE Date = '2012-08-25' GROUP BY CustomerID ORDER BY SUM(Price) DESC LIMIT 1",
+   "result_digest": "35e5df733a6a6e4551951baff2524e4b7efdd38b57ee54e16cc42bc51a978fa6",
+   "native_receipt_digest": "755ee744ee54ffb7e6f4be11d720e607db387703f2de9d919a419487de5a34c2",
+   "source_manifest_digest": "d29de1d46398ff2bdcda8a17d727d9e0b83c93d54fb68e2dab56962e2475809c",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CustomerID"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 34,
+   "sample_id": "reference-q34",
+   "question": "What kind of currency did the customer paid at 16:25:00 in 2012/8/24?",
+   "sql": "SELECT DISTINCT T3.Currency FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN customers AS T3 ON T1.CustomerID = T3.CustomerID WHERE T1.Date = '2012-08-24' AND T1.Time = '16:25:00'",
+   "result_digest": "0ffe8c3ca2df2eefd1ff7f8a79ac68c4d76181e3d54d257398c64a128fb9b0cf",
+   "native_receipt_digest": "2c161377c48c84308a834a74b73d420f02389ddca4bc848f2c0bbbee8b54d92e",
+   "source_manifest_digest": "5437a120f20d5c257b5665c6828e0cd6e63477642edef03e01cb4508e4fe05ed",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "Currency"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 36,
+   "sample_id": "reference-q36",
+   "question": "How many transactions were paid in CZK in the morning of 2012/8/26?",
+   "sql": "SELECT COUNT(T1.TransactionID) FROM transactions_1k AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Date = '2012-08-26' AND T1.Time < '13:00:00' AND T2.Currency = 'CZK'",
+   "result_digest": "a6549278c5b93efb4cec3dd0ed70b278087a26a2a4943d1f7ede543b7694db48",
+   "native_receipt_digest": "2a10762b548ef3ee0446d8f2b5b9e75bbf786ff7069ba58ef65905aa7acb44ba",
+   "source_manifest_digest": "6d9189ee2e0282c035055ceb165f4e039a42791ace2e97925a0da8e754661f6e",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "COUNT(T1.TransactionID)"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 38,
+   "sample_id": "reference-q38",
+   "question": "What was the product id of the transaction happened at 2012/8/23 21:20:00?",
+   "sql": "SELECT T1.ProductID FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T1.Date = '2012-08-23' AND T1.Time = '21:20:00'",
+   "result_digest": "24227028f5989317de063afa979c6b34bfd191537b8fd2ed796a820bf47b2024",
+   "native_receipt_digest": "df2cb5824c6d09a07de631e7a30e497ed7e9f167f3c7b1dedc32c6fac26e872d",
+   "source_manifest_digest": "5f78fc75b2278945e818180da32c9a4fd4de9d0dce561d14b20b489390ee4848",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "ProductID"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 40,
+   "sample_id": "reference-q40",
+   "question": "There's one customer spent 214582.17 in the June of 2013, which currency did he/she use?",
+   "sql": "SELECT T2.Currency FROM yearmonth AS T1 INNER JOIN customers AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Date = '201306' AND T1.Consumption = 214582.17",
+   "result_digest": "0ffe8c3ca2df2eefd1ff7f8a79ac68c4d76181e3d54d257398c64a128fb9b0cf",
+   "native_receipt_digest": "c730ca01df9fc2f27b178a0ae40f2eac4081378da441ba2a0f225bdd86b367a1",
+   "source_manifest_digest": "118bad2b8129978fdba1aab6c4abaecd81f8dc0895a90ec352ed51651aa739dd",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "Currency"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 42,
+   "sample_id": "reference-q42",
+   "question": "For the customer who paid 634.8 in 2012/8/25, what was the consumption decrease rate from Year 2012 to 2013?",
+   "sql": "SELECT CAST(SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0)) - SUM(IF(SUBSTR(Date, 1, 4) = '2013', Consumption, 0)) AS FLOAT) / SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0)) FROM yearmonth WHERE CustomerID = ( SELECT T1.CustomerID FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T1.Date = '2012-08-25' AND T1.Price = 634.8 )",
+   "result_digest": "65dab44c2348287a487f23d8b3c3557c3d1c6fc60406123ef39e596c8b963f05",
+   "native_receipt_digest": "697b24673facc3890bd4e056c3c10ddd1660a7196b022e752af9f8679b712b1b",
+   "source_manifest_digest": "c9b775ab70a33c96cee7fd655f6bbef71e6a623ec527e14018eeb7fb8e1ccd30",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CAST(SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0)) - SUM(IF(SUBSTR(Date, 1, 4) = '2013', Consumption, 0)) AS FLOAT) / SUM(IF(SUBSTR(Date, 1, 4) = '2012', Consumption, 0))"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "REFERENCE_SQL",
+   "qid": 44,
+   "sample_id": "reference-q44",
+   "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+   "sql": "SELECT CAST(SUM(IF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IF(Country = 'SVK', 1, 0)) FROM gasstations",
+   "result_digest": "98a32b90cfc17946192a71f8218ca9d141aa4bb602d2da621f4b6b8bd94f96e5",
+   "native_receipt_digest": "96158c43098660a18590a20405ebc8495c89a1fe10d9251d0091e54e2ca9c561",
+   "source_manifest_digest": "b5cf07c5fb3acf186e7c0b9dfccaedd007de7fc31de2da9c8e8cf43cf1d6d28e",
+   "lesson": "Reference SQL from the authorized QA judgment CSV, independently executed against the read-only database under a SELECT-only controlled connection; its result rows are the verified reference for this question (origin=REFERENCE_SQL).",
+   "columns": [
+    "CAST(SUM(IF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IF(Country = 'SVK', 1, 0))"
+   ],
+   "row_count": 1
+  },
+  {
+   "origin": "native",
+   "qid": 0,
+   "kind": "final",
+   "sample_id": "native-q0-final",
+   "question": "How many gas stations in CZE has Premium gas?",
+   "sql": "SELECT COUNT(*) AS cnt FROM gasstations WHERE Country = 'CZE' AND Segment = 'Premium';",
+   "result_digest": "d109237858032cb3be88572639d481d02d510b7040549d39119fc4e5ebf4f748",
+   "native_receipt_digest": "1c2e4b7365824873cc741b42fe798b686bf37712c5d3099ce4659b72422b7f76",
+   "source_manifest_digest": "918e7e34b6f742d772e55271930372112ec29154a33dd905fb607b4384393306",
+   "lesson": "Independent native execution answered this question correctly in 17 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 4,
+   "kind": "final",
+   "sample_id": "native-q4-final",
+   "question": "Which customers, paying in CZK, consumed the most gas in 2011?",
+   "sql": "WITH t AS (\n  SELECT c.CustomerID, SUM(y.Consumption) AS total\n  FROM customers c\n  JOIN yearmonth y ON c.CustomerID = y.CustomerID\n  WHERE c.Currency = 'CZK' AND SUBSTR(y.Date, 1, 4) = '2011'\n  GROUP BY c.CustomerID\n)\nSELECT CustomerID FROM t WHERE total = (SELECT MAX(total) FROM t);",
+   "result_digest": "1c87a88211bfe49997e6816c54e3897e1d346cd8e92b37f788cb6eb1255c13b1",
+   "native_receipt_digest": "b20be1b346792dd7935948f5d7fadd1cd8e8f411ce1d166cf034ae428b508739",
+   "source_manifest_digest": "cda128ec4ed260af3132c273fe8ad371e42e4138512c187a42a7ee840cd6d304",
+   "lesson": "Independent native execution answered this question correctly in 43 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 6,
+   "kind": "final",
+   "sample_id": "native-q6-final",
+   "question": "What was the difference in gas consumption between CZK-paying customers and EUR-paying customers in 2012?",
+   "sql": "SELECT\n  SUM(CASE WHEN c.Currency = 'CZK' THEN ym.Consumption ELSE 0 END) -\n  SUM(CASE WHEN c.Currency = 'EUR' THEN ym.Consumption ELSE 0 END) AS diff\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE SUBSTR(ym.Date, 1, 4) = '2012';",
+   "result_digest": "e2c7d44ad170611e812f103bde0d87618c0dbb8e4340024cc8ccfa9f7a6d15ec",
+   "native_receipt_digest": "e5006c8749336db7690b245c9c11b5b46222e6a491cf9a7c7124a560e97dcb59",
+   "source_manifest_digest": "742ac69d35e8b954203e41d499d042d6de65ea449cd22c8eb77e430052613589",
+   "lesson": "Independent native execution answered this question correctly in 22 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 12,
+   "kind": "final",
+   "sample_id": "native-q12-final",
+   "question": "How many more \"discount\" gas stations does the Czech Republic have compared to Slovakia?",
+   "sql": "SELECT\n  (SELECT COUNT(*) FROM gasstations WHERE Country = 'CZE' AND Segment = 'Discount')\n  -\n  (SELECT COUNT(*) FROM gasstations WHERE Country = 'SVK' AND Segment = 'Discount')\n  AS diff;",
+   "result_digest": "4a93b1dede3835da4b87d3470c0dff4cffdd413ff93cc9645d164cd491d75afa",
+   "native_receipt_digest": "445edb0a02182bf51b64cb1e4417ec721cefa6fb014354c7d10b09713b05f057",
+   "source_manifest_digest": "c0716a363741aaef59cea4fbb7451b442ff4e26e2e12a9ae2b0cbd7f7ffae6bf",
+   "lesson": "Independent native execution answered this question correctly in 17 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 28,
+   "kind": "final",
+   "sample_id": "native-q28-final",
+   "question": "How many transactions taken place in the gas station in the Czech Republic are with a price of over 1000?",
+   "sql": "SELECT COUNT(*) AS cnt\nFROM transactions_1k t\nJOIN gasstations g ON t.GasStationID = g.GasStationID\nWHERE g.Country = 'CZE' AND t.Price > 1000;",
+   "result_digest": "2b508a00a17e7b0bf2e770ee643f293e325dc19678f73a01e1929917220849af",
+   "native_receipt_digest": "d43145a97e6ce26a252b556ffd51b1fd4b87e2734f04b757aabc8ae5459e9333",
+   "source_manifest_digest": "0d1bcd90f8e83a05104173eec1a1918498dfa798afd7752aa2a744fcaf5077d2",
+   "lesson": "Independent native execution answered this question correctly in 22 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 38,
+   "kind": "final",
+   "sample_id": "native-q38-final",
+   "question": "What was the product id of the transaction happened at 2012/8/23 21:20:00?",
+   "sql": "SELECT ProductID FROM transactions_1k WHERE Date = '2012-08-23' AND Time = '21:20:00'",
+   "result_digest": "24227028f5989317de063afa979c6b34bfd191537b8fd2ed796a820bf47b2024",
+   "native_receipt_digest": "b7180cd223365da50b748836463977e9d3cfab4ae36ba6bc278b7dc9542917c5",
+   "source_manifest_digest": "d70ab66ed3e9cd8c113d86ede346ab6b27725e4c6c97a5b34710c6988e528ee4",
+   "lesson": "Independent native execution answered this question correctly in 17 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 40,
+   "kind": "final",
+   "sample_id": "native-q40-final",
+   "question": "There's one customer spent 214582.17 in the June of 2013, which currency did he/she use?",
+   "sql": "SELECT c.Currency AS Currency\nFROM yearmonth y\nJOIN customers c ON y.CustomerID = c.CustomerID\nWHERE y.Date = '201306' AND y.Consumption = 214582.17;",
+   "result_digest": "0ffe8c3ca2df2eefd1ff7f8a79ac68c4d76181e3d54d257398c64a128fb9b0cf",
+   "native_receipt_digest": "8323b3c9af3d5bbdc8714a80c52653a49337e41c569656b9cf09578b73aa5815",
+   "source_manifest_digest": "9e3b3f3d3df78f0c9d33334d4297c005f96b4a077383032049c0e2588bde9347",
+   "lesson": "Independent native execution answered this question correctly in 17 tool calls; the final SQL and its result rows were verified against the evaluator oracle."
+  },
+  {
+   "origin": "native",
+   "qid": 16,
+   "kind": "intermediate",
+   "sample_id": "native-q16-sql",
+   "question": "Who among KAM's customers consumed the most? How much did it consume?",
+   "sql": "SELECT c.CustomerID, SUM(ym.Consumption) AS TotalConsumption\nFROM customers c\nJOIN yearmonth ym ON c.CustomerID = ym.CustomerID\nWHERE c.Segment = 'KAM'\nGROUP BY c.CustomerID\nHAVING SUM(ym.Consumption) = (SELECT MAX(t.TotalConsumption)\n                              FROM (SELECT SUM(ym2.Consumption) AS TotalConsumption\n                                    FROM customers c2\n                                    JOIN yearmonth ym2 ON c2.CustomerID = ym2.CustomerID\n                                    WHERE c2.Segment = 'KAM'\n                                    GROUP BY c2.CustomerID) t)\nORDER BY c.CustomerID;",
+   "result_digest": "abd3679ff48786da75c6387acd399632ede1305d07529b7f49c7d8550f5ae0f4",
+   "native_receipt_digest": "4e180b1b9d2e727354d0476b06fd981a0ecfa7abbf8a517c15c51cee91fbb5d5",
+   "source_manifest_digest": "057df2207097111b8bbd1877775bbb7405f3611bf1b54a6380437e1ad6791389",
+   "lesson": "Independent native execution of this question failed overall in 20 tool calls, but one executed SQL produced rows equal to the evaluator oracle result for this question."
+  },
+  {
+   "origin": "negative",
+   "qid": 2,
+   "sample_id": "negative-q2",
+   "question": "In 2012, who had the least consumption in LAM?",
+   "sql": "SELECT c.CustomerID, SUM(y.Consumption) AS total_consumption\nFROM customers c\nJOIN yearmonth y ON c.CustomerID = y.CustomerID\nWHERE c.Segment = 'LAM' AND SUBSTR(y.Date, 1, 4) = '2012'\nGROUP BY c.CustomerID\nHAVING SUM(y.Consumption) = (\n    SELECT MIN(t.total)\n    FROM (\n        SELECT SUM(y2.Consumption) AS total\n        FROM customers c2\n        JOIN yearmonth y2 ON c2.CustomerID = y2.CustomerID\n        WHERE c2.Segment = 'LAM' AND SUBSTR(y2.Date, 1, 4) = '2012'\n        GROUP BY c2.CustomerID\n    ) t\n);",
+   "agent_rows_digest": "f1ce1be5ee06c9348e2257165ebb540f7e847d60306907f31bdbd18f64317046",
+   "reference_rows_digest": "a45af9257c409ba70d339684e60d8629d19d9b5e2494b1f4986a2055108a7c51",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 8,
+   "sample_id": "negative-q8",
+   "question": "Which segment had the least consumption?",
+   "sql": "SELECT c.Segment, ROUND(SUM(ym.Consumption), 2) AS total_consumption\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nGROUP BY c.Segment\nORDER BY total_consumption ASC\nLIMIT 1;",
+   "agent_rows_digest": "043f369e00be61e18c3f70d5da803d830c0a89419e90bd68e11799c09b563793",
+   "reference_rows_digest": "87d50b922cceff1465807fd0ec2dfd46f186a2d24c2a80e5935b5bde37e970a3",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 10,
+   "sample_id": "negative-q10",
+   "question": "What was the gas consumption peak month for SME customers in 2013?",
+   "sql": "SELECT SUBSTR(ym.Date, 5, 2) AS month,\n       SUM(ym.Consumption) AS total_consumption\nFROM birdbench.yearmonth ym\nJOIN birdbench.customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'SME'\n  AND SUBSTR(ym.Date, 1, 4) = '2013'\nGROUP BY SUBSTR(ym.Date, 5, 2)\nORDER BY total_consumption DESC\nLIMIT 1",
+   "agent_rows_digest": "8ea3aa6c5095452d1783ff501c99828ddcd43cb12173322025722e330fc01ca5",
+   "reference_rows_digest": "15ad3924b8867f6607c4276dcc1e314b34cca05564560176d2e4f19f2db2a021",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 14,
+   "sample_id": "negative-q14",
+   "question": "Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?",
+   "sql": "SELECT\n  SUM(CASE WHEN Currency = 'CZK' THEN 1 ELSE 0 END) AS czk_sme_count,\n  SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) AS eur_sme_count,\n  SUM(CASE WHEN Currency = 'CZK' THEN 1 ELSE 0 END) > SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) AS more_sme_pay_in_czk_than_eur,\n  SUM(CASE WHEN Currency = 'CZK' THEN 1 ELSE 0 END) - SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) AS czk_minus_eur_difference\nFROM customers\nWHERE Segment = 'SME'",
+   "agent_rows_digest": "4f480987f64afd41fcd284fd3b97fb3182df02d67f80362ad08fbb72408e1884",
+   "reference_rows_digest": "c9960f02e420efd645a03c3b430852031a6289f8b39a13f5057183a14d962e4e",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 18,
+   "sample_id": "negative-q18",
+   "question": "What percentage of KAM customers pay in euros?",
+   "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN Currency = 'EUR' THEN 1 ELSE 0 END) / COUNT(*), 2) AS percentage FROM customers WHERE Segment = 'KAM';",
+   "agent_rows_digest": "6469d7b047707e8faf8b158900bc62852b2db27d5a3ce8642c42fb6fe631f6a2",
+   "reference_rows_digest": "e6f813ba262cf09ae8b68b5a3e88b7918ab4e0a3d0277697b4dc12aae8869ee0",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 20,
+   "sample_id": "negative-q20",
+   "question": "What percentage of Slovakian gas stations are premium?",
+   "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*), 2) AS percentage_premium\nFROM gasstations\nWHERE Country = 'SVK'",
+   "agent_rows_digest": "dfe3ed774941af1aa285678b2a6820f1a4ab10aa25e2106918a6fc47b2b6fd1b",
+   "reference_rows_digest": "98a32b90cfc17946192a71f8218ca9d141aa4bb602d2da621f4b6b8bd94f96e5",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 22,
+   "sample_id": "negative-q22",
+   "question": "Which SME customer consumed the least in June 2012?",
+   "sql": "SELECT c.CustomerID, c.Segment, y.Consumption\nFROM customers c\nJOIN yearmonth y ON c.CustomerID = y.CustomerID\nWHERE c.Segment = 'SME' AND y.Date = '201206'\n  AND y.Consumption = (SELECT MIN(Consumption)\n                       FROM yearmonth\n                       WHERE Date = '201206'\n                         AND CustomerID IN (SELECT CustomerID FROM customers WHERE Segment = 'SME'))\nORDER BY c.CustomerID;",
+   "agent_rows_digest": "8d0012a4e6319d5fdfc6815aae3be2c92398d93d6056ba673fa566254a2422d9",
+   "reference_rows_digest": "c9488b3e08c4c26ef7c11f6004023fe9f9dba1e4030c2a22e5f8ef303fbdb50a",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 26,
+   "sample_id": "negative-q26",
+   "question": "Please list the product descriptions of the transactions taken place in the gas stations in the Czech Republic.",
+   "sql": "SELECT p.Description\nFROM transactions_1k t\nJOIN gasstations g ON t.GasStationID = g.GasStationID\nJOIN products p ON t.ProductID = p.ProductID\nWHERE g.Country = 'CZE'",
+   "agent_rows_digest": "25be1c0508321d4a281e2909e26a61f35187e7cad0dc72713add806ebbbfa063",
+   "reference_rows_digest": "89c539b002679c44272fef02d7ac43e2bab0a07937b5e41f67fe35c66a0aaab2",
+   "agent_row_count": 933,
+   "reference_row_count": 21,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 30,
+   "sample_id": "negative-q30",
+   "question": "What is the average total price of the transactions taken place in gas stations in the Czech Republic?",
+   "sql": "SELECT AVG(t.Amount * t.Price) AS avg_total_price\nFROM transactions_1k t\nJOIN gasstations g ON t.GasStationID = g.GasStationID\nWHERE g.Country = 'CZE'",
+   "agent_rows_digest": "bc2dfd70dbaf6b8782991698dc57a2c0687bd658eb2d7c906bb77b777bde27a5",
+   "reference_rows_digest": "69271b27d2332c2f0432e26a2c19137b661303deac29e7e0bca97d624861a110",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "unverified",
+   "qid": 32,
+   "sample_id": "unverified-q32",
+   "reason": "incomplete_trace",
+   "trace_issues": [
+    "incomplete_result"
+   ]
+  },
+  {
+   "origin": "negative",
+   "qid": 34,
+   "sample_id": "negative-q34",
+   "question": "What kind of currency did the customer paid at 16:25:00 in 2012/8/24?",
+   "sql": "SELECT c.Currency\nFROM transactions_1k t\nJOIN customers c ON t.CustomerID = c.CustomerID\nWHERE t.Date = '2012-08-24' AND t.Time = '16:25:00'",
+   "agent_rows_digest": "8fff0e29525a3557a7a390b2d500349e15f4e3512bee858446d1ec8cd4ad63b3",
+   "reference_rows_digest": "0ffe8c3ca2df2eefd1ff7f8a79ac68c4d76181e3d54d257398c64a128fb9b0cf",
+   "agent_row_count": 3,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "negative",
+   "qid": 36,
+   "sample_id": "negative-q36",
+   "question": "How many transactions were paid in CZK in the morning of 2012/8/26?",
+   "sql": "SELECT COUNT(*) AS cnt\nFROM transactions_1k t\nJOIN customers c ON t.CustomerID = c.CustomerID\nWHERE t.Date = '2012-08-26'\n  AND t.Time < '12:00:00'\n  AND c.Currency = 'CZK'",
+   "agent_rows_digest": "5c61f47670b4291a29f98bb7ad2bdf740a51b16b4ee81d6d6251c5c13de16f73",
+   "reference_rows_digest": "a6549278c5b93efb4cec3dd0ed70b278087a26a2a4943d1f7ede543b7694db48",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  },
+  {
+   "origin": "unverified",
+   "qid": 42,
+   "sample_id": "unverified-q42",
+   "reason": "incomplete_trace",
+   "trace_issues": [
+    "incomplete_result"
+   ]
+  },
+  {
+   "origin": "negative",
+   "qid": 44,
+   "sample_id": "negative-q44",
+   "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+   "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*), 2) AS percentage\nFROM gasstations\nWHERE Country = 'SVK';",
+   "agent_rows_digest": "dfe3ed774941af1aa285678b2a6820f1a4ab10aa25e2106918a6fc47b2b6fd1b",
+   "reference_rows_digest": "98a32b90cfc17946192a71f8218ca9d141aa4bb602d2da621f4b6b8bd94f96e5",
+   "agent_row_count": 1,
+   "reference_row_count": 1,
+   "lesson": "Negative control: the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance (origin=negative)."
+  }
+ ],
+ "expected_rows_sha256": "40ce8a73e299c04f83da34584db7134055b042e92e1ac2202c628181b55303dd"
+}
