@@ -1,0 +1,79 @@
+{
+ "freeze_id": "POWE-3-R3-CHAMPION-1",
+ "champion": "s3v2",
+ "frozen_at": "2026-09-13T21:03:26Z",
+ "provenance": "frozen AFTER D23x3 selection, BEFORE any R or H2 run of this round (POWE-152)",
+ "selection_rule": "preregistered: D23x3 mean C desc -> mean J desc -> mean S asc",
+ "d23x3": [
+  {
+   "arm": "s3v2",
+   "C_by_rep": [
+    23,
+    22,
+    23
+   ],
+   "J_by_rep": [
+    17,
+    17,
+    18
+   ],
+   "meanS_by_rep": [
+    2.57,
+    1.77,
+    2.65
+   ],
+   "mean_C": 22.666666666666668,
+   "mean_J": 17.333333333333332,
+   "mean_S": 2.33
+  },
+  {
+   "arm": "s3v1",
+   "C_by_rep": [
+    22,
+    23,
+    22
+   ],
+   "J_by_rep": [
+    17,
+    18,
+    17
+   ],
+   "meanS_by_rep": [
+    1.77,
+    1.61,
+    1.77
+   ],
+   "mean_C": 22.333333333333332,
+   "mean_J": 17.333333333333332,
+   "mean_S": 1.7166666666666668
+  },
+  {
+   "arm": "p2",
+   "C_by_rep": [
+    20,
+    20,
+    23
+   ],
+   "J_by_rep": [
+    17,
+    19,
+    18
+   ],
+   "meanS_by_rep": [
+    1.55,
+    1.1,
+    1.7
+   ],
+   "mean_C": 21.0,
+   "mean_J": 18.0,
+   "mean_S": 1.45
+  }
+ ],
+ "stage_line_d23": "PASS",
+ "git_head": "58ccb93f7423b51350246eb17343883e4f41f4e2",
+ "artifacts": {
+  "skills_root_sha256": "560a30eb2f48d1f2aa983099ac8456c5009145e4feee3aa93f08c4076d347f30",
+  "common_sha256": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+  "common_path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-152-4bed59acb45b/workdir/r3/commons/s3v2.txt"
+ }
+}

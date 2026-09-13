@@ -1,0 +1,38 @@
+{
+ "schema_version": "powercontext.experience/1",
+ "variant": "v1",
+ "governance": {
+  "source": "allowed exposed learning evidence (E1/E2/D2 reference SQL, recorded round feedback); H2/H3 holdouts never read",
+  "candidate": "experience-v1 synthesized 2026-09-13T19:38:03Z",
+  "revision": "approved-rev-1 (frozen before any screening/regression run)",
+  "guard_inheritance": "all entries carry the eight C4 guards; POWE-148 (J=3/23 unguarded) is the recorded reason"
+ },
+ "entries": [
+  {
+   "id": "EXP-01-unordered-pair-enumeration",
+   "sha256": "69238bda6b1bafd0bef92a4a72abe6d8ab57d9030e0fdfe4e750c2eccb34bf79"
+  },
+  {
+   "id": "EXP-02-median-and-mad",
+   "sha256": "928d3086a599c18731de5cf1b061c9e97fd2aa282e785605268381abc65f8c50"
+  },
+  {
+   "id": "EXP-03-concentration-index",
+   "sha256": "6734ca09b465bebf3f4118000c432b88ea1af023c06fc650497f2d7166366c63"
+  },
+  {
+   "id": "EXP-04-set-signature-equivalence",
+   "sha256": "5788030c90678abf1396971d6b63eed4cb8aadfed97c89014d5bb44f3e447166"
+  },
+  {
+   "id": "EXP-05-dirty-datetime-normalization",
+   "sha256": "2f6a628c1cedac52fdbb5b57fe2db1f62113a1b9a9e239591b2436fe611f16e8"
+  },
+  {
+   "id": "EXP-06-two-hop-composition",
+   "sha256": "bd77d5cab047d080f8366d517c8b333632719129d41143fa0a3cf02078b08cd2"
+  }
+ ],
+ "set_sha256": "f2b12791f581b234be2ae975c040a49e60003b117b921e1c1437fc8913b29e9a",
+ "frozen_at": "2026-09-13T19:38:03Z"
+}

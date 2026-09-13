@@ -1,0 +1,217 @@
+{
+ "rows": [
+  {
+   "arm": "p2",
+   "qset": "d10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 24,
+   "input_tokens": 998546,
+   "output_tokens": 30185
+  },
+  {
+   "arm": "p2",
+   "qset": "d23",
+   "rep": 1,
+   "runs": 23,
+   "requests": 56,
+   "input_tokens": 2328262,
+   "output_tokens": 65260
+  },
+  {
+   "arm": "p2",
+   "qset": "d23",
+   "rep": 2,
+   "runs": 23,
+   "requests": 51,
+   "input_tokens": 2095595,
+   "output_tokens": 51728
+  },
+  {
+   "arm": "p2",
+   "qset": "d23",
+   "rep": 3,
+   "runs": 23,
+   "requests": 57,
+   "input_tokens": 2367872,
+   "output_tokens": 77617
+  },
+  {
+   "arm": "p2",
+   "qset": "s2r10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 21,
+   "input_tokens": 852012,
+   "output_tokens": 10139
+  },
+  {
+   "arm": "s2direct",
+   "qset": "s2r10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 41,
+   "input_tokens": 1734464,
+   "output_tokens": 21530
+  },
+  {
+   "arm": "s2direct",
+   "qset": "s2r10",
+   "rep": 2,
+   "runs": 10,
+   "requests": 35,
+   "input_tokens": 1472238,
+   "output_tokens": 19326
+  },
+  {
+   "arm": "s2render",
+   "qset": "s2r10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 46,
+   "input_tokens": 1945348,
+   "output_tokens": 25188
+  },
+  {
+   "arm": "s2render",
+   "qset": "s2r10",
+   "rep": 2,
+   "runs": 10,
+   "requests": 41,
+   "input_tokens": 1724851,
+   "output_tokens": 22731
+  },
+  {
+   "arm": "s3v1",
+   "qset": "d10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 25,
+   "input_tokens": 1103601,
+   "output_tokens": 33094
+  },
+  {
+   "arm": "s3v1",
+   "qset": "d23",
+   "rep": 1,
+   "runs": 23,
+   "requests": 65,
+   "input_tokens": 2904789,
+   "output_tokens": 75567
+  },
+  {
+   "arm": "s3v1",
+   "qset": "d23",
+   "rep": 2,
+   "runs": 23,
+   "requests": 55,
+   "input_tokens": 2405023,
+   "output_tokens": 69636
+  },
+  {
+   "arm": "s3v1",
+   "qset": "d23",
+   "rep": 3,
+   "runs": 23,
+   "requests": 63,
+   "input_tokens": 2801839,
+   "output_tokens": 80569
+  },
+  {
+   "arm": "s3v2",
+   "qset": "d10",
+   "rep": 1,
+   "runs": 10,
+   "requests": 24,
+   "input_tokens": 1074707,
+   "output_tokens": 31003
+  },
+  {
+   "arm": "s3v2",
+   "qset": "d23",
+   "rep": 1,
+   "runs": 23,
+   "requests": 58,
+   "input_tokens": 2619810,
+   "output_tokens": 80857
+  },
+  {
+   "arm": "s3v2",
+   "qset": "d23",
+   "rep": 2,
+   "runs": 23,
+   "requests": 64,
+   "input_tokens": 2899723,
+   "output_tokens": 70939
+  },
+  {
+   "arm": "s3v2",
+   "qset": "d23",
+   "rep": 3,
+   "runs": 23,
+   "requests": 58,
+   "input_tokens": 2606500,
+   "output_tokens": 83222
+  },
+  {
+   "arm": "s3v2",
+   "qset": "h2",
+   "rep": 1,
+   "runs": 23,
+   "requests": 85,
+   "input_tokens": 3999450,
+   "output_tokens": 147745
+  },
+  {
+   "arm": "s3v2",
+   "qset": "h2",
+   "rep": 2,
+   "runs": 23,
+   "requests": 79,
+   "input_tokens": 3753566,
+   "output_tokens": 159296
+  },
+  {
+   "arm": "s3v2",
+   "qset": "h2",
+   "rep": 3,
+   "runs": 23,
+   "requests": 83,
+   "input_tokens": 3964621,
+   "output_tokens": 160082
+  },
+  {
+   "arm": "s3v2",
+   "qset": "r",
+   "rep": 1,
+   "runs": 23,
+   "requests": 48,
+   "input_tokens": 2100079,
+   "output_tokens": 23398
+  },
+  {
+   "arm": "s3v2",
+   "qset": "r",
+   "rep": 2,
+   "runs": 23,
+   "requests": 47,
+   "input_tokens": 2059404,
+   "output_tokens": 25244
+  },
+  {
+   "arm": "s3v2",
+   "qset": "r",
+   "rep": 3,
+   "runs": 23,
+   "requests": 50,
+   "input_tokens": 2201226,
+   "output_tokens": 30851
+  }
+ ],
+ "total": {
+  "runs": 425,
+  "requests": 1176,
+  "input_tokens": 52013526,
+  "output_tokens": 1395207
+ }
+}
