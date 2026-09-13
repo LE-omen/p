@@ -1,12 +1,12 @@
 ## POWE-152 第三轮交付报告（S1 契约+记账 → S2 消费对照 → S3 守卫经验）
 
-- 代码 HEAD：`58ccb93f7423b51350246eb17343883e4f41f4e2`（分支 swift/powe-152-r3，基线 a4c177c4 = 评测 d88f2a4b + E2 32aa2abd + p2-additive 记录 a4c177c4）
+- 代码 HEAD：冻结时 `58ccb93f`；分支尖端（含本轮记录件）`bd768b8f`（分支 swift/powe-152-r3 已 push，无 PR 无合并；基线 a4c177c4 = 评测 d88f2a4b + E2 32aa2abd + p2-additive 记录）
 - 冠军冻结：`"s3v2"` freeze_id POWE-3-R3-CHAMPION-1 @ 2026-09-13T21:03:26Z（D23×3 选择后、R/H2 前）
 
 ### S1 契约与投递记账（P0，无新增模型评测）
 - 新增 `powercontext_datus/delivery_ledger.py`：版本化 bundle（schema_version/scope/artifact digest/通道/适用条件/来源）、每题投递账（各通道字节与估算 token、真实模型 usage、失败/回退、预算、误投递检测）、off 开关保持纯观察。
 - 静态一致性+回放自测 20/20 通过：p2-additive 重建冻结摘要（skills 560a30eb…、common 08a87663…）、契约重放确定性、off=on 投递字节一致（20767B）、N 臂错配契约被正确标记误投递。
-- 全部 306+ 次运行均带投递账（r3/ledgers/）：报告为 full_delivery（永不伪报召回），预算内，无误投递。
+- 全部 425 次运行均带投递账（r3/ledgers/）：报告为 full_delivery（永不伪报召回），预算内，无误投递。
 
 ### S2 同内容消费对照（P1）
 - 12 个 C4 T01–T08 派生类型化模板（枚举/正则字面量子集、标识符白名单、渲染前后双重校验）投影进 datus 0.4.0 原生 reference_template store；离线负例 13 例全部按预期（注入/引号/分号/枚举逃逸/注释/反斜杠/未知参数拒绝，注入被引号转义中和）。
