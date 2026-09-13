@@ -121,3 +121,20 @@ def test_mixed_decimal_wrapper_multiset_alignment():
 def test_empty_results_equal_only_when_both_empty():
     assert rows_equal([], [])
     assert not rows_equal([], [[]])
+
+
+# --- final binding: pyformat transport escaping (POWE-145 re-freeze) --------
+
+
+def test_final_sql_result_collapses_pyformat_percent_escaping():
+    from powercontext_datus.trace_learning import final_sql_result
+
+    result = {
+        "output": {"sql_query_final": "SELECT DATE_FORMAT(d,'%Y%m%d') FROM t"},
+        "sql_results": [
+            {"sql": "SELECT DATE_FORMAT(d,'%%Y%%m%%d') FROM t", "rows": [["20240101"]]},
+        ],
+    }
+    sql, rows = final_sql_result(result)
+    assert sql == "SELECT DATE_FORMAT(d,'%Y%m%d') FROM t"
+    assert rows == [["20240101"]]

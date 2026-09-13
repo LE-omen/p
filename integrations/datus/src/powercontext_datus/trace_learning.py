@@ -189,7 +189,12 @@ def final_sql_result(result: dict[str, Any]) -> tuple[str, list[list[Any]]] | No
         return None
 
     def _normalized(sql: str) -> str:
-        return sql.strip().rstrip(";").strip()
+        # The pinned SQLAlchemy/pymysql (pyformat) transport doubles literal
+        # percent signs in the SQL it dispatches, so the recorded executed span
+        # may read '%%Y%%m%%d' where the model wrote '%Y%m%d'. Collapse the
+        # transport escaping on both sides; the span binding itself stays
+        # strict (text equality after this one artifact removal).
+        return sql.strip().rstrip(";").strip().replace("%%", "%")
 
     matching = [
         entry for entry in executed_sqls(result) if _normalized(entry.get("sql") or "") == _normalized(final_sql)
