@@ -22,14 +22,22 @@ Skills are generated server-side from the captured evidence.
 
 from __future__ import annotations
 
+import json
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from powercontext_datus.freeze import digest_json
 from powercontext_datus.learning import LearningEvidence
 
-REL_TOL = 1e-6
-ABS_TOL = 1e-6
+# Preregistered numeric rule (POWE-145 step 0, coordinator dispatch 2026-09-13):
+# every numeric cell value - including numeric members inside dict cells such
+# as the trace encoder's {"decimal": "..."} wrapper - is compared after
+# Decimal normalization with an ABSOLUTE tolerance of 5e-7 and NO relative
+# tolerance. This replaces the previous float comparison, which combined a
+# 1e-6 relative term and left dict cells to strict equality, so database
+# DECIMALs like {"decimal": "0.119904"} never matched a plain "0.119904".
+ABS_TOL = Decimal("5e-7")
 
 _IDENT = r"`[^`]+`|[A-Za-z_][A-Za-z0-9_]*"
 _IDENT_GROUP = rf"(?:{_IDENT})"
@@ -45,42 +53,98 @@ _MATERIALIZED_AT = re.compile(r"\s*(?:not\s+)?materialized\b", re.IGNORECASE)
 _WITH_AT = re.compile(r"\bwith\b", re.IGNORECASE)
 
 
-def numify(value: Any) -> Any:
+_STRIP_TRANSLATION = str.maketrans("", "", ",%")
+
+
+def _as_decimal(value: Any) -> Decimal | None:
+    """Exact Decimal for any numeric representation; None for non-numerics.
+
+    Accepts int/float (via ``str`` for exactness), Decimal, finite numeric
+    strings (the legacy comma/percent stripping is preserved), and the trace
+    encoder's ``{"decimal": "..."}`` wrapper. Booleans are not numeric.
+    """
     if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return float(value)
-    if isinstance(value, str):
-        text = value.strip().replace("%", "").replace(",", "")
+        return None
+    if isinstance(value, Decimal):
+        return value if value.is_finite() else None
+    if isinstance(value, int):
+        return Decimal(value)
+    if isinstance(value, float):
         try:
-            return float(text)
-        except ValueError:
-            return value.strip()
+            candidate = Decimal(str(value))
+        except InvalidOperation:
+            return None
+        return candidate if candidate.is_finite() else None
+    if isinstance(value, str):
+        text = value.strip().translate(_STRIP_TRANSLATION)
+        if not text:
+            return None
+        try:
+            candidate = Decimal(text)
+        except InvalidOperation:
+            return None
+        return candidate if candidate.is_finite() else None
+    if isinstance(value, dict) and set(value) == {"decimal"} and isinstance(value["decimal"], str):
+        return _as_decimal(value["decimal"].strip())
+    return None
+
+
+def numify(value: Any) -> Any:
+    decimal = _as_decimal(value)
+    if decimal is not None:
+        return decimal
+    if isinstance(value, str):
+        return value.strip()
     return value
 
 
 def cell_equal(left: Any, right: Any) -> bool:
-    left, right = numify(left), numify(right)
-    if isinstance(left, float) and isinstance(right, float):
-        return abs(left - right) <= max(ABS_TOL, REL_TOL * max(abs(left), abs(right)))
+    """Preregistered cell equality: Decimal-normalized numerics at 5e-7 absolute.
+
+    Numeric members nested inside dict or list cells use the same rule; all
+    other values compare exactly. A numeric never equals a non-numeric.
+    """
+    left_decimal, right_decimal = _as_decimal(left), _as_decimal(right)
+    if left_decimal is not None and right_decimal is not None:
+        return abs(left_decimal - right_decimal) <= ABS_TOL
+    if left_decimal is not None or right_decimal is not None:
+        return False
+    if isinstance(left, dict) and isinstance(right, dict):
+        return left.keys() == right.keys() and all(cell_equal(left[k], right[k]) for k in left)
+    if isinstance(left, list) and isinstance(right, list):
+        return len(left) == len(right) and all(cell_equal(x, y) for x, y in zip(left, right, strict=True))
+    if isinstance(left, str) and isinstance(right, str):
+        return left.strip() == right.strip()  # legacy numify semantics
     return left == right
 
 
+def _cell_key(value: Any) -> tuple[str, Any]:
+    decimal = _as_decimal(value)
+    if decimal is not None:
+        return ("0-num", decimal)
+    if isinstance(value, (dict, list)):
+        return ("1-json", json.dumps(value, sort_keys=True, separators=(",", ":"), default=str))
+    if isinstance(value, bool):
+        return ("2-bool", value)
+    if value is None:
+        return ("3-null", "")
+    return ("4-val", value if isinstance(value, str) else str(value))
+
+
 def rows_equal(actual: list[list[Any]], expected: list[list[Any]], *, ordered: bool = False) -> bool:
-    """Row-multiset equality with numeric tolerance (BIRD-style value comparison).
+    """Row-multiset equality under the preregistered numeric rule.
 
     Column counts must agree on every row (zip truncation never accepts a
     wider row against a narrower one). Unordered comparison is a row
     multiset that preserves duplicate counts; pass ordered=True only when the
-    question explicitly requires a specific row order.
+    question explicitly requires a specific row order. Dict/list cells are
+    compared recursively with the same numeric rule.
     """
     if len(actual) != len(expected):
         return False
     if not actual:
         return True
-    if any(
-        not isinstance(row, list) or any(isinstance(cell, (dict, list)) for cell in row) for row in [*actual, *expected]
-    ):
+    if any(not isinstance(row, list) for row in [*actual, *expected]):
         return actual == expected
     width = len(actual[0])
     if len(expected[0]) != width or any(len(row) != width for row in [*actual, *expected]):
@@ -89,11 +153,11 @@ def rows_equal(actual: list[list[Any]], expected: list[list[Any]], *, ordered: b
         return all(
             cell_equal(x, y) for ra, rb in zip(actual, expected, strict=True) for x, y in zip(ra, rb, strict=True)
         )
-    keyed_actual = sorted((tuple(numify(c) for c in row) for row in actual), key=repr)
-    keyed_expected = sorted((tuple(numify(c) for c in row) for row in expected), key=repr)
+    keyed_actual = sorted((tuple(_cell_key(c) for c in row), tuple(row)) for row in actual)
+    keyed_expected = sorted((tuple(_cell_key(c) for c in row), tuple(row)) for row in expected)
     return all(
         cell_equal(x, y)
-        for ra, rb in zip(keyed_actual, keyed_expected, strict=True)
+        for (_, ra), (_, rb) in zip(keyed_actual, keyed_expected, strict=True)
         for x, y in zip(ra, rb, strict=True)
     )
 
