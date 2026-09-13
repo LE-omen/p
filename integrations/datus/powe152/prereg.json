@@ -1,0 +1,27 @@
+{
+  "schema_version": "powe152.prereg/1",
+  "registered_at": "before any round-3 model run",
+  "baseline": "p2-additive (freeze_id POWE-3-D6-ITER-CHAMPION-1); scorer d88f2a4b; datus b38e71c3",
+  "scoring": {
+    "comparator": "Decimal absolute 5e-7, no relative tolerance, dict members included",
+    "s_agent": "online model tool call attempts (failures/retries counted)",
+    "denominators": "unknown/timeout/failure stay in denominators",
+    "stage_lines": {"d23x3_mean_J": ">= 17/23", "old_R_x3_mean_J": ">= 14/23"}
+  },
+  "question_sets": {
+    "s2r10": "old-R slice covering C4 template families (single-hop T05 + double-hop T02/T06/T07/T08): qids 1,15,21,25,27,29,31,33,35,37",
+    "d10": "D2 screen_10 (V2-01,02,06,07,08,10,11,17,21,23)",
+    "d23": "full D2 23",
+    "r": "old R 23 (odd qids 1..45)",
+    "h2": "H2-23 v2.1 EXPOSED regression only (never blind)"
+  },
+  "selection_rule_finalists": "D23x3 mean C desc -> mean J desc -> mean S_agent asc; finalists = arms beating their screening anchor on C, or stage-line passing S3 variants",
+  "screening_rules": {
+    "s2": "same-content consumption comparison on s2r10 x1: p2 anchor (frozen runner) vs s2render vs s2direct (r3 runner); report C/J/meanS + per-family; benefit hypothesis = fewer errors/requests, J unchanged",
+    "s3": "content increment on d10 x1: p2 anchor vs p2+exp-v1 vs p2+exp-v2; increment = C improvement with J not collapsing"
+  },
+  "better_result_rule_push_branch": "push swift/powe-152-r3 (no PR, no merge) iff the round champion achieves H2x3 gate-13 correct strictly > 25/39 (p2 frozen 64.1%) while old-R x3 mean J >= 14/23 and D23x3 mean C >= p2 D23x3 mean C - 1; otherwise no push",
+  "freeze_discipline": "champion frozen (digests + timestamp) AFTER D23x3 selection and BEFORE any R/H2 run; lineage.jsonl records every prep/exec/score",
+  "h3_boundary": "H3/D3 (POWE-153) never read until the coordinator freezes and releases; no round-3 arm derives content from H2 traces",
+  "infra_policy": "assembly-phase failures (connector/DNS before question_injected, steps=None) are re-run up to 3 attempts, each logged; model-phase failures stay as unknown in denominators; DB host pinned to resolved IP due to resolver NXDOMAIN flaps (hostname+IP logged per plan)"
+}

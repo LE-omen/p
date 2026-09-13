@@ -1,0 +1,253 @@
+{
+ "ok": true,
+ "results": [
+  {
+   "check": "s1.skills_root_matches_frozen_champion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s1.common_matches_frozen_champion",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s1.contract_verifies_materialized",
+   "ok": true,
+   "detail": "[{\"check\": \"skills_root_digest\", \"expected\": \"560a30eb2f48d1f2aa983099ac8456c5009145e4feee3aa93f08c4076d347f30\", \"actual\": \"560a30eb2f48d1f2aa983099ac8456c5009145e4feee3aa93f08c4076d347f30\", \"ok\": true}, {\"check\": \"external_knowledge_digest\", \"expected\": \"08a8766330d89d832fd3d34a7a93e6d44643a2b3a868"
+  },
+  {
+   "check": "s1.contract_replay_deterministic",
+   "ok": true,
+   "detail": "bundle_id=ecc2c8cebbe89d3e"
+  },
+  {
+   "check": "s1.offswitch_preserves_delivered_bytes",
+   "ok": true,
+   "detail": "off=20767 on=20767"
+  },
+  {
+   "check": "s1.offswitch_ledger_still_emitted",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s1.replay_accounts_all_channels",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s1.replay_reports_full_delivery",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s1.misdelivery_detection_flags_mismatch",
+   "ok": true,
+   "detail": "[{\"channel\": \"required_skill\", \"artifact_id\": \"d2-patterns\", \"reason\": \"contract_artifact_not_delivered\"}, {\"channel\": \"required_skill\", \"artifact_id\": \"legacy-patterns\", \"reason\": \"contract_artifact_"
+  },
+  {
+   "check": "s2.negative_suite_all_expected",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "check": "s2.injection_neutralized_by_escaping",
+   "ok": true,
+   "detail": "SELECT COUNT(CustomerID) FROM customers WHERE Segment = 'KAM'' OR ''1''=''1'"
+  },
+  {
+   "check": "s2.t02_valid_render_is_single_select",
+   "ok": true,
+   "detail": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T2.Date = '2"
+  },
+  {
+   "check": "s2.t01_two_filter_render",
+   "ok": true,
+   "detail": "SELECT COUNT(CustomerID) FROM customers WHERE Segment = 'KAM' AND Currency = 'EUR'"
+  },
+  {
+   "check": "s2.quote_escaping_doubled",
+   "ok": true,
+   "detail": "SELECT COUNT(CustomerID) FROM customers WHERE Segment = 'O''Brien'"
+  },
+  {
+   "check": "s2.freeze_manifest_has_digests",
+   "ok": true,
+   "detail": "set=541676fd3cb9ff47 n=12"
+  },
+  {
+   "check": "s2.store_projection_roundtrip",
+   "ok": true,
+   "detail": "{\"projected\": 12, \"store_size\": 12}"
+  },
+  {
+   "check": "s3.v1_guard_structure_complete",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s3.v1_manifest_frozen",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s3.v2_guard_structure_complete",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "check": "s3.v2_manifest_frozen",
+   "ok": true,
+   "detail": ""
+  }
+ ],
+ "freeze": {
+  "schema_version": "powercontext.s2templates/1",
+  "frozen_at": "2026-09-13T19:34:34Z",
+  "source": "C4 knowledge file T01-T08 (frozen p2-additive champion evidence)",
+  "templates": [
+   {
+    "name": "t01-dim-filter-count",
+    "family": "T01-dim-filter-count",
+    "hops": 1,
+    "body_sha256": "38243dd508c40715ceb3b33d08a800153934440f7fe8992822b2210c83b5467d",
+    "parameters_sha256": "0cf1a2d0f929ee7ab806936f3f4cb9193deb43d9d4d91bcccd4d3c06a7caac19",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NULL-EMPTY"
+    ]
+   },
+   {
+    "name": "t02-cust-ym-consumption-extremum",
+    "family": "T02-cust-ym-consumption-extremum",
+    "hops": 2,
+    "body_sha256": "c8e289b12b87f417e2db1ef574f2b8923bdf119ab6e313c2fcf06a07eb084927",
+    "parameters_sha256": "78bb3762f6ae7c9aec20b6002b80458bcee0f2b23f948c591f10deae9b7dd8cf",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND",
+     "G-GROUP-KEY"
+    ]
+   },
+   {
+    "name": "t03-segment-extremum",
+    "family": "T03-segment-agg-extremum",
+    "hops": 2,
+    "body_sha256": "3ee0d4aefe36a25c2fb4b58015958ebc335d7a68eb055bd30de0b14ce2a8c42b",
+    "parameters_sha256": "449b4d6dfc1b02ef5ec66df54f85293eba1ff07e8030b3b95b8b532d418cee21",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND",
+     "G-GROUP-KEY"
+    ]
+   },
+   {
+    "name": "t04-peak-month",
+    "family": "T04-peak-month",
+    "hops": 2,
+    "body_sha256": "8644ff1e24a507fef29616576c0512db5b5773a86996cbb291897af90b3c1b95",
+    "parameters_sha256": "3524cd6db74ad555a64236e09c897c290078b38fb6e691a3eaaab24c8096ef5c",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND",
+     "G-GROUP-KEY"
+    ]
+   },
+   {
+    "name": "t05-diff-customers",
+    "family": "T05-conditional-agg",
+    "hops": 1,
+    "body_sha256": "787cf7f7db843b43ec3864ca7da17a1140d7dfbbe0b89bdab394d58cb919a387",
+    "parameters_sha256": "4f041e91dc2de40baeefd64a66d8b7f72554f2892c5658e741a373b926e2bb3b",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-SCOPE-DENOM"
+    ]
+   },
+   {
+    "name": "t05-diff-gasstations",
+    "family": "T05-conditional-agg",
+    "hops": 1,
+    "body_sha256": "095297f38ed7ab0387fe30076eaafa54fed577a1ad29cbb8ed5e2bcac8d1a53f",
+    "parameters_sha256": "170d342dbe13f4ea7546c87ac3f38c8cedd79b15eb13f98822a1ad98982433c7",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-SCOPE-DENOM"
+    ]
+   },
+   {
+    "name": "t05-ym-diff",
+    "family": "T05-conditional-agg",
+    "hops": 1,
+    "body_sha256": "16c1b4b68c0e06bbe51a267ccdb4632b58abdca14aff817ebc1897ef0c570683",
+    "parameters_sha256": "d72b64e65845a22a9602af3667a10088ae3978ae24219503eb17625aa6df198b",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND"
+    ]
+   },
+   {
+    "name": "t05-ratio-customers",
+    "family": "T05-conditional-agg",
+    "hops": 1,
+    "body_sha256": "30863b7f3450afd3498798272db4701883106e82b971cff6ae362cdb3b29b7de",
+    "parameters_sha256": "4f041e91dc2de40baeefd64a66d8b7f72554f2892c5658e741a373b926e2bb3b",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND",
+     "G-SCOPE-DENOM"
+    ]
+   },
+   {
+    "name": "t06-distinct-list-join",
+    "family": "T06-distinct-list-join",
+    "hops": 2,
+    "body_sha256": "1554596cc697fbfa7cca308fa810ffb53d5bb57b54f0b2ad15680851577a6255",
+    "parameters_sha256": "cf492776032c698dc522bee33cd71e7e972d996ab7f9fe610309e15c7ff0c5a4",
+    "guards": [
+     "G-DISTINCT-LIST",
+     "G-TIME-BOUNDARY",
+     "G-NULL-EMPTY"
+    ]
+   },
+   {
+    "name": "t07-txn-aggregate",
+    "family": "T07-txn-filtered-aggregate",
+    "hops": 2,
+    "body_sha256": "0abdd83c48834a0610fdf6a40ab2fd69217f01635c42dfc0610acc2fdd09ee6b",
+    "parameters_sha256": "c868559e6bb127dc531d2c781b3be2687304e54145e9164d9d056a2f17f3e8c4",
+    "guards": [
+     "G-SEMANTIC-BINDING",
+     "G-TIME-BOUNDARY",
+     "G-NO-ROUND",
+     "G-NULL-EMPTY"
+    ]
+   },
+   {
+    "name": "t08-top-of-date",
+    "family": "T08-point-lookup",
+    "hops": 1,
+    "body_sha256": "8e7d200e4230826c4cf32308351185f49773a8bb35809c728962639dc41643a8",
+    "parameters_sha256": "8bae5edd389d7cacb27f9d535d21f01d66cef4677bc04dcce28a355b16326f01",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-NO-ROUND",
+     "G-GROUP-KEY"
+    ]
+   },
+   {
+    "name": "t08a-timestamp-lookup",
+    "family": "T08-point-lookup",
+    "hops": 2,
+    "body_sha256": "172e9ec06bd514b203ab134462cd1c8ba504c92d33e8b3ad9b4b8d25b3a6d95e",
+    "parameters_sha256": "5fccb852ab1aeb5b89c9ccad0da8780e6d7ccc148b1b0fa87d1bc04359383be6",
+    "guards": [
+     "G-EXACT-OUTPUT",
+     "G-SEMANTIC-BINDING"
+    ]
+   }
+  ],
+  "set_sha256": "541676fd3cb9ff47c5ddc274de635d3c4824afe4d2a4c87be185baa1f9ed4efb"
+ }
+}
