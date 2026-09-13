@@ -1,0 +1,462 @@
+{
+ "1": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "11": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "13": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "15": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "17": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "19": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 3,
+   "in_budget": false,
+   "unknown_reason": null
+  }
+ ],
+ "21": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "23": [
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  }
+ ],
+ "25": [
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  }
+ ],
+ "27": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "29": [
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": null,
+   "s_agent": null,
+   "in_budget": null,
+   "unknown_reason": "run_failed"
+  }
+ ],
+ "3": [
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  }
+ ],
+ "31": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": null,
+   "s_agent": null,
+   "in_budget": null,
+   "unknown_reason": "run_failed"
+  }
+ ],
+ "33": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "35": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "37": [
+  {
+   "correct": false,
+   "s_agent": 2,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": false,
+   "s_agent": 1,
+   "in_budget": false,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "39": [
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "41": [
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "43": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": null,
+   "s_agent": null,
+   "in_budget": null,
+   "unknown_reason": "run_failed"
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "45": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "5": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "7": [
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ],
+ "9": [
+  {
+   "correct": true,
+   "s_agent": 2,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  },
+  {
+   "correct": true,
+   "s_agent": 1,
+   "in_budget": true,
+   "unknown_reason": null
+  }
+ ]
+}

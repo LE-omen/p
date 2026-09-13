@@ -1,0 +1,91 @@
+{
+ "rows": [
+  {
+   "cand": "p1-portfolio",
+   "tag": "g1",
+   "set": "d23",
+   "runs": 23,
+   "requests": 63,
+   "input_tokens": 2145765,
+   "output_tokens": 94240
+  },
+  {
+   "cand": "p1-portfolio",
+   "tag": "g1",
+   "set": "screen10",
+   "runs": 10,
+   "requests": 23,
+   "input_tokens": 757970,
+   "output_tokens": 35857
+  },
+  {
+   "cand": "p1-portfolio",
+   "tag": "g1",
+   "set": "screen5",
+   "runs": 5,
+   "requests": 14,
+   "input_tokens": 471175,
+   "output_tokens": 19445
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "g1",
+   "set": "d23",
+   "runs": 23,
+   "requests": 59,
+   "input_tokens": 2493531,
+   "output_tokens": 88780
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "g1",
+   "set": "screen10",
+   "runs": 10,
+   "requests": 23,
+   "input_tokens": 950364,
+   "output_tokens": 23167
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "g1",
+   "set": "screen5",
+   "runs": 5,
+   "requests": 14,
+   "input_tokens": 602415,
+   "output_tokens": 19845
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "r1",
+   "set": "r",
+   "runs": 23,
+   "requests": 50,
+   "input_tokens": 2033216,
+   "output_tokens": 27663
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "r2",
+   "set": "r",
+   "runs": 23,
+   "requests": 47,
+   "input_tokens": 1908656,
+   "output_tokens": 24442
+  },
+  {
+   "cand": "p2-additive",
+   "tag": "r3",
+   "set": "r",
+   "runs": 23,
+   "requests": 44,
+   "input_tokens": 1788482,
+   "output_tokens": 23453
+  }
+ ],
+ "total": {
+  "runs": 145,
+  "requests": 337,
+  "input_tokens": 13151574,
+  "output_tokens": 356892
+ }
+}

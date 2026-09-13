@@ -1,0 +1,29 @@
+{
+ "p1-portfolio": {
+  "generation": 1,
+  "note": "portfolio: c7 D2 recipe (d2+neg cards required-skill) + C4 T01-T08 via external_knowledge; legacy exact-source card dropped",
+  "skills": [
+   "d2-patterns",
+   "negative-guards"
+  ],
+  "skills_dir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/skills/p1-portfolio",
+  "common_path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/common/p1-portfolio-g1.txt",
+  "skills_sha256": "5b54d887866400b83d6586c6ea951a3093ab0edb5827554ae90a996b7af552ea",
+  "common_sha256": "08a8766330d89d832fd3d34a7a93e6d44643a2b3a868a2e4640baee0c91268ac",
+  "inject": true
+ },
+ "p2-additive": {
+  "generation": 1,
+  "note": "additive control: full c7 recipe + C4 T01-T08 via external_knowledge",
+  "skills": [
+   "d2-patterns",
+   "legacy-patterns",
+   "negative-guards"
+  ],
+  "skills_dir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/skills/p2-additive",
+  "common_path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/common/p2-additive-g1.txt",
+  "skills_sha256": "560a30eb2f48d1f2aa983099ac8456c5009145e4feee3aa93f08c4076d347f30",
+  "common_sha256": "08a8766330d89d832fd3d34a7a93e6d44643a2b3a868a2e4640baee0c91268ac",
+  "inject": true
+ }
+}

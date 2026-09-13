@@ -1,0 +1,31 @@
+{
+ "champion": "p2-additive",
+ "freeze_id": "POWE-3-D6-ITER-CHAMPION-1",
+ "runs": {
+  "r1": {
+   "correct": 19,
+   "j_agent": 19,
+   "unknown": 0,
+   "mean_s_agent": 1.22
+  },
+  "r2": {
+   "correct": 18,
+   "j_agent": 18,
+   "unknown": 1,
+   "mean_s_agent": 1.14
+  },
+  "r3": {
+   "correct": 18,
+   "j_agent": 17,
+   "unknown": 2,
+   "mean_s_agent": 1.14
+  }
+ },
+ "j_agent_mean": 18.0,
+ "stage_line_14_of_23": "PASS",
+ "d2_d23_champion": {
+  "correct": 23,
+  "j_agent": 19
+ },
+ "unknown_diagnosis": "r2 q43 / r3 q29+q31: litellm.RateLimitError (API quota) at native gen_sql node -> run_failed unknown; infrastructure, not model behavior; kept in denominator per protocol, no post-hoc retry"
+}

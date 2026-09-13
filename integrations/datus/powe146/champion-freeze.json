@@ -1,0 +1,57 @@
+{
+ "freeze_id": "POWE-3-D6-ITER-CHAMPION-1",
+ "champion": "p2-additive",
+ "frozen_at": "2026-09-13T11:55:51Z",
+ "provenance": "frozen AFTER D23 selection, BEFORE any old-R or H2 run of this round (POWE-146)",
+ "selection_rule": "pre-declared: D23 J_agent desc -> C desc -> mean S_agent asc -> unknown desc (applied over screen5/screen10/D23 evidence; R excluded from selection)",
+ "selection_evidence": {
+  "screen5": {
+   "p1": "C5 J4",
+   "p2": "C5 J4",
+   "c7_anchor": "C5 J4"
+  },
+  "screen10": {
+   "p1": "C10 J8 meanS1.80",
+   "p2": "C10 J9 meanS1.60",
+   "c7_anchor": "C10 J8"
+  },
+  "d23": {
+   "p1": "C22/23 J17 unk1 meanS1.68",
+   "p2": "C23/23 J19 unk0 meanS1.91",
+   "c7_anchor": "C21/23 J17 unk2"
+  }
+ },
+ "eval_head": "d88f2a4b6104d7ccdd90736c58b5b67e063a22c6",
+ "checkout_head": "32aa2abd7291df824fa60d91f55ab9db386e5137",
+ "checkout_head_note": "d88f2a4b + E2 manifest evidence only; scoring/trace paths verified identical to d88f2a4b",
+ "work_branch": "swift/powe-146-iter (local only, never pushed)",
+ "candidate": {
+  "generation": 1,
+  "note": "additive control: full c7 recipe + C4 T01-T08 via external_knowledge",
+  "skills": [
+   "d2-patterns",
+   "legacy-patterns",
+   "negative-guards"
+  ],
+  "skills_dir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/skills/p2-additive",
+  "common_path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-146-1ffd2b3b1d05/workdir/bc/common/p2-additive-g1.txt",
+  "skills_sha256": "560a30eb2f48d1f2aa983099ac8456c5009145e4feee3aa93f08c4076d347f30",
+  "common_sha256": "08a8766330d89d832fd3d34a7a93e6d44643a2b3a868a2e4640baee0c91268ac",
+  "inject": true
+ },
+ "skills_sha256": {
+  "d2-patterns": "2becba0a0245bac6dcc9f1eb134666cbfb3b30b1a690dfa84504e95f10303aff",
+  "legacy-patterns": "c6fd035d792aaebb20519e2e276c7fa42cc53cc3ce16b6e1e279e7b8eaf1af6a",
+  "negative-guards": "320c7e8f6f29553efaa4f7db44bf77d781672c16bb445c9d689b00a02699fbb2"
+ },
+ "datus_side_changes": "none (portfolio delivered entirely via native required-skill + external_knowledge fields; upstream b38e71c3 pinned runtime unmodified)",
+ "statement": "no old-R question has been executed in any POWE-146 run at this timestamp; H2 packages untouched",
+ "model": {
+  "model": "deepseek-v4-flash-0731",
+  "temperature": 0,
+  "max_turns": 8,
+  "timeout_s": 420,
+  "concurrency": 3,
+  "current_date": "2026-09-13"
+ }
+}
