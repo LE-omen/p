@@ -1,7 +1,7 @@
 {
  "e2_version": 1,
- "created_at": "2026-09-13T06:33:39.706388+00:00",
- "base_head": "76f108a2d0754858e7c3e1fe885f23a77b2e0b08",
+ "created_at": "2026-09-13T07:25:36.815370+00:00",
+ "base_head": "d88f2a4b6104d7ccdd90736c58b5b67e063a22c6",
  "e1_manifest": {
   "path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-145-de4623df5224/workdir/powercontext/integrations/datus/e1/manifest.json",
   "sha256": "0018502ee539594aec8cbad3a6ea7fae6402be25b53543681f48432303bc2808",
@@ -156,7 +156,7 @@
  "origin_counts": {
   "REFERENCE_SQL": 23,
   "native": 8,
-  "negative": 12,
+  "negative": 21,
   "unverified": 2,
   "REFERENCE_SQL_D2": 23
  },
@@ -1177,6 +1177,132 @@
     "customer_count"
    ],
    "row_count": 6
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-11",
+   "sample_id": "negative-d2-V2-11-c1-cards-g1",
+   "question": "For each currency, compute product quantity concentration using the Herfindahl index. Return columns: currency, product_count, hhi. Order: currency ascending. Use customer-joined transactions with non-NULL currency/ProductID and Amount > 0. Product shares use sums of Amount over that same cohort. HHI is sum of squared shares.",
+   "sql": "WITH t AS (\nSELECT tr.*, CAST(Price AS DECIMAL(38,6)) AS p,\nCASE WHEN Date IS NOT NULL AND Time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'\nTHEN TIMESTAMP(Date,Time) ELSE NULL END AS ts FROM birdbench.transactions_1k tr),\nm AS (SELECT CustomerID, Date AS ym, STR_TO_DATE(CONCAT(Date,'01'),'%%Y%%m%%d') AS md,\nCAST(Consumption AS DECIMAL(38,6)) AS v FROM birdbench.yearmonth\nWHERE Date REGEXP '^[0-9]{4}(0[1-9]|1[0-2])$' AND LEFT(Date,4) BETWEEN '1000' AND '9999'),\na AS (SELECT c.Currency,t.ProductID,SUM(t.Amount) v FROM t JOIN birdbench.customers c ON t.CustomerID=c.CustomerID WHERE c.Currency IS NOT NULL AND t.ProductID IS NOT NULL AND t.Amount>0 GROUP BY c.Currency,t.ProductID),\nb AS (SELECT a.*,SUM(v) OVER(PARTITION BY Currency) total FROM a)\nSELECT Currency currency,COUNT(*) product_count,ROUND(SUM(POWER(CAST(v AS DECIMAL(60,18))/total,2)),4) hhi FROM b GROUP BY Currency ORDER BY Currency",
+   "agent_rows_digest": "560857ec20d4ff2c771fdc137125d59d881a86a32d475ee006a8ff3584b638c7",
+   "reference_rows_digest": "7c6bb5c44b90135f767f7113a01c697360c89087e1cfe2efef0511bb8074090b",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c1-cards/g1/screen5/qV2-11"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-17",
+   "sample_id": "negative-d2-V2-17-c1-cards-g1",
+   "question": "Compute equal-segment standardized mean transaction Price by currency on segments present in every observed currency. Return columns: currency, common_segments, standardized_mean, raw_matched_mean. Order: currency ascending. Eligible joined rows have known currency/segment/Price. Common segments occur in every currency in that eligible universe. Standardized mean equally weights segment mean Prices; raw matched mean weights all eligible rows in the common segments.",
+   "sql": "WITH t AS (\nSELECT tr.*, CAST(Price AS DECIMAL(38,6)) AS p,\nCASE WHEN Date IS NOT NULL AND Time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'\nTHEN TIMESTAMP(Date,Time) ELSE NULL END AS ts FROM birdbench.transactions_1k tr),\nm AS (SELECT CustomerID, Date AS ym, STR_TO_DATE(CONCAT(Date,'01'),'%%Y%%m%%d') AS md,\nCAST(Consumption AS DECIMAL(38,6)) AS v FROM birdbench.yearmonth\nWHERE Date REGEXP '^[0-9]{4}(0[1-9]|1[0-2])$' AND LEFT(Date,4) BETWEEN '1000' AND '9999')\n, a AS (SELECT c.Currency,c.Segment,COUNT(*) n,SUM(t.p) total,AVG(t.p) mean_p FROM t JOIN birdbench.customers c ON t.CustomerID=c.CustomerID WHERE c.Currency IS NOT NULL AND c.Segment IS NOT NULL AND t.p IS NOT NULL GROUP BY c.Currency,c.Segment),u AS (SELECT COUNT(DISTINCT Currency) n FROM a),common AS (SELECT Segment FROM a GROUP BY Segment HAVING COUNT(*)=(SELECT n FROM u))\nSELECT a.Currency currency,COUNT(*) common_segments,ROUND(AVG(a.mean_p),2) standardized_mean,ROUND(CAST(SUM(a.total) AS DECIMAL(38,6))/SUM(a.n),2) raw_matched_mean FROM a JOIN common b ON a.Segment=b.Segment GROUP BY a.Currency ORDER BY a.Currency",
+   "agent_rows_digest": "2566110421b78025b7aca1348da307341405392bc4e17ef5c96f7606141f42db",
+   "reference_rows_digest": "55b399d70c1191f88c95acfef834da2046b8d2709d56184985129759439b72be",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c1-cards/g1/screen5/qV2-17"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-01",
+   "sample_id": "negative-d2-V2-01-c2-cards-neg-g1",
+   "question": "For every unordered pair of distinct transacted products sharing a customer, compute customer-set Jaccard similarity. Return columns: product_a, product_b, shared_customers, union_customers, jaccard. Order: product_a, product_b ascending. Use distinct non-NULL CustomerID/ProductID edges, product_a < product_b; union is customers buying either product, intersection is customers buying both.",
+   "sql": "WITH edges AS (\n  SELECT DISTINCT CustomerID, ProductID\n  FROM birdbench.transactions_1k\n  WHERE CustomerID IS NOT NULL AND ProductID IS NOT NULL\n),\nsizes AS (\n  SELECT ProductID, COUNT(*) AS n\n  FROM edges\n  GROUP BY ProductID\n),\npairs AS (\n  SELECT a.ProductID AS pa, b.ProductID AS pb, COUNT(*) AS n\n  FROM edges a\n  JOIN edges b ON a.CustomerID = b.CustomerID AND a.ProductID < b.ProductID\n  GROUP BY a.ProductID, b.ProductID\n)\nSELECT\n  x.pa AS product_a,\n  x.pb AS product_b,\n  x.n AS shared_customers,\n  a.n + b.n - x.n AS union_customers,\n  ROUND(CAST(x.n AS DECIMAL(38,6)) / (a.n + b.n - x.n), 4) AS jaccard\nFROM pairs x\nJOIN sizes a ON x.pa = a.ProductID\nJOIN sizes b ON x.pb = b.ProductID\nORDER BY x.pa, x.pb",
+   "agent_rows_digest": "24cfd8c79153a2977e53f7ca97335fcf2aed82f3c4a5cc5c415aa6ce26b34f3e",
+   "reference_rows_digest": "7fd7312006fd15a8fd2d55e807d6c7a0af6d51328ed0b8570b3b14d7cf0f9555",
+   "agent_row_count": 85,
+   "reference_row_count": 85,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c2-cards-neg/g1/screen5/qV2-01"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-01",
+   "sample_id": "negative-d2-V2-01-c3-extk-g1",
+   "question": "For every unordered pair of distinct transacted products sharing a customer, compute customer-set Jaccard similarity. Return columns: product_a, product_b, shared_customers, union_customers, jaccard. Order: product_a, product_b ascending. Use distinct non-NULL CustomerID/ProductID edges, product_a < product_b; union is customers buying either product, intersection is customers buying both.",
+   "sql": "WITH edges AS (\n    SELECT DISTINCT CustomerID, ProductID\n    FROM birdbench.transactions_1k\n    WHERE CustomerID IS NOT NULL AND ProductID IS NOT NULL\n),\nsizes AS (\n    SELECT ProductID, COUNT(*) AS buyers\n    FROM edges\n    GROUP BY ProductID\n),\npairs AS (\n    SELECT e1.ProductID AS product_a,\n           e2.ProductID AS product_b,\n           COUNT(*) AS shared_customers\n    FROM edges e1\n    JOIN edges e2\n      ON e1.CustomerID = e2.CustomerID\n     AND e1.ProductID < e2.ProductID\n    GROUP BY e1.ProductID, e2.ProductID\n)\nSELECT p.product_a,\n       p.product_b,\n       p.shared_customers,\n       s1.buyers + s2.buyers - p.shared_customers AS union_customers,\n       ROUND(p.shared_customers / (s1.buyers + s2.buyers - p.shared_customers), 4) AS jaccard\nFROM pairs p\nJOIN sizes s1 ON s1.ProductID = p.product_a\nJOIN sizes s2 ON s2.ProductID = p.product_b\nORDER BY p.product_a, p.product_b;",
+   "agent_rows_digest": "24cfd8c79153a2977e53f7ca97335fcf2aed82f3c4a5cc5c415aa6ce26b34f3e",
+   "reference_rows_digest": "7fd7312006fd15a8fd2d55e807d6c7a0af6d51328ed0b8570b3b14d7cf0f9555",
+   "agent_row_count": 85,
+   "reference_row_count": 85,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c3-extk/g1/screen5/qV2-01"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-11",
+   "sample_id": "negative-d2-V2-11-c3-extk-g1",
+   "question": "For each currency, compute product quantity concentration using the Herfindahl index. Return columns: currency, product_count, hhi. Order: currency ascending. Use customer-joined transactions with non-NULL currency/ProductID and Amount > 0. Product shares use sums of Amount over that same cohort. HHI is sum of squared shares.",
+   "sql": "WITH cohort AS (\n    SELECT c.Currency, t.ProductID, t.Amount\n    FROM birdbench.transactions_1k t\n    JOIN birdbench.customers c ON t.CustomerID = c.CustomerID\n    WHERE c.Currency IS NOT NULL\n      AND t.ProductID IS NOT NULL\n      AND t.Amount > 0\n),\nproduct_sums AS (\n    SELECT Currency, ProductID, SUM(Amount) AS product_amount\n    FROM cohort\n    GROUP BY Currency, ProductID\n),\ncurrency_totals AS (\n    SELECT Currency, SUM(Amount) AS total_amount\n    FROM cohort\n    GROUP BY Currency\n)\nSELECT ps.Currency,\n       COUNT(ps.ProductID) AS product_count,\n       ROUND(SUM(POW(ps.product_amount / ct.total_amount, 2)), 4) AS hhi\nFROM product_sums ps\nJOIN currency_totals ct ON ps.Currency = ct.Currency\nGROUP BY ps.Currency\nORDER BY ps.Currency ASC",
+   "agent_rows_digest": "560857ec20d4ff2c771fdc137125d59d881a86a32d475ee006a8ff3584b638c7",
+   "reference_rows_digest": "7c6bb5c44b90135f767f7113a01c697360c89087e1cfe2efef0511bb8074090b",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c3-extk/g1/screen5/qV2-11"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-17",
+   "sample_id": "negative-d2-V2-17-c3-extk-g1",
+   "question": "Compute equal-segment standardized mean transaction Price by currency on segments present in every observed currency. Return columns: currency, common_segments, standardized_mean, raw_matched_mean. Order: currency ascending. Eligible joined rows have known currency/segment/Price. Common segments occur in every currency in that eligible universe. Standardized mean equally weights segment mean Prices; raw matched mean weights all eligible rows in the common segments.",
+   "sql": "WITH eligible AS (\n    SELECT t.CustomerID, c.Currency, c.Segment, t.Price\n    FROM birdbench.transactions_1k t\n    JOIN birdbench.customers c ON t.CustomerID = c.CustomerID\n    WHERE c.Currency IS NOT NULL\n      AND c.Segment IS NOT NULL\n      AND t.Price IS NOT NULL\n),\ncommon_segments AS (\n    SELECT Segment\n    FROM eligible\n    GROUP BY Segment\n    HAVING COUNT(DISTINCT Currency) = (SELECT COUNT(DISTINCT Currency) FROM eligible)\n),\nseg_means AS (\n    SELECT e.Currency, e.Segment, AVG(e.Price) AS seg_mean\n    FROM eligible e\n    JOIN common_segments cs ON e.Segment = cs.Segment\n    GROUP BY e.Currency, e.Segment\n)\nSELECT\n    sm.Currency AS currency,\n    COUNT(*) AS common_segments,\n    ROUND(AVG(sm.seg_mean), 2) AS standardized_mean,\n    ROUND((\n        SELECT AVG(e2.Price)\n        FROM eligible e2\n        JOIN common_segments cs2 ON e2.Segment = cs2.Segment\n        WHERE e2.Currency = sm.Currency\n    ), 2) AS raw_matched_mean\nFROM seg_means sm\nGROUP BY sm.Currency\nORDER BY sm.Currency ASC;",
+   "agent_rows_digest": "0619837473129cfbee047d72c7719c00353fa3ab78c5059768a00218315fe00b",
+   "reference_rows_digest": "55b399d70c1191f88c95acfef834da2046b8d2709d56184985129759439b72be",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/c3-extk/g1/screen5/qV2-17"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-01",
+   "sample_id": "negative-d2-V2-01-m-base-g0",
+   "question": "For every unordered pair of distinct transacted products sharing a customer, compute customer-set Jaccard similarity. Return columns: product_a, product_b, shared_customers, union_customers, jaccard. Order: product_a, product_b ascending. Use distinct non-NULL CustomerID/ProductID edges, product_a < product_b; union is customers buying either product, intersection is customers buying both.",
+   "sql": "WITH edges AS (\n  SELECT DISTINCT CustomerID, ProductID\n  FROM transactions_1k\n  WHERE CustomerID IS NOT NULL AND ProductID IS NOT NULL\n),\nshared AS (\n  SELECT a.ProductID AS product_a, b.ProductID AS product_b,\n         COUNT(DISTINCT a.CustomerID) AS shared_customers\n  FROM edges a\n  JOIN edges b ON a.CustomerID = b.CustomerID AND a.ProductID < b.ProductID\n  GROUP BY a.ProductID, b.ProductID\n),\nprod_counts AS (\n  SELECT ProductID, COUNT(DISTINCT CustomerID) AS cnt\n  FROM edges\n  GROUP BY ProductID\n)\nSELECT s.product_a, s.product_b, s.shared_customers,\n       p1.cnt + p2.cnt - s.shared_customers AS union_customers,\n       s.shared_customers / (p1.cnt + p2.cnt - s.shared_customers) AS jaccard\nFROM shared s\nJOIN prod_counts p1 ON p1.ProductID = s.product_a\nJOIN prod_counts p2 ON p2.ProductID = s.product_b\nORDER BY s.product_a, s.product_b",
+   "agent_rows_digest": "24cfd8c79153a2977e53f7ca97335fcf2aed82f3c4a5cc5c415aa6ce26b34f3e",
+   "reference_rows_digest": "7fd7312006fd15a8fd2d55e807d6c7a0af6d51328ed0b8570b3b14d7cf0f9555",
+   "agent_row_count": 85,
+   "reference_row_count": 85,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/m-base/g0/screen5/qV2-01"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-06",
+   "sample_id": "negative-d2-V2-06-m-base-g0",
+   "question": "For each customer currency with known transaction Price, compute median Price and median absolute deviation from that median. Return columns: currency, observation_count, median_price, mad_price. Order: currency ascending. Join customers; exclude NULL currency/Price. Normalize Price before sorting. An even sample median averages the two middle values; MAD is the same median rule on absolute deviations.",
+   "sql": "WITH norm AS (\n  SELECT c.Currency AS currency,\n         CASE WHEN c.Currency = 'CZK' THEN t.Price / 25.0 ELSE t.Price END AS norm_price\n  FROM transactions_1k t\n  JOIN customers c ON t.CustomerID = c.CustomerID\n  WHERE t.Price IS NOT NULL AND c.Currency IS NOT NULL\n),\nranked AS (\n  SELECT currency, norm_price,\n         ROW_NUMBER() OVER (PARTITION BY currency ORDER BY norm_price) AS rn,\n         COUNT(*) OVER (PARTITION BY currency) AS cnt\n  FROM norm\n),\nmedians AS (\n  SELECT currency,\n         MAX(cnt) AS observation_count,\n         AVG(norm_price) AS median_price\n  FROM ranked\n  WHERE rn IN (FLOOR((cnt + 1) / 2), CEIL((cnt + 1) / 2))\n  GROUP BY currency\n),\ndevs AS (\n  SELECT r.currency, ABS(r.norm_price - m.median_price) AS dev\n  FROM ranked r\n  JOIN medians m ON r.currency = m.currency\n),\ndev_ranked AS (\n  SELECT currency, dev,\n         ROW_NUMBER() OVER (PARTITION BY currency ORDER BY dev) AS rn,\n         COUNT(*) OVER (PARTITION BY currency) AS cnt\n  FROM devs\n)\nSELECT d.currency,\n       m.observation_count,\n       m.median_price,\n       AVG(d.dev) AS mad_price\nFROM dev_ranked d\nJOIN medians m ON d.currency = m.currency\nWHERE d.rn IN (FLOOR((d.cnt + 1) / 2), CEIL((d.cnt + 1) / 2))\nGROUP BY d.currency, m.observation_count, m.median_price\nORDER BY d.currency ASC",
+   "agent_rows_digest": "11df6d3a69d8f76e6e0e81dd938a5bf620ae4d8146c36fbb50c7c4985b1c2c7c",
+   "reference_rows_digest": "63917196d14eb248877acc413593795b5b0df2293bf33c28ce504406e6451896",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/m-base/g0/screen5/qV2-06"
+  },
+  {
+   "origin": "negative",
+   "source_partition": "D2",
+   "qid": "V2-17",
+   "sample_id": "negative-d2-V2-17-m-base-g0",
+   "question": "Compute equal-segment standardized mean transaction Price by currency on segments present in every observed currency. Return columns: currency, common_segments, standardized_mean, raw_matched_mean. Order: currency ascending. Eligible joined rows have known currency/segment/Price. Common segments occur in every currency in that eligible universe. Standardized mean equally weights segment mean Prices; raw matched mean weights all eligible rows in the common segments.",
+   "sql": "WITH eligible AS (\n    SELECT t.Price, c.Currency, c.Segment\n    FROM transactions_1k t\n    JOIN customers c ON t.CustomerID = c.CustomerID\n    WHERE c.Currency IS NOT NULL\n      AND c.Segment IS NOT NULL\n      AND t.Price IS NOT NULL\n),\ntotal_currency_count AS (\n    SELECT COUNT(DISTINCT Currency) AS cnt FROM eligible\n),\nsegment_currency_count AS (\n    SELECT Segment, COUNT(DISTINCT Currency) AS cnt\n    FROM eligible\n    GROUP BY Segment\n),\ncommon_segments AS (\n    SELECT scc.Segment\n    FROM segment_currency_count scc\n    CROSS JOIN total_currency_count tcc\n    WHERE scc.cnt = tcc.cnt\n),\nseg_means AS (\n    SELECT e.Currency, e.Segment, AVG(e.Price) AS seg_mean\n    FROM eligible e\n    INNER JOIN common_segments cs ON e.Segment = cs.Segment\n    GROUP BY e.Currency, e.Segment\n),\nstandardized AS (\n    SELECT Currency, AVG(seg_mean) AS standardized_mean\n    FROM seg_means\n    GROUP BY Currency\n),\nraw AS (\n    SELECT e.Currency, AVG(e.Price) AS raw_matched_mean\n    FROM eligible e\n    INNER JOIN common_segments cs ON e.Segment = cs.Segment\n    GROUP BY e.Currency\n),\ncommon_segments_str AS (\n    SELECT GROUP_CONCAT(Segment ORDER BY Segment SEPARATOR ',') AS common_segments\n    FROM common_segments\n)\nSELECT\n    cur.Currency AS currency,\n    css.common_segments AS common_segments,\n    s.standardized_mean AS standardized_mean,\n    r.raw_matched_mean AS raw_matched_mean\nFROM (SELECT DISTINCT Currency FROM eligible) cur\nCROSS JOIN common_segments_str css\nLEFT JOIN standardized s ON cur.Currency = s.Currency\nLEFT JOIN raw r ON cur.Currency = r.Currency\nORDER BY cur.Currency ASC;",
+   "agent_rows_digest": "bd432f1b775d112d9849e0af372ad143a2ddfff8abb240c50853dbf0e863c3c3",
+   "reference_rows_digest": "55b399d70c1191f88c95acfef834da2046b8d2709d56184985129759439b72be",
+   "agent_row_count": 2,
+   "reference_row_count": 2,
+   "lesson": "Negative control (D2 partition, POWE-145 B-mechanism run): the agent's bound final SQL for this question produced rows different from the independently executed reference SQL; this pattern is a counter-example, not reusable guidance.",
+   "source_run": "bc/runs/m-base/g0/screen5/qV2-17"
   }
  ]
 }
