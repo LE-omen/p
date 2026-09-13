@@ -475,9 +475,10 @@ def project_store(home_dir: Path, entries: list[dict[str, Any]], *, datasource: 
 
     home = Path(home_dir)
     home.mkdir(parents=True, exist_ok=True)
+    qdir = home.parent.parent  # home_dir is <qdir>/home/.datus, matching the runner's anchoring
     AC = importlib.import_module("datus.configuration.agent_config").AgentConfig
     cfg = AC(
-        nodes={}, home=str(home), project_root=str(home.parent), session_dir=str(home.parent / "sessions"),
+        nodes={}, home=str(home), project_root=str(qdir), session_dir=str(qdir / "sessions"),
         plugins_enabled=False, active_plugins={}, config_mutable=False, sql_read_only=True,
         bash={"enabled": False}, filesystem={"strict": True}, target="evaluation",
         models={"evaluation": {"type": "openai", "model": "unused", "base_url": "unused",
