@@ -126,6 +126,15 @@ def _stats_response() -> ScopedStats:
             }
         ],
     }
+    recurrence = {
+        "selected": 0,
+        "recurred": 0,
+        "avoided": 0,
+        "unknown": 0,
+        "unlinked_handoff_citations": 0,
+        "needing_review": 0,
+        "top_revisions": [],
+    }
     return ScopedStats.model_validate({
         "selection": {"mode": "exact", "scope_ids": ["project"]},
         "scope_ids": ["project"],
@@ -133,7 +142,15 @@ def _stats_response() -> ScopedStats:
         "inventory": inventory,
         "usage": usage,
         "recall": recall,
-        "by_scope": [{"scope_id": "project", "inventory": inventory, "usage": usage, "recall": recall}],
+        "by_scope": [
+            {
+                "scope_id": "project",
+                "inventory": inventory,
+                "usage": usage,
+                "recall": recall,
+                "recurrence": recurrence,
+            }
+        ],
     })
 
 
