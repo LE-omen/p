@@ -136,5 +136,5 @@ def test_final_sql_result_collapses_pyformat_percent_escaping():
         ],
     }
     sql, rows = final_sql_result(result)
-    assert sql == "SELECT DATE_FORMAT(d,'%Y%m%d') FROM t"
+    assert sql == "SELECT DATE_FORMAT(d,'%%Y%%m%%d') FROM t"  # recorded span stays verbatim
     assert rows == [["20240101"]]

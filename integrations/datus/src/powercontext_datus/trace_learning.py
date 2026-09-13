@@ -202,7 +202,8 @@ def final_sql_result(result: dict[str, Any]) -> tuple[str, list[list[Any]]] | No
     if not matching:
         return None
     entry = matching[-1]
-    return _normalized(entry.get("sql") or ""), entry.get("rows") or []
+    # Report the recorded span verbatim; _normalized is used for matching only.
+    return entry.get("sql") or "", entry.get("rows") or []
 
 
 def matching_executions(result: dict[str, Any], expected_rows: list[list[Any]]) -> list[dict[str, Any]]:
