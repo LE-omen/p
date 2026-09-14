@@ -47,6 +47,7 @@ from powercontext.builtin.artifacts.experience.recurrence import (
     failure_item_text,
     failure_refs,
     freeze_candidate_set,
+    item_digest,
     match_key,
     match_result,
     new_observation,
@@ -76,6 +77,10 @@ class _LinkedHandoff:
     receipt_ref: SourceRef
     handoff_ref: ArtifactRef
     contents: _Contents
+
+
+class _UnresolvedHandoff:
+    """Marker for a receipt that exists but cannot reconstruct its exact chain."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,6 +122,8 @@ class RelationalRecurrenceLedger:
         /,
     ) -> tuple[RecurrenceRevisionProposal, ...]:
         link = await self._resolve_link(connection, outcome)
+        if not isinstance(link, (_LinkedHandoff, type(None))):
+            return ()
         contents: _Contents = () if link is None else link.contents
         if link is not None:
             await self._record_selected(connection, row=row, link=link, contents=contents)
@@ -252,6 +259,17 @@ class RelationalRecurrenceLedger:
         content = await self._experience_content(connection, artifact_ref)
         if content is None or content.failure is None:
             return None
+        try:
+            current = await self.artifacts.latest(
+                connection,
+                self.scope_id,
+                artifact_ref.family,
+                artifact_ref.artifact_id,
+            )
+        except RepositoryNotFoundError:
+            return None
+        if current.as_ref() != artifact_ref:
+            return None
         if content.failure.repair_surface != _EXPERIENCE_CONTENT_SURFACE:
             return None
         observations = await self.recurrence.observations(connection, self.scope_id)
@@ -321,7 +339,7 @@ class RelationalRecurrenceLedger:
                 ),
             )
             await self.recurrence.append_match(connection, match)
-            matches.append(match)
+            matches.append(await self.recurrence.find_match(connection, self.scope_id, row.ref, failure_ref) or match)
         return tuple(matches)
 
     async def _append(
@@ -360,7 +378,9 @@ class RelationalRecurrenceLedger:
             ),
         )
 
-    async def _resolve_link(self, connection: AsyncConnection, outcome: TaskOutcome, /) -> _LinkedHandoff | None:
+    async def _resolve_link(
+        self, connection: AsyncConnection, outcome: TaskOutcome, /
+    ) -> _LinkedHandoff | _UnresolvedHandoff | None:
         """Rebuild the ``selected`` chain from a Receipt and its Handoff citations.
 
         Nothing here instruments the read path: the chain comes from the Receipt
@@ -372,10 +392,10 @@ class RelationalRecurrenceLedger:
             return None
         receipt = await self._receipt(connection, receipt_ref)
         if receipt is None:
-            return None
+            return _UNRESOLVED_HANDOFF
         handoff_ref = receipt.selected_revision
         if handoff_ref is None or handoff_ref.family != Handoff.family:
-            return None
+            return _UNRESOLVED_HANDOFF
         return _LinkedHandoff(
             receipt_ref=receipt_ref,
             handoff_ref=handoff_ref,
@@ -409,7 +429,7 @@ class RelationalRecurrenceLedger:
             return ()
         if not isinstance(handoff.content, HandoffContent):
             return ()
-        citations = handoff_experience_citations(handoff.content)[:MAX_RECURRENCE_CANDIDATES]
+        citations = _unique_refs(handoff_experience_citations(handoff.content))[:MAX_RECURRENCE_CANDIDATES]
         return await self._contents(connection, citations)
 
     async def _experience_heads(self, connection: AsyncConnection, /) -> _Contents:
@@ -438,15 +458,15 @@ class RelationalRecurrenceLedger:
     async def _contents(self, connection: AsyncConnection, refs: tuple[ArtifactRef, ...], /) -> _Contents:
         if not refs:
             return ()
-        try:
-            artifacts = await self.artifacts.get_many(connection, self.scope_id, refs)
-        except RepositoryNotFoundError:
-            return ()
-        return tuple(
-            (artifact.as_ref(), artifact.content)
-            for artifact in artifacts
-            if isinstance(artifact.content, ExperienceContent)
-        )
+        contents: list[tuple[ArtifactRef, ExperienceContent]] = []
+        for ref in refs:
+            try:
+                artifact = await self.artifacts.get(connection, self.scope_id, ref)
+            except RepositoryNotFoundError:
+                continue
+            if isinstance(artifact.content, ExperienceContent):
+                contents.append((artifact.as_ref(), artifact.content))
+        return tuple(contents)
 
     async def _experience_content(self, connection: AsyncConnection, ref: ArtifactRef, /) -> ExperienceContent | None:
         try:
@@ -468,7 +488,10 @@ def _task_outcome(row: StoredSource, /) -> TaskOutcome | None:
 
 def _item(outcome: TaskOutcome, ref: TaskOutcomeItemRef, /) -> Any | None:
     items: tuple[Any, ...] = outcome.checks if ref.item_kind == "check" else outcome.observations
-    return items[ref.item_index] if ref.item_index < len(items) else None
+    if ref.item_index >= len(items):
+        return None
+    item = items[ref.item_index]
+    return item if item_digest(item) == ref.item_digest else None
 
 
 def handoff_experience_citations(content: HandoffContent, /) -> tuple[ArtifactRef, ...]:
@@ -482,6 +505,16 @@ def handoff_experience_citations(content: HandoffContent, /) -> tuple[ArtifactRe
         for citation in citations
         if isinstance(citation, HandoffArtifactCitation) and citation.artifact_ref.family == Experience.family
     )
+
+
+def _unique_refs(refs: tuple[ArtifactRef, ...], /) -> tuple[ArtifactRef, ...]:
+    unique: dict[tuple[str, str, int], ArtifactRef] = {}
+    for ref in refs:
+        unique.setdefault((ref.family, ref.artifact_id, ref.revision), ref)
+    return tuple(unique.values())
+
+
+_UNRESOLVED_HANDOFF = _UnresolvedHandoff()
 
 
 def _ordered(pair: tuple[ArtifactRef, ExperienceContent], /) -> tuple[str, str, int]:

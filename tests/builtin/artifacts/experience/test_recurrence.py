@@ -42,6 +42,7 @@ from powercontext.builtin.artifacts.experience.recurrence import (
     failure_refs,
     freeze_candidate_set,
     is_failure_evidence,
+    item_digest,
     match_result,
     near_duplicate_overlap,
     needing_review,
@@ -255,9 +256,35 @@ def test_eligible_candidates_match_only_the_normalized_cue() -> None:
     assert eligible_candidates(CUE, ((EXPERIENCE_REF, ExperienceContent(**_plain())),)) == ()
 
 
+def test_eligible_candidates_deduplicate_immutable_revisions() -> None:
+    exact = _content()
+    assert eligible_candidates(CUE, ((EXPERIENCE_REF, exact), (EXPERIENCE_REF, exact))) == (EXPERIENCE_REF,)
+
+
 def test_a_stored_cue_without_a_failure_block_is_never_a_candidate() -> None:
     plain = ExperienceContent(**_plain())
     assert eligible_candidates(plain.situation, ((EXPERIENCE_REF, plain),)) == ()
+
+
+def test_task_outcome_item_ref_rejects_noncanonical_digest() -> None:
+    with pytest.raises(ValidationError, match="item_digest must be a sha256 digest"):
+        TaskOutcomeItemRef(
+            task_outcome_ref=OUTCOME_REF,
+            item_kind="check",
+            item_index=0,
+            item_digest="sha256:not-a-digest",
+        )
+
+
+def test_task_outcome_item_ref_digest_is_the_immutable_item_identity() -> None:
+    check = _check("regenerate the client")
+    ref = TaskOutcomeItemRef(
+        task_outcome_ref=OUTCOME_REF,
+        item_kind="check",
+        item_index=0,
+        item_digest=item_digest(check),
+    )
+    assert ref.item_digest == item_digest(check)
 
 
 def test_verdicts_are_ordered_by_immutable_journal_position() -> None:

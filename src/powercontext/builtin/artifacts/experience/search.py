@@ -43,6 +43,9 @@ def render_experience(content: ExperienceContent, /) -> str:
         lines.append(f"Failure cue: {content.failure.signature.recall_cue}")
         if content.failure.signature.symptom is not None:
             lines.append(f"Symptom: {content.failure.signature.symptom}")
+        lines.append(f"Repair surface: {content.failure.repair_surface}")
+        lines.append(f"Verification condition: {content.failure.verification.condition}")
+        lines.append(f"Verification check: {content.failure.verification.check_subject}")
     return "\n".join(lines)
 
 

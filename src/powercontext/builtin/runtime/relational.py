@@ -1735,10 +1735,15 @@ class _RelationalExperienceIncubator:
                     candidate_ids.append(candidate.candidate_id)
                     candidates.append(candidate)
                 for proposal in await self._services.recurrence_ledger().record_window(connection, eligible_rows):
+                    target_content = await self._services.repositories.artifacts.get(
+                        connection,
+                        self._services.scope_id,
+                        proposal.target,
+                    )
                     candidate = await review.propose_experience(
                         proposal.proposal,
                         sources=proposal.sources,
-                        artifacts=(),
+                        artifacts=(target_content.as_ref(),),
                         target=proposal.target,
                         reason=proposal.reason,
                     )

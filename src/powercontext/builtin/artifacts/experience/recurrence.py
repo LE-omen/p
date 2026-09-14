@@ -21,6 +21,7 @@ read-only: the ledger is written only by the task-outcome incubation window.
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from typing import Annotated, Any, Literal, TypeAlias
 
@@ -45,7 +46,13 @@ MatchResult: TypeAlias = Literal["matched", "unmatched", "ambiguous"]
 CandidateSetMode: TypeAlias = Literal["handoff_citations", "scope_heads"]
 TaskOutcomeItemKind: TypeAlias = Literal["observation", "check"]
 
-_DIGEST_PREFIX = "sha256:"
+_DIGEST_PATTERN = re.compile(r"sha256:[0-9a-f]{64}\Z")
+
+
+def _is_digest(value: str) -> bool:
+    return _DIGEST_PATTERN.fullmatch(value) is not None
+
+
 _FAILURE_OUTCOME_STATUSES = frozenset({"failed", "blocked"})
 _FAILURE_CHECK_STATUSES = frozenset({"failed", "timed_out", "unavailable"})
 
@@ -183,11 +190,11 @@ def eligible_candidates(
         key = normalize_match_text(failure_text)
     except ValueError:
         return ()
-    return tuple(
-        ref
-        for ref, content in sorted(candidates, key=lambda pair: _ref_identity(pair[0]))
-        if _stored_signature_key(content) == key
-    )
+    eligible: dict[tuple[str, str, int], ArtifactRef] = {}
+    for ref, content in sorted(candidates, key=lambda pair: _ref_identity(pair[0])):
+        if _stored_signature_key(content) == key:
+            eligible.setdefault(_ref_identity(ref), ref)
+    return tuple(eligible.values())
 
 
 def match_result(count: int, /) -> MatchResult:
@@ -275,7 +282,7 @@ class TaskOutcomeItemRef(_ArtifactValue):
 
     @model_validator(mode="after")
     def validate_item_digest(self) -> TaskOutcomeItemRef:
-        if not self.item_digest.startswith(_DIGEST_PREFIX):
+        if _DIGEST_PATTERN.fullmatch(self.item_digest) is None:
             raise ValueError("item_digest must be a sha256 digest")  # noqa: TRY003
         return self
 
@@ -341,7 +348,7 @@ class RecurrenceObservation(_ArtifactValue):
 
     @model_validator(mode="after")
     def validate_event_evidence(self) -> RecurrenceObservation:
-        if not self.observation_id.startswith(_DIGEST_PREFIX):
+        if not _is_digest(self.observation_id):
             raise ValueError("observation_id must be a sha256 digest")  # noqa: TRY003
         if self.event == "selected":
             _require_selected(self)
@@ -592,9 +599,7 @@ def _require_recurred(observation: RecurrenceObservation) -> None:
     )
     if observation.failure_ref is not None:
         _require_same_outcome(observation, observation.failure_ref)
-    if observation.recurrence_match_digest is not None and not observation.recurrence_match_digest.startswith(
-        _DIGEST_PREFIX
-    ):
+    if observation.recurrence_match_digest is not None and not _is_digest(observation.recurrence_match_digest):
         raise ValueError("recurrence_match_digest must be a sha256 digest")  # noqa: TRY003
 
 

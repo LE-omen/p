@@ -383,7 +383,17 @@ def test_unlinked_failure_window_still_records_recurrence() -> None:
             async with profile.database.transaction() as connection:
                 await _seed_scope(connection)
                 artifacts = await _seed_artifacts(connection, sources)
-                await _add_source(sources, connection, "outcome-unlinked", _failed_outcome().model_dump_json())
+                await _add_source(
+                    sources,
+                    connection,
+                    "outcome-unlinked",
+                    _outcome(
+                        status="failed",
+                        observations=_failed_outcome().observations,
+                        checks=_failed_outcome().checks,
+                        linked=False,
+                    ).model_dump_json(),
+                )
 
             async with profile.database.transaction() as connection:
                 rows = await _window(sources, connection)
@@ -403,6 +413,36 @@ def test_unlinked_failure_window_still_records_recurrence() -> None:
 
             assert events == ("recurred",)
             assert matches[0].candidate_set_mode == "scope_heads"
+
+    asyncio.run(scenario())
+
+
+def test_unresolvable_receipt_does_not_fallback_to_scope_heads() -> None:
+    async def scenario() -> None:
+        async with SQLiteProfile.open(
+            SQLiteConfig(), tables=SCOPE_TABLES + SHARED_TABLES + RECURRENCE_TABLES
+        ) as profile:
+            sources = SourceRepository((CONTENT_SOURCE_ADAPTER,))
+            repository = RecurrenceRepository()
+            async with profile.database.transaction() as connection:
+                await _seed_scope(connection)
+                artifacts = await _seed_artifacts(connection, sources)
+                outcome = _failed_outcome().model_copy(update={"handoff_receipt_ref": RECEIPT_REF})
+                await _add_source(sources, connection, "outcome-unresolved-receipt", outcome.model_dump_json())
+
+            async with profile.database.transaction() as connection:
+                rows = await _window(sources, connection)
+                ledger = RelationalRecurrenceLedger(
+                    database=profile.database,
+                    scope_id=SCOPE,
+                    sources=sources,
+                    artifacts=artifacts,
+                    recurrence=repository,
+                )
+                await ledger.record_window(connection, rows)
+                matches = await repository.matches(connection, SCOPE)
+
+            assert matches == ()
 
     asyncio.run(scenario())
 

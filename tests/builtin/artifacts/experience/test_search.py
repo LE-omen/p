@@ -73,6 +73,9 @@ def test_render_experience_includes_the_cue_and_symptom() -> None:
 
     assert f"Failure cue: {CUE}" in rendered
     assert f"Symptom: {SYMPTOM}" in rendered
+    assert "Repair surface: experience_content" in rendered
+    assert "Verification condition: The OpenAPI contract changed." in rendered
+    assert "Verification check: Generated code matches the contract" in rendered
 
 
 def test_render_experience_without_a_failure_block_is_unchanged() -> None:
@@ -89,4 +92,4 @@ def test_render_experience_omits_a_missing_symptom_line() -> None:
 
     assert f"Failure cue: {CUE}" in rendered
     assert "Symptom:" not in rendered
-    assert rendered.splitlines()[-1] == f"Failure cue: {CUE}"
+    assert rendered.splitlines()[-1] == "Verification check: Generated code matches the contract"

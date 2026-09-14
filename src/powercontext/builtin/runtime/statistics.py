@@ -253,10 +253,12 @@ class RelationalScopedStatistics:
                 cited.extend(handoff_experience_citations(handoff.content))
         if not cited:
             return ()
-        try:
-            experiences = await self._artifacts.get_many(connection, self._scope_id, tuple(cited))
-        except RepositoryNotFoundError:
-            return ()
+        experiences = []
+        for ref in cited:
+            try:
+                experiences.append(await self._artifacts.get(connection, self._scope_id, ref))
+            except RepositoryNotFoundError:
+                continue
         keys: set[tuple[str, str, int, str]] = set()
         for experience in experiences:
             content = experience.content

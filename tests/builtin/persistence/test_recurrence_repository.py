@@ -18,7 +18,9 @@ import asyncio
 import re
 from pathlib import Path
 
+import pytest
 from sqlalchemy import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from powercontext.artifacts import ArtifactRef
@@ -219,6 +221,37 @@ def test_match_append_is_idempotent_under_replay() -> None:
             assert first == second == match_key(_match())
             assert len(stored) == 1
             assert found is not None and found.result == "matched"
+
+    asyncio.run(scenario())
+
+
+def test_match_replay_returns_the_persisted_key_when_the_new_payload_differs() -> None:
+    async def scenario() -> None:
+        repository = RecurrenceRepository()
+        async with SQLiteProfile.open(
+            SQLiteConfig(), tables=SCOPE_TABLES + SHARED_TABLES + RECURRENCE_TABLES
+        ) as profile:
+            async with profile.database.transaction() as connection:
+                await _seed_scope(connection)
+                first = await repository.append_match(connection, _match())
+                replay = await repository.append_match(
+                    connection,
+                    _match(result="ambiguous", artifact_ref=None, key=None),
+                )
+            assert replay == first
+
+    asyncio.run(scenario())
+
+
+def test_observation_integrity_errors_outside_replay_are_not_suppressed() -> None:
+    async def scenario() -> None:
+        repository = RecurrenceRepository()
+        async with (
+            SQLiteProfile.open(SQLiteConfig(), tables=SCOPE_TABLES + SHARED_TABLES + RECURRENCE_TABLES) as profile,
+            profile.database.transaction() as connection,
+        ):
+            with pytest.raises(IntegrityError):
+                await repository.append_observation(connection, _selected())
 
     asyncio.run(scenario())
 

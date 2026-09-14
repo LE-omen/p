@@ -76,9 +76,23 @@ class RecurrenceRepository:
             "payload": dump_model(match, kind=_MATCH_KIND, name=key),
         }
         try:
-            await connection.execute(insert(RECURRENCE_MATCH_TABLE).values(**values))
+            async with connection.begin_nested():
+                await connection.execute(insert(RECURRENCE_MATCH_TABLE).values(**values))
         except IntegrityError:
-            return key
+            existing = (
+                await connection.execute(
+                    select(RECURRENCE_MATCH_TABLE.c.match_key).where(
+                        RECURRENCE_MATCH_TABLE.c.scope_id == scope,
+                        RECURRENCE_MATCH_TABLE.c.task_outcome_source_type == match.task_outcome_ref.source_type,
+                        RECURRENCE_MATCH_TABLE.c.task_outcome_source_id == match.task_outcome_ref.source_id,
+                        RECURRENCE_MATCH_TABLE.c.failure_item_kind == match.failure_ref.item_kind,
+                        RECURRENCE_MATCH_TABLE.c.failure_item_index == match.failure_ref.item_index,
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                raise
+            key = str(existing)
         return key
 
     async def find_match(
@@ -136,8 +150,23 @@ class RecurrenceRepository:
             "payload": dump_model(observation, kind=_OBSERVATION_KIND, name=identifier),
         }
         try:
-            await connection.execute(insert(RECURRENCE_OBSERVATION_TABLE).values(**values))
+            async with connection.begin_nested():
+                await connection.execute(insert(RECURRENCE_OBSERVATION_TABLE).values(**values))
         except IntegrityError:
+            existing = (
+                await connection.execute(
+                    select(RECURRENCE_OBSERVATION_TABLE.c.observation_id).where(
+                        RECURRENCE_OBSERVATION_TABLE.c.scope_id == scope,
+                        (
+                            (RECURRENCE_OBSERVATION_TABLE.c.observation_id == identifier)
+                            | (RECURRENCE_OBSERVATION_TABLE.c.selection_key == values["selection_key"])
+                            | (RECURRENCE_OBSERVATION_TABLE.c.verdict_key == values["verdict_key"])
+                        ),
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                raise
             return False
         return True
 
@@ -185,7 +214,10 @@ class RecurrenceRepository:
                     RECURRENCE_OBSERVATION_TABLE.c.artifact_id,
                     RECURRENCE_OBSERVATION_TABLE.c.revision,
                     RECURRENCE_OBSERVATION_TABLE.c.signature_key,
-                ).where(RECURRENCE_OBSERVATION_TABLE.c.scope_id == scope)
+                ).where(
+                    RECURRENCE_OBSERVATION_TABLE.c.scope_id == scope,
+                    RECURRENCE_OBSERVATION_TABLE.c.event == "selected",
+                )
             )
         ).all()
         observed = {
