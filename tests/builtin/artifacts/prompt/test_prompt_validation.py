@@ -27,6 +27,7 @@ from pydantic_ai.models.function import FunctionModel
 from powercontext.builtin.artifacts.prompt import (
     PROMPT_KEYS,
     GeneratePromptDemonstrations,
+    Prompt,
     PromptContent,
     PromptError,
     PromptRegistry,
@@ -201,6 +202,26 @@ def test_valid_demonstrations_preserve_their_original_json(key: str) -> None:
         ("handoff.generate", ("expected_output", "state", 0, "evidence_ids"), ["source:99"]),
         ("handoff.generate", ("expected_output", "omissions"), [{"text": "Unknown.", "evidence_id": "source:99"}]),
         ("profile.generate", ("expected_output", "content"), "   "),
+        ("topic_memory.probe", ("expected_output", "probes", 0, "evidence_ids"), ["e99"]),
+        (
+            "topic_memory.global",
+            ("expected_output", "proposals"),
+            [{"content": {"title": "t", "summary": "s", "detail": "d"}, "evidence_ids": ["e99"]}],
+        ),
+        ("topic_memory.planner", ("expected_output", "items", 0, "probe_ids"), ["p99"]),
+        (
+            "topic_memory.evolve",
+            ("expected_output", "proposal"),
+            {
+                "content": {"title": "t", "summary": "s", "detail": "d"},
+                "evidence_ids": ["e1"],
+                "candidate_id": "cand-99",
+            },
+        ),
+        ("topic_memory.temporary", ("expected_output", "proposals", 0, "candidate_id"), "cand-1"),
+        ("topic_memory.reduce", ("expected_output", "covered_indices"), [99]),
+        ("topic_memory.reduce", ("expected_output", "covered_indices"), [1]),
+        ("topic_memory.reduce", ("expected_output", "probe"), {"query": "port checks", "evidence_ids": ["e1", "e99"]}),
     ],
 )
 def test_demonstrations_reject_semantically_impossible_outputs(
@@ -224,6 +245,49 @@ def test_profile_noop_demonstration_uses_null_content() -> None:
     case["expected_output"] = {"content": None}
     definition = PromptRegistry(builtin_prompt_definitions()).get("profile.generate")
     definition.validate(_content(case))
+
+
+def test_reconcile_demonstrations_preserve_distinct_historical_identities() -> None:
+    proposal = {
+        "proposal_id": "r1",
+        "candidate_id": "cand-1",
+        "content": {"title": "Port checks", "summary": "Ports are checked.", "detail": "Ports are checked."},
+        "evidence_ids": ["e1"],
+    }
+    definition = PromptRegistry(builtin_prompt_definitions()).get("topic_memory.reconcile")
+
+    case = deepcopy(_case("topic_memory.reconcile"))
+    case["input"]["proposals"] = [dict(proposal)]
+    case["expected_output"]["proposals"] = [dict(proposal)]
+    definition.validate(_content(case))
+
+    case["expected_output"]["proposals"] = [dict(proposal, candidate_id="cand-2")]
+    with pytest.raises(PromptError) as caught:
+        definition.validate(_content(case))
+    assert caught.value.code == "prompt_definition_incompatible"
+
+    case["expected_output"]["proposals"] = [dict(proposal, proposal_id="r99")]
+    with pytest.raises(PromptError) as caught:
+        definition.validate(_content(case))
+    assert caught.value.code == "prompt_definition_incompatible"
+
+
+@pytest.mark.parametrize(
+    ("key", "contract"),
+    [
+        ("topic_memory.probe", "Each probe cites one or more supplied evidence_id values."),
+        ("topic_memory.planner", "Partition every supplied probe exactly once"),
+        ("topic_memory.reduce", "exact union of the supplied evidence_ids"),
+        ("topic_memory.reconcile", "never merge two distinct historical identities"),
+    ],
+)
+def test_custom_prompts_retain_stage_operation_contracts(key: str, contract: str) -> None:
+    definition = PromptRegistry(builtin_prompt_definitions()).get(key)
+    prompt = Prompt(artifact_id=key, revision=1, content=_content(_case(key)))
+    resolved = definition.resolve("scope-a", prompt)
+    assert resolved.selection == "artifact"
+    assert contract in resolved.compiled_instructions
+    assert contract in definition.invariant_instructions
 
 
 def test_generated_demonstrations_retry_invalid_references_within_request_budget() -> None:

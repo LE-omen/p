@@ -230,6 +230,30 @@ def _topic_memory_prompt_definitions() -> tuple[PromptDefinition, ...]:
             None,
         ),
     )
+    # Stage contracts the JSON schemas cannot express and custom guidance must never remove.
+    stage_contracts = {
+        "probe": "Each probe cites one or more supplied evidence_id values.",
+        "global": "Each proposal cites supplied evidence_id values; at most one proposal targets each historical candidate_id.",
+        "planner": (
+            "Partition every supplied probe exactly once into work items. "
+            "An item with a candidate_id must list only probes whose candidate_ids include it, "
+            "and must include every supplied probe whose candidate_ids include that candidate_id."
+        ),
+        "evolve": (
+            "Cite only evidence_id values supplied as evidence or by the supplied temporary Topics. "
+            "Target a historical candidate_id only when one is supplied for this work item."
+        ),
+        "temporary": "Each temporary Topic cites supplied evidence_id values and never targets a historical candidate_id.",
+        "reduce": (
+            "Consolidate every supplied input: cite the exact union of the supplied evidence_ids, "
+            "and include every zero-based input position exactly once in covered_indices. "
+            "Return only the output kind matching the input kind; never invent candidate_id or proposal_id."
+        ),
+        "reconcile": (
+            "Emit proposals only for supplied proposal_id values. Preserve every supplied historical "
+            "candidate_id assignment exactly once; never merge two distinct historical identities."
+        ),
+    }
     return tuple(
         PromptDefinition(
             key=cast(PromptKey, f"topic_memory.{name}"),
@@ -237,8 +261,11 @@ def _topic_memory_prompt_definitions() -> tuple[PromptDefinition, ...]:
             input_type=input_type,
             output_type=output_type,
             builtin_version=f"powercontext.topic_memory.{name}.v1",
-            invariant_instructions=_COMMON_INVARIANTS
-            + "\nCite only supplied opaque evidence and historical IDs; never invent persistence identities or revisions.",
+            invariant_instructions=(
+                _COMMON_INVARIANTS
+                + "\nCite only supplied opaque evidence and historical IDs; never invent persistence identities or revisions."
+                + f"\n{stage_contracts[name]}"
+            ),
             default_instructions=instructions,
             noop_field=noop_field,
         )

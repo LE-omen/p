@@ -1019,6 +1019,10 @@ async def _generation_pipelines(
                 "experience.generate",
                 "skill.generate",
                 "handoff.generate",
+                *(
+                    f"topic_memory.{stage}"
+                    for stage in ("probe", "global", "planner", "evolve", "temporary", "reduce", "reconcile")
+                ),
             ),
             generation_model,
             generation_limits,
