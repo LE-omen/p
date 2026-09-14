@@ -19,7 +19,11 @@ notebooks-test: ## Execute provider-free tutorials in fresh kernels; use ARGS fo
 	@uv run --locked --group notebooks python examples/jupyter/run.py $(ARGS)
 
 .PHONY: check
-check: integration-manifest-check ## Run code quality tools.
+check: workflow-actions-check integration-manifest-check ## Run code quality tools.
+
+.PHONY: workflow-actions-check
+workflow-actions-check: ## Verify third-party GitHub Actions use immutable commit pins.
+	@uv run python scripts/check_workflow_actions.py .github/workflows .github/actions
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
 	@echo "🚀 Linting code: Running prek"
