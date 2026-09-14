@@ -192,20 +192,27 @@ def _topic_memory_planner(value: TopicMemoryPlannerInput, output: TopicMemoryPla
         candidate_id for probe in value.probes for candidate_id in probe.candidate_ids
     }
     assigned: set[str] = set()
-    for item in output.items:
+    item_by_probe: dict[str, int] = {}
+    for index, item in enumerate(output.items):
         for probe_id in item.probe_ids:
             _require(probe_id in probes and probe_id not in assigned)
             assigned.add(probe_id)
+            item_by_probe[probe_id] = index
     _require(assigned == set(probes))
+    selected: set[str] = set()
     for item in output.items:
         if item.candidate_id is None:
             continue
-        _require(item.candidate_id in candidates)
-        item_probes = set(item.probe_ids)
+        _require(item.candidate_id in candidates and item.candidate_id not in selected)
+        selected.add(item.candidate_id)
         for probe_id in item.probe_ids:
             _require(item.candidate_id in probes[probe_id].candidate_ids)
-        shared = {probe_id for probe_id, probe in probes.items() if item.candidate_id in probe.candidate_ids}
-        _require(shared <= item_probes)
+    for probe in value.probes:
+        # The runtime rejects plans that split probes sharing a candidate across
+        # items, whether or not any item selects that candidate as its target.
+        for candidate_id in probe.candidate_ids:
+            items = {item_by_probe[other.probe_id] for other in value.probes if candidate_id in other.candidate_ids}
+            _require(len(items) == 1)
 
 
 def _topic_memory_evolve(value: TopicMemoryEvolveInput, output: TopicMemoryEvolveOutput) -> None:
@@ -251,13 +258,16 @@ def _topic_memory_reconcile(value: TopicMemoryReconcileInput, output: TopicMemor
     outputs = output.proposals
     input_ids = {item.proposal_id for item in inputs}
     input_targets = {item.candidate_id for item in inputs if item.candidate_id is not None}
+    # The runtime allows an unbound proposal to gain a target from the supplied
+    # historical slots; existing assignments must stay fixed.
+    allowed_targets = input_targets | {slot.candidate_id for slot in value.historical}
     input_evidence = {evidence_id for item in inputs for evidence_id in item.evidence_ids}
     output_ids = [item.proposal_id for item in outputs]
     _require(None not in output_ids and set(output_ids) <= input_ids and len(output_ids) == len(set(output_ids)))
     output_targets = [item.candidate_id for item in outputs if item.candidate_id is not None]
     _require(
         input_targets <= set(output_targets)
-        and set(output_targets) <= input_targets
+        and set(output_targets) <= allowed_targets
         and len(output_targets) == len(set(output_targets))
     )
     output_by_id = {item.proposal_id: item for item in outputs if item.proposal_id is not None}

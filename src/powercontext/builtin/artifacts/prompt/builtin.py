@@ -236,8 +236,9 @@ def _topic_memory_prompt_definitions() -> tuple[PromptDefinition, ...]:
         "global": "Each proposal cites supplied evidence_id values; at most one proposal targets each historical candidate_id.",
         "planner": (
             "Partition every supplied probe exactly once into work items. "
-            "An item with a candidate_id must list only probes whose candidate_ids include it, "
-            "and must include every supplied probe whose candidate_ids include that candidate_id."
+            "Probes that share a candidate_id must never be split across work items, "
+            "whether or not the item selects that candidate. "
+            "An item with a candidate_id must list only probes whose candidate_ids include it."
         ),
         "evolve": (
             "Cite only evidence_id values supplied as evidence or by the supplied temporary Topics. "
@@ -251,7 +252,8 @@ def _topic_memory_prompt_definitions() -> tuple[PromptDefinition, ...]:
         ),
         "reconcile": (
             "Emit proposals only for supplied proposal_id values. Preserve every supplied historical "
-            "candidate_id assignment exactly once; never merge two distinct historical identities."
+            "candidate_id assignment exactly once; an unbound proposal may bind to one of the supplied "
+            "historical candidate_id values; never merge two distinct historical identities."
         ),
     }
     return tuple(

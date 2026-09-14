@@ -247,6 +247,23 @@ def test_profile_noop_demonstration_uses_null_content() -> None:
     definition.validate(_content(case))
 
 
+def test_planner_demonstrations_group_shared_candidates() -> None:
+    definition = PromptRegistry(builtin_prompt_definitions()).get("topic_memory.planner")
+
+    case = deepcopy(_case("topic_memory.planner"))
+    case["input"]["probes"] = [
+        {"probe_id": "p1", "query": "port checks", "evidence_ids": ["e1"], "candidate_ids": ["c1"]},
+        {"probe_id": "p2", "query": "port conflicts", "evidence_ids": ["e1"], "candidate_ids": ["c1"]},
+    ]
+    case["expected_output"]["items"] = [{"probe_ids": ["p1"]}, {"probe_ids": ["p2"]}]
+    with pytest.raises(PromptError) as caught:
+        definition.validate(_content(case))
+    assert caught.value.code == "prompt_definition_incompatible"
+
+    case["expected_output"]["items"] = [{"probe_ids": ["p1", "p2"]}]
+    definition.validate(_content(case))
+
+
 def test_reconcile_demonstrations_preserve_distinct_historical_identities() -> None:
     proposal = {
         "proposal_id": "r1",
@@ -267,6 +284,28 @@ def test_reconcile_demonstrations_preserve_distinct_historical_identities() -> N
     assert caught.value.code == "prompt_definition_incompatible"
 
     case["expected_output"]["proposals"] = [dict(proposal, proposal_id="r99")]
+    with pytest.raises(PromptError) as caught:
+        definition.validate(_content(case))
+    assert caught.value.code == "prompt_definition_incompatible"
+
+
+def test_reconcile_demonstrations_may_bind_unbound_proposals_to_supplied_history() -> None:
+    definition = PromptRegistry(builtin_prompt_definitions()).get("topic_memory.reconcile")
+    unbound = {
+        "proposal_id": "r1",
+        "content": {"title": "Port checks", "summary": "Ports are checked.", "detail": "Ports are checked."},
+        "evidence_ids": ["e1"],
+    }
+    case = deepcopy(_case("topic_memory.reconcile"))
+    case["input"] = {
+        "component_id": "c1",
+        "proposals": [dict(unbound)],
+        "historical": [{"candidate_id": "cand-1", "title": "Ports", "summary": "Ports.", "detail": "Ports."}],
+    }
+    case["expected_output"]["proposals"] = [dict(unbound, candidate_id="cand-1")]
+    definition.validate(_content(case))
+
+    case["expected_output"]["proposals"] = [dict(unbound, candidate_id="cand-99")]
     with pytest.raises(PromptError) as caught:
         definition.validate(_content(case))
     assert caught.value.code == "prompt_definition_incompatible"
