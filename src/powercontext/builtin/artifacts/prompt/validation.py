@@ -238,7 +238,8 @@ def _topic_memory_reduce(value: TopicMemoryReductionInput, output: TopicMemoryRe
     items = value.temporary if temporary else value.probes
     result = output.temporary if temporary else output.probe
     other = output.probe if temporary else output.temporary
-    _require(result is not None and other is None)
+    if result is None or other is not None:
+        raise ValueError("demonstration violates the operation's reference or output contract")  # noqa: TRY003
     _require(sorted(output.covered_indices) == list(range(len(items))))
     _require(set(result.evidence_ids) == {evidence_id for item in items for evidence_id in item.evidence_ids})
     if isinstance(result, TopicMemoryProposal):
