@@ -1,0 +1,66 @@
+{
+  "task": "POWE-166 step-0: numeric-contract delivery audit against actual H4 (and R4) driver, payloads, and first-request evidence",
+  "verdict": "NOT_DELIVERED — the G1-G5 numeric contract never reached any arm in H4 (483 runs) or in POWE-158's A1/diagnostic/Rx3 batches (231 payloads audited). Static suspicion CONFIRMED with runtime evidence.",
+  "suspicion_source": "POWE-164: r4eval.py:136 writes contract_path at plan top level; run_qa_r4.py:299 builds per-question payload without it",
+  "evidence": [
+    {
+      "id": "E1-driver",
+      "claim": "H4 actually ran h4eval.py run_batch -> subprocess(RUNTIME_PY, run_qa_r4.py, --batch, plan)",
+      "facts": {
+        "h4eval_run_batch": "h4eval.py:173-193 invokes RUNNER (experiment/run_qa_r4.py) with --batch",
+        "runner_sha256": "895076bc79a925b4af57e91c70dddb4f24452761685c72ec8f03a7ed72660f0a",
+        "runner_identical_to_repo_head": "byte-identical to integrations/datus/powe158/run_qa_r4.py @ cb111e43"
+      }
+    },
+    {
+      "id": "E2-plans",
+      "claim": "Plan JSONs do carry top-level contract_path",
+      "facts": {
+        "h4eval_make_plan": "h4eval.py:162 'contract_path': str(CONTRACT)",
+        "contract_sha256": "3b94b35a3d39cfe1f8ce14168986186ed4ec1e154d1919965c240f81b997fbf1"
+      }
+    },
+    {
+      "id": "E3-payloads",
+      "claim": "Actual per-question payloads contain NO contract_path key — the runner's --batch payload assembly (run_qa_r4.py:299-302) drops it, so run_single's `if payload.get('contract_path')` gate is always False",
+      "facts": {
+        "h4_payloads_audited": 483,
+        "h4_payloads_with_contract_path": 0,
+        "coverage": "7 arms x 3 reps x 23 questions, every (run, arm)",
+        "r4_payloads_audited": 231,
+        "r4_payloads_with_contract_path": 0,
+        "r4_coverage": "A1 (N-old/N-full/S3V2-old/S3V2-full), diag (S4/P2/H0/N), S4 champion R batches"
+      }
+    },
+    {
+      "id": "E4-digest",
+      "claim": "Cryptographic: recorded effective_config.common_sha256 equals the digest of common WITHOUT contract",
+      "facts": {
+        "sample": "h41-S4/qV4-24/trace.jsonl effective_config.common_sha256",
+        "recorded": "80b36d23f3cdf6b59c3c649dfeb61c4834f805f9f195b5335b4d074651eef49a",
+        "digest_common_plus_protocol": "80b36d23f3cdf6b59c3c649dfeb61c4834f805f9f195b5335b4d074651eef49a (MATCH)",
+        "digest_common_plus_contract_plus_protocol": "7aee0729b05cce78adaf287ad477026158478c29fc543e20c15121e6ee591759 (no match anywhere)"
+      }
+    },
+    {
+      "id": "E5-prompt",
+      "claim": "First-request prompt evidence: system prompt carries no contract markers",
+      "facts": {
+        "prompt_len": 116321,
+        "numeric_contract_in_prompt": false,
+        "G1_marker_in_prompt": false
+      }
+    }
+  ],
+  "impact": {
+    "h4_scores": "unchanged (frozen). All arms were uniformly WITHOUT the contract, so within-experiment arm contrasts (EXP-card effects) remain internally valid; only the delivery claim is void.",
+    "powe158_a1": "A1 verdict 'contract prose alone does not change model behavior' is VOID as evidence: old vs full arms were mechanically identical in delivery (both no contract). A1 actually measured runner noise.",
+    "round5_baseline": "Any 'unified contract' premise must be re-established mechanically. Round 5 r5 runner fixes the payload propagation and asserts per-run common_sha256 equals the with-contract digest before scoring."
+  },
+  "root_cause": "run_qa_r4.py main() --batch path constructs the payload dict from plan fields but omits contract_path; single --payload mode would honor it, but no driver used that mode.",
+  "audit_repro": [
+    "payload scan: for f in <h4 evidence>/h4*/*/payload.json: json.load(f).get('contract_path') -> absent in 483/483",
+    "digest check: powercontext_datus.freeze.digest_json(s4.txt + ANSWER_PROTOCOL) == recorded common_sha256",
+    "runner sha256sum vs repo run_qa_r4.py"
+  ]
+}

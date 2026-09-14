@@ -1,0 +1,141 @@
+{
+ "frozen_at": "2026-09-14T14:56:56Z",
+ "base": {
+  "s3v2_sha256": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+  "s4_sha256": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d"
+ },
+ "arms": {
+  "a00.txt": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+  "a10.txt": "1d01feff03aec6c064c1db356ca9e8cef8598a45bc631f0a4ea9294ba7d0673a",
+  "a01.txt": "d838310e3fa73dbcdd405cbcc622c3e91cd55af96debd4a97c38dd7127a2ab40",
+  "a11.txt": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+  "a11v2.txt": "f1b4f769892d53fc6ca9f06c76fca079c7863d195c2c8deef98629d7f00f9121"
+ },
+ "exp10_v1_sha256": "659f764a634708ef4be75319bee511fd20f2c7bac047b27ed276a65be4e8a282",
+ "exp11_sha256": "a47875f56496401912e925036c646ec571531a2c2c670aa4b6475fffbfbf34a7",
+ "exp10v2_sha256": "2c0eeb0da64272b3eeb03006a39ef17642e581980ba44c97df8178b9854a1891",
+ "counterexamples": {
+  "V4-24_h43-S4": {
+   "qid": "V4-24",
+   "batch": "h43-S4",
+   "trace_sha256": "a286a566d638aaf06a26d3f34880bed746002cc2a7bf5362e4cc7117902e70c0",
+   "final_sql_head": "WITH t AS (\nSELECT tr.*, CAST(Price AS DECIMAL(38,6)) AS p,\nCASE WHEN Date IS NOT NULL AND Time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'\nTHEN TIMESTA",
+   "typology": {
+    "class": "precision_miss",
+    "cells": 8,
+    "examples": [
+     {
+      "cell": [
+       4
+      ],
+      "expected": "553.793103",
+      "got": "{'decimal': '553.7931'}",
+      "rel": "5.42e-9"
+     },
+     {
+      "cell": [
+       4
+      ],
+      "expected": "998.319328",
+      "got": "{'decimal': '998.3193'}",
+      "rel": "2.80e-8"
+     },
+     {
+      "cell": [
+       4
+      ],
+      "expected": "7347.692308",
+      "got": "{'decimal': '7347.6923'}",
+      "rel": "1.09e-9"
+     },
+     {
+      "cell": [
+       4
+      ],
+      "expected": "10012.941176",
+      "got": "{'decimal': '10012.9412'}",
+      "rel": "2.40e-9"
+     }
+    ]
+   },
+   "admission": {
+    "decision": "ADMIT",
+    "actions": [
+     "AVG(TIMESTAMPDIFF(SECOND,c.ts,pr.ts)): AVG over integer operand -> CAST to DECIMAL(60,18) before aggregating",
+     "SUM(c.p): unknown operand -> keep exact, CAST if scale < 6"
+    ],
+    "non_actions": [],
+    "guards": [
+     "COALESCE wraps an aggregate: empty-group NULL would become 0 (H4 V4-27 counterexample) -> prefer NULL-preserving form or COALESCE only at the outermost display layer"
+    ],
+    "aggregates_found": 2
+   }
+  },
+  "V4-27_h41-S4": {
+   "qid": "V4-27",
+   "batch": "h41-S4",
+   "trace_sha256": "facff42745234dc7b3919d08a6b1e12ebb0e1dcbd07f7a5db0ac9882e110ddc5",
+   "final_sql_head": "WITH t AS (\nSELECT tr.*, CAST(Price AS DECIMAL(38,6)) AS p,\nCASE WHEN Date IS NOT NULL AND Time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'\nTHEN TIMESTA",
+   "typology": {
+    "class": "null_vs_zero",
+    "cells": 21,
+    "examples": [
+     {
+      "cell": [
+       5
+      ],
+      "expected": null,
+      "got": {
+       "decimal": "0.000000"
+      }
+     },
+     {
+      "cell": [
+       5
+      ],
+      "expected": null,
+      "got": {
+       "decimal": "0.000000"
+      }
+     },
+     {
+      "cell": [
+       5
+      ],
+      "expected": null,
+      "got": {
+       "decimal": "0.000000"
+      }
+     },
+     {
+      "cell": [
+       5
+      ],
+      "expected": null,
+      "got": {
+       "decimal": "0.000000"
+      }
+     }
+    ]
+   },
+   "admission": {
+    "decision": "ADMIT",
+    "actions": [
+     "SUM(CASE WHEN cts>pts THEN 1 ELSE 0 END): unknown operand -> keep exact, CAST if scale < 6"
+    ],
+    "non_actions": [
+     "AVG(CAST(d AS DECIMAL(60,18))): operand already CAST -> no action",
+     "SUM(CAST(cp AS DECIMAL(38,6))): already CAST -> no action"
+    ],
+    "guards": [
+     "COALESCE wraps aggregate-derived column 'attached' (empty-group NULL -> 0, H4 V4-27 counterexample) -> keep NULL for unmatched groups",
+     "COALESCE wraps aggregate-derived column 'future_count' (empty-group NULL -> 0, H4 V4-27 counterexample) -> keep NULL for unmatched groups",
+     "COALESCE wraps aggregate-derived column 'mean_abs' (empty-group NULL -> 0, H4 V4-27 counterexample) -> keep NULL for unmatched groups"
+    ],
+    "aggregates_found": 3
+   }
+  }
+ },
+ "admission_tool_sha256": "008d95ca239bc1df5ded7e7543ef56cb2e6ce3665a7537595f204a1b1b6e1cb1",
+ "note": "a11.txt asserted byte-identical to POWE-158 s4.txt (champion continuity); a11v2 differs only in the EXP-10 section; EXP-11 section byte-identical across arms that carry it."
+}

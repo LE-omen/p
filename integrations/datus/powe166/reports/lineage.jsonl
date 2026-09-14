@@ -1,0 +1,19 @@
+{"ts": "2026-09-14T15:02:00Z", "event": "prereg_frozen", "sha256": "dc60dd9c8bad8e11cad14d3423810223f6241544b80cc1944d2cec2bb8623308", "path": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-166-fcd4e871ddd6/workdir/r5/freeze/prereg-r5.json"}
+{"ts": "2026-09-14T15:02:02Z", "event": "score", "arms": []}
+{"ts": "2026-09-14T15:12:18Z", "event": "exec", "arm": "A00", "rep": 1, "attempt": 1, "rc": 0, "seconds": 600.5, "assembly_failed": []}
+{"ts": "2026-09-14T15:14:13Z", "event": "score", "arms": ["A00"]}
+{"ts": "2026-09-14T15:14:42Z", "event": "exec", "arm": "A00", "rep": 1, "attempt": 1, "rc": 0, "seconds": 0.4, "assembly_failed": []}
+{"ts": "2026-09-14T15:22:27Z", "event": "exec", "arm": "A10", "rep": 1, "attempt": 1, "rc": 0, "seconds": 465.4, "assembly_failed": []}
+{"ts": "2026-09-14T15:32:22Z", "event": "exec", "arm": "A01", "rep": 1, "attempt": 1, "rc": 0, "seconds": 594.2, "assembly_failed": []}
+{"ts": "2026-09-14T15:41:58Z", "event": "exec", "arm": "A11", "rep": 1, "attempt": 1, "rc": 0, "seconds": 576.2, "assembly_failed": []}
+{"ts": "2026-09-14T15:53:19Z", "event": "exec", "arm": "A11v2", "rep": 1, "attempt": 1, "rc": 0, "seconds": 681.4, "assembly_failed": []}
+{"ts": "2026-09-14T16:02:05Z", "event": "exec", "arm": "A00", "rep": 2, "attempt": 1, "rc": 0, "seconds": 525.4, "assembly_failed": []}
+{"ts": "2026-09-14T16:12:02Z", "event": "exec", "arm": "A10", "rep": 2, "attempt": 1, "rc": 0, "seconds": 597.2, "assembly_failed": []}
+{"ts": "2026-09-14T16:21:20Z", "event": "exec", "arm": "A01", "rep": 2, "attempt": 1, "rc": 0, "seconds": 558.5, "assembly_failed": []}
+{"ts": "2026-09-14T16:31:36Z", "event": "exec", "arm": "A11", "rep": 2, "attempt": 1, "rc": 0, "seconds": 615.3, "assembly_failed": []}
+{"ts": "2026-09-14T16:41:18Z", "event": "exec", "arm": "A11v2", "rep": 2, "attempt": 1, "rc": 0, "seconds": 582.2, "assembly_failed": []}
+{"ts": "2026-09-14T16:49:24Z", "event": "exec", "arm": "A00", "rep": 3, "attempt": 1, "rc": 0, "seconds": 486.4, "assembly_failed": []}
+{"ts": "2026-09-14T16:57:28Z", "event": "exec", "arm": "A10", "rep": 3, "attempt": 1, "rc": 0, "seconds": 483.4, "assembly_failed": []}
+{"ts": "2026-09-14T17:08:19Z", "event": "exec", "arm": "A01", "rep": 3, "attempt": 1, "rc": 0, "seconds": 651.2, "assembly_failed": []}
+{"ts": "2026-09-14T17:17:37Z", "event": "exec", "arm": "A11", "rep": 3, "attempt": 1, "rc": 0, "seconds": 558.2, "assembly_failed": []}
+{"ts": "2026-09-14T17:26:10Z", "event": "exec", "arm": "A11v2", "rep": 3, "attempt": 1, "rc": 0, "seconds": 513.3, "assembly_failed": []}

@@ -1,0 +1,345 @@
+Database: birdbench (BIRD debit_card_specializing, MySQL dialect on OceanBase).
+
+Business context: gas-station fuel-card analytics. Customers hold fuel cards; each
+customer belongs to a segment and pays in one currency. Gas stations belong to chains
+and countries. Monthly fuel consumption per customer is stored one row per
+(CustomerID, month). Individual point-of-sale transactions are stored in
+transactions_1k.
+
+Schema (exact column names and types):
+
+- customers(CustomerID BIGINT PK, Segment VARCHAR(32), Currency VARCHAR(8))
+  Segment values: 'KAM', 'LAM', 'SME'. Currency values: 'EUR', 'CZK'.
+- gasstations(GasStationID BIGINT PK, ChainID BIGINT, Country VARCHAR(16), Segment VARCHAR(64))
+  Country values: 'CZE', 'SVK'. Segment values include 'Premium', 'Discount'.
+- yearmonth(CustomerID BIGINT, Date VARCHAR(6) 'YYYYMM', Consumption DOUBLE, PK(Date, CustomerID))
+  Date is a string like '201208' (year 2012, month 08).
+- products(ProductID BIGINT PK, Description VARCHAR(255))
+- transactions_1k(TransactionID BIGINT PK, Date DATE 'YYYY-MM-DD', Time VARCHAR(16) 'HH:MM:SS',
+  CustomerID BIGINT, CardID BIGINT, GasStationID BIGINT, ProductID BIGINT,
+  Amount BIGINT, Price DOUBLE)
+  Joins: transactions_1k.CustomerID -> customers.CustomerID;
+  transactions_1k.GasStationID -> gasstations.GasStationID;
+  transactions_1k.ProductID -> products.ProductID; transactions_1k.CardID is the card number.
+
+Notes:
+- Comparisons on Segment/Country/Currency strings are case-sensitive binary collation;
+  use exact values as written above.
+- yearmonth.Date filtering by year uses SUBSTR(Date, 1, 4); by month SUBSTR(Date, 5, 2);
+  a specific month is Date = 'YYYYMM'.
+- No FOREIGN KEY constraints are declared; joins are by the ID columns above.
+
+
+# STRUCTURED QUERY TEMPLATES (ARM-C candidate C4, knowledge-file packaging)
+
+The following counterexample-validated templates cover the recurring question families of this database. USAGE: the full schema is already in your context; do not call describe_table or list_tables. Match the question to one template, bind its parameters, and produce the final SQL in one step (one execute_sql call). Emit the complete answer table exactly as the output contract requires.
+
+## Non-negotiable guards (each one is a recorded failure that lost a question)
+
+- **G-EXACT-OUTPUT**: project exactly the asked-for columns; no boolean helper columns
+- **G-NO-ROUND**: never add ROUND/CAST-to-rounded unless the template itself has it
+- **G-DISTINCT-LIST**: listing questions ('what kind of', 'list') require DISTINCT over the join result
+- **G-SCOPE-DENOM**: percentage/ratio denominators must equal the question scope (conditional SUM form when scope is a condition)
+- **G-SEMANTIC-BINDING**: bind business terms to the recorded column semantics ('total price of a transaction' = Price)
+- **G-TIME-BOUNDARY**: morning = Time < '13:00:00' (recorded reference boundary, negative-q36 counterexample: 12:00:00 failed); exact times as equality on the stored strings
+- **G-GROUP-KEY**: GROUP BY the projected entity only; no extra grouping columns
+- **G-NULL-EMPTY**: aggregates over empty/all-NULL sets yield NULL/0 per SQL semantics; empty results stay empty
+
+## Templates
+
+### T01-dim-filter-count — dimension static filter count
+
+Use when: question asks 'how many <entity>' with attribute equalities on a single table (gasstations/customers/products); no aggregation over facts, no time range
+
+Parameters:
+- table (enum domain=['gasstations', 'customers'])
+- filters (list[col,op,value]) bind from: attribute tokens in the question (country/segment/currency)
+
+Structure: joins=none | group_by=None | aggregation=COUNT(<table PK>)
+SQL skeleton: SELECT COUNT({pk}) FROM {table} WHERE {col1} = '{v1}' [AND {col2} = '{v2}']
+Output contract: columns=1; rows=exactly 1; ordering=none; distinct=False; rounding=none; empty_filter=COUNT returns 0, never NULL
+
+### T02-cust-ym-consumption-extremum — per-customer consumption extremum over yearmonth
+
+Use when: question asks who/which customer consumed the most or least gas, or asks for the consumption total too; customers joined to yearmonth
+
+Parameters:
+- selector (enum domain=['CustomerID', 'Segment']) bind from: question subject (who -> CustomerID)
+- filters (list) bind from: Segment / Currency equality from question
+- period (enum domain=['year', 'month', 'none']) bind from: a year ('in 2012') -> SUBSTR(Date,1,4)='YYYY'; a month ('June 2012') -> Date='YYYYMM'
+- direction (enum domain=['max', 'min']) bind from: most/least in question
+- with_total (bool) bind from: question also asks 'how much'
+
+Structure: joins=customers.CustomerID = yearmonth.CustomerID | group_by=selector | aggregation=SUM(yearmonth.Consumption)
+Order/limit: ORDER BY SUM(Consumption) {ASC|DESC} LIMIT 1
+SQL skeleton: SELECT {selector}[ , SUM(T2.Consumption)] FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE {filters} GROUP BY {selector} ORDER BY SUM(T2.Consumption) {dir} LIMIT 1
+Output contract: columns=1 (or 2 when the total is asked); rows=1; ordering=none (LIMIT 1 already fixes the row); distinct=False; rounding=none — never wrap SUM in ROUND; tie=LIMIT 1 keeps exactly one row; do not add tie-break columns not requested
+
+Known failure modes on this family (never reproduce them): negative-q2, negative-q22
+
+### T03-segment-agg-extremum — group-level aggregate extremum
+
+Use when: question asks 'which <grouping attribute>' had the least/most total consumption, no per-customer output
+
+Parameters:
+- group_col (enum domain=['Segment'])
+- direction (enum domain=['min', 'max'])
+
+Structure: joins=customers.CustomerID = yearmonth.CustomerID | group_by=T1.Segment | aggregation=SUM(T2.Consumption)
+Order/limit: ORDER BY SUM(T2.Consumption) {dir} LIMIT 1
+SQL skeleton: SELECT T1.Segment FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID GROUP BY T1.Segment ORDER BY SUM(T2.Consumption) {dir} LIMIT 1
+Output contract: columns=1; rows=1; rounding=none — the reference emits the raw SUM ordering; adding ROUND to the output changes nothing here but ROUND in ORDER BY over equal-displayed values is forbidden; distinct=False
+
+Known failure modes on this family (never reproduce them): negative-q8
+
+### T04-peak-month — peak period bucket
+
+Use when: question asks for the consumption peak month / busiest month for a segment in a year
+
+Parameters:
+- segment (string) bind from: segment token
+- year (string) bind from: year token
+- bucket_expr (enum domain=['SUBSTR(T2.Date, 5, 2)'])
+
+Structure: joins=customers.CustomerID = yearmonth.CustomerID | group_by=month bucket | aggregation=SUM(Consumption)
+Order/limit: ORDER BY SUM DESC LIMIT 1
+SQL skeleton: SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '{year}' AND T1.Segment = '{segment}' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1
+Output contract: columns=1; rows=1; distinct=False; rounding=none
+
+Known failure modes on this family (never reproduce them): negative-q10
+
+### T05-conditional-agg — conditional aggregation in one row (diff / ratio / percentage)
+
+Use when: question compares two attribute values ('more X than Y, how many more', 'ratio of X to Y', 'what percentage of <scope> is <subset>') or computes a within-scope percentage
+
+Parameters:
+- mode (enum domain=['diff', 'ratio', 'pct_of_count', 'pct_of_scope_sum'])
+- table (enum domain=['customers', 'gasstations', 'yearmonth', 'transactions_1k'])
+- cond_a (expr) bind from: first subgroup attribute test
+- cond_b (expr) bind from: second subgroup attribute test (diff/ratio)
+- scope (expr) bind from: scope filter of the percentage denominator (must equal the question scope, expressed as a conditional SUM when the scope is itself a condition)
+
+Structure: joins=none | group_by=None | aggregation=SUM(IF(cond,...)) arithmetic; CAST(... AS FLOAT) before division
+Forms (bind exactly one):
+- diff: SELECT SUM(IF({cond_a},1,0)) - SUM(IF({cond_b},1,0)) FROM {table} [WHERE {scope}]
+- ratio: SELECT CAST(SUM(IF({cond_a},1,0)) AS FLOAT) / SUM(IF({cond_b},1,0)) FROM {table}
+- pct_of_count: SELECT CAST(SUM({cond_a}) AS FLOAT) * 100 / COUNT({pk}) FROM {table} WHERE {scope}
+- pct_of_scope_sum: SELECT CAST(SUM(IF({scope} AND {cond_a},1,0)) AS FLOAT) * 100 / SUM(IF({scope},1,0)) FROM {table}
+- ym_diff: SELECT SUM(IF({ya},{val},0)) - SUM(IF({yb},{val},0)) FROM yearmonth WHERE {row_scope}
+- ym_rate: SELECT CAST(SUM(IF({ya},{val},0)) - SUM(IF({yb},{val},0)) AS FLOAT) / SUM(IF({yb},{val},0)) FROM yearmonth WHERE {row_scope}
+Output contract: columns=1; rows=1; rounding=none — never add ROUND(...,2); division uses CAST AS FLOAT, exact value; boolean_helper_columns=forbidden — 'is it true that X, how many more' wants the single difference value only; null=SUM over empty table is NULL; ratio with zero denominator is NULL
+
+Known failure modes on this family (never reproduce them): negative-q14, negative-q18, negative-q20, negative-q44
+
+### T06-distinct-list-join — distinct value list through transaction joins
+
+Use when: question says 'list'/'what kind of'/'which chains/descriptions/currencies' reachable from transactions
+
+Parameters:
+- target (enum domain=['ChainID', 'Description', 'Currency', 'Segment']) bind from: the listed noun; target table = gasstations/products/customers
+- filters (list) bind from: country/currency/date/time equality predicates from the question
+
+Structure: joins=transactions_1k.CustomerID=customers.CustomerID; transactions_1k.GasStationID=gasstations.GasStationID; transactions_1k.ProductID=products.ProductID (only the tables on the path) | group_by=None | aggregation=none — SELECT DISTINCT target
+SQL skeleton: SELECT DISTINCT {target_expr} FROM transactions_1k AS T1 INNER JOIN {mid} ... WHERE {filters}
+Output contract: columns=1; rows=as many distinct values as exist (>=1 in this dataset); distinct=DISTINCT is mandatory — without it duplicate join rows appear; ordering=none; rounding=none — no aggregate is emitted; empty=no matching transactions -> empty result (0 rows), do not fabricate
+
+Known failure modes on this family (never reproduce them): negative-q26, negative-q34
+
+### T07-txn-filtered-aggregate — filtered aggregate over transactions
+
+Use when: question asks how many transactions / average price over a filtered transaction set; 'morning' means Time < '13:00:00' (recorded reference boundary, verified by negative-q36)
+
+Parameters:
+- agg (enum domain=['COUNT(TransactionID)', 'AVG(Price)'])
+- filters (list) bind from: country (join), Price condition, Date='YYYY-MM-DD', Time < '13:00:00' for morning
+
+Structure: joins=only tables needed for the filter (gasstations for Country, customers for Currency) | group_by=None | aggregation=single aggregate
+SQL skeleton: SELECT {agg} FROM transactions_1k AS T1 INNER JOIN {filter_table} ... WHERE {filters}
+Output contract: columns=1; rows=1; rounding=none — AVG(Price) raw, no ROUND; semantic_binding='average total price of transactions' = AVG(Price) per transaction; do NOT multiply Amount*Price unless the question defines total = Amount*Price; null=AVG over zero matching rows is NULL
+
+Known failure modes on this family (never reproduce them): negative-q30, negative-q36
+
+### T08-point-lookup — point lookup / per-entity extremum on transactions
+
+Use when: question pins an exact timestamp ('at HH:MM:SS in YYYY/M/D'), an exact Consumption value in a month, or asks who paid the most on one date
+
+Parameters:
+- mode (enum domain=['timestamp-lookup', 'value-lookup', 'top-of-date'])
+- target (expr) bind from: asked attribute (ProductID/Currency/...)
+- point (expr) bind from: Date='YYYY-MM-DD' AND Time='HH:MM:SS' | Date='YYYYMM' AND Consumption=<v>
+
+Structure: joins=only tables on the path to the target | group_by=None (lookups) or CustomerID (top-of-date) | aggregation=none (lookups) or SUM(Price) (top-of-date)
+Order/limit: top-of-date: ORDER BY SUM(Price) DESC LIMIT 1
+SQL skeleton: mode-dependent; top-of-date: SELECT CustomerID FROM transactions_1k WHERE Date='{d}' GROUP BY CustomerID ORDER BY SUM(Price) DESC LIMIT 1
+Output contract: columns=1; rows=1 for point lookups in this dataset; distinct=DISTINCT on point lookups is allowed and keeps identical rows from collapsing; rounding=none
+
+FALLBACK RULE: if the question matches no template above (different entity, measure, grain or filters), do not force a template — derive the SQL natively from the schema in the system prompt. The guards above still apply to every SQL you emit, native or templated.
+
+# EXPERIENCE ENTRIES (governed, guarded; revision frozen before runs)
+
+Each entry states when it applies, the authorized semantics, the structural procedure,
+output contract, NULL/empty handling, and a mismatch fallback. MANDATORY RULE: if a
+question does not match an entry's applicability, do NOT force the entry — fall back
+to deriving SQL natively from the schema; the entry guards still apply to any SQL you emit.
+
+## EXP-01-unordered-pair-enumeration — Enumerate unordered pairs of entities sharing a relation
+- Applicability: any question whose grain is 'pairs of X' with a symmetric/relation table between X and Y (co-purchase, co-occurrence, similarity between entities)
+- Scope: a DISTINCT edge table (entity_a, entity_b) derived from the fact table; both IDs non-NULL
+- Required tools: execute_sql
+- Procedure:
+  1. Build edges: SELECT DISTINCT <left_id>, <right_id> FROM <fact> WHERE both IDs non-NULL
+  2. Self-join edges with a.a_id < b.b_id ON the shared key — the strict < comparison enumerates each unordered pair exactly once and excludes self-pairs
+  3. Group by (a_id, b_id) to compute the shared count / intersection measure
+  4. Join a per-entity size aggregate on both sides when a union denominator or set-similarity ratio is needed
+- Output contract: one row per unordered pair; columns: entity_a, entity_b, shared, [union], [similarity rounded to 6 decimals]; ORDER BY entity_a, entity_b
+- NULL/empty: empty edge set -> zero rows (do not fabricate); similarity denominators that are zero cannot occur when every pair shares >=1 key
+- Mismatch fallback: if the question pairs different entities per side (a->b directed), use a.a_id != b.b_id instead of < and keep direction; if it asks for top-K pairs, wrap with ORDER BY similarity DESC LIMIT K
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: D2 reference SQL (oracle-verified, allowed learning evidence) V2-01 Jaccard; V2-03 ordered-pair variant
+
+## EXP-02-median-and-mad — Median and median absolute deviation per group (MySQL, no MEDIAN())
+- Applicability: question asks for a median or median absolute deviation of a measure within groups
+- Scope: one row per item with a numeric measure; window functions available
+- Required tools: execute_sql
+- Procedure:
+  1. Number rows within each group: ROW_NUMBER() OVER (PARTITION BY g ORDER BY measure, tiebreak_id) rn and COUNT(*) OVER (PARTITION BY g) n
+  2. Median = AVG(measure) over rn IN (FLOOR((n+1)/2), FLOOR((n+2)/2)) — handles both odd and even n; GROUP BY g
+  3. For MAD, join the median back per group and take the median of ABS(measure - median) by repeating steps 1-2 over the deviation column
+- Output contract: one row per group: group key, median [, mad]; no rounding unless the question rounds
+- NULL/empty: groups with all-NULL measures excluded before numbering; a group with no rows simply produces no output row
+- Mismatch fallback: if the dialect has a native MEDIAN/PERCENTILE_CONT, prefer it; if a mode is asked instead, use COUNT-based ranking, not this recipe
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: D2 reference SQL (oracle-verified, allowed learning evidence) V2-06 median Price and MAD per currency
+
+## EXP-03-concentration-index — Concentration / share-based index (HHI) per group
+- Applicability: question asks for a concentration, Herfindahl index, or sum of squared shares within groups
+- Scope: per-(group, member) aggregate value v > 0; group total via window SUM
+- Required tools: execute_sql
+- Procedure:
+  1. Aggregate the measure to (group, member) grain first
+  2. Compute the group total with SUM(v) OVER (PARTITION BY group)
+  3. Index = SUM(POWER(CAST(v AS DECIMAL(60,18)) / total, 2)) GROUP BY group; round only at the final projection, to 6 decimals
+- Output contract: one row per group: group key, member_count, index; ORDER BY group key
+- NULL/empty: exclude NULL members and zero/negative values before the window sum, per recorded reference behavior
+- Mismatch fallback: for top-1 share or CR-ratio questions keep the same window total and take MAX(v)/total instead of squared shares
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: D2 reference SQL (oracle-verified, allowed learning evidence) V2-11 product-quantity HHI per currency
+
+## EXP-04-set-signature-equivalence — Equivalence classes by set signature (GROUP_CONCAT canonicalization)
+- Applicability: question groups entities by their exact set of related items ('identical sets', 'same products bought') and counts classes
+- Scope: edge table (entity, item); GROUP_CONCAT available
+- Required tools: execute_sql
+- Procedure:
+  1. Build DISTINCT (entity, item) edges
+  2. Per entity: COUNT(*) items and GROUP_CONCAT(item ORDER BY item SEPARATOR ',') as the canonical signature — ordering inside GROUP_CONCAT makes equal sets produce equal strings
+  3. Group by (item_count, signature) to count class size k
+  4. Re-aggregate to the asked grain, e.g. GROUP BY item_count, k ORDER BY both
+- Output contract: class histogram rows: set size, class size, number of classes
+- NULL/empty: entities with zero edges have empty signatures — decide from the question whether empty sets count, and say so by including/excluding them consistently
+- Mismatch fallback: if the question asks for 'at least k shared items' instead of identical sets, switch to the pair-enumeration recipe (EXP-01) with a HAVING on shared count
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: D2 reference SQL (oracle-verified, allowed learning evidence) V2-02 equivalence classes of customers by purchased-product set
+
+## EXP-05-dirty-datetime-normalization — Guarded timestamp construction from string Date/Time columns
+- Applicability: any computation needing a real timestamp from separate string date and time columns that may contain malformed values
+- Scope: Date DATE strings and Time VARCHAR strings; TIMESTAMP(date,time) constructor
+- Required tools: execute_sql
+- Procedure:
+  1. Construct conditionally: CASE WHEN Date IS NOT NULL AND Time REGEXP '^([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$' THEN TIMESTAMP(Date, Time) ELSE NULL END
+  2. Filter malformed strings with REGEXP before arithmetic; never compare raw strings when a timestamp is meant
+  3. For month strings like YYYYMM validate with REGEXP '^[0-9]{4}(0[1-9]|1[0-2])$' and build month starts with STR_TO_DATE(CONCAT(Date,'01'),'%Y%m%d')
+- Output contract: a normalized derived column inside a CTE; downstream logic uses only the normalized value
+- NULL/empty: malformed or NULL inputs normalize to NULL and drop out of aggregates — this is intended, recorded behavior
+- Mismatch fallback: if the dialect lacks TIMESTAMP(date,time), use DATE_ADD(Date, INTERVAL time HOUR_SECOND); if Time has single-digit hours, widen the regex
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: D2 reference SQL (oracle-verified, allowed learning evidence) shared CTE prologue across the D2 reference set
+
+## EXP-06-two-hop-composition — Two-step composition: resolve an identifier, then aggregate by it
+- Applicability: question names an entity by a natural key (name/description) but the aggregation runs on its surrogate ID, or joins a lookup then a fact
+- Scope: lookup table (natural key -> ID) plus fact table carrying the ID
+- Required tools: execute_sql
+- Procedure:
+  1. Step 1 (may be a separate tool call): resolve the natural key to ID(s) — allow several IDs (IN list) when several names are given
+  2. Step 2: aggregate the fact table filtered by the resolved ID(s); count S_agent honestly as two online steps
+  3. Prefer a single joined SQL when both steps fit one statement; keep the two-call form when name resolution is genuinely exploratory
+- Output contract: final answer at the asked grain; intermediate ID rows are never part of the answer
+- NULL/empty: an unknown natural key resolves to zero rows — return an empty result rather than guessing
+- Mismatch fallback: if the fact table already carries the natural key, skip the lookup hop; do not force two calls for a one-call question
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: original user story (store name -> ID -> monthly revenue) + E2 composition descriptors
+
+## EXP-07-display-rounding-discipline — Compute precisely, round only at display — and never when the reference does not
+- Applicability: any question whose reference emits an unrounded float or fixes a specific rounding depth
+- Scope: division and ratio computations
+- Required tools: execute_sql
+- Procedure:
+  1. Wrap divisions as CAST(numerator AS DECIMAL(60,18)) / denominator (or AS FLOAT when the reference used FLOAT) at computation time
+  2. Apply ROUND(x, d) only when the question or recorded reference contract names d — default d=6 on ratio outputs in the D2 set
+  3. Never round inside ORDER BY comparisons of values that are displayed rounded
+- Output contract: numeric columns exactly at the recorded precision
+- NULL/empty: ratios over zero denominators are NULL, not zero
+- Mismatch fallback: if the oracle disagrees with a displayed value, suspect rounding placement first — recompute unrounded
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: POWE-146 disclosure (q3/q23/q25 persistent semantic misses) + D2 output contracts
+
+## EXP-08-rank-with-unique-tiebreak — Deterministic top-1 with ties
+- Applicability: questions asking for 'the' maximum/minimum row when ties are possible
+- Scope: window ordering or ORDER BY ... LIMIT 1 patterns
+- Required tools: execute_sql
+- Procedure:
+  1. Add a unique tiebreak column (primary key) to every ORDER BY used for extremum selection
+  2. When the question asks for all tied rows, drop LIMIT and select rows where the measure equals the group extremum via a window MAX
+  3. LIMIT 1 without a tiebreak is only acceptable when the reference itself used it — check the recorded contract
+- Output contract: exactly the asked number of rows
+- NULL/empty: empty group -> no row; never emit a placeholder
+- Mismatch fallback: if ordering is unstable across engines, compute the extremum first, then equality-select
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: T02/T08 guard notes (LIMIT 1 keeps exactly one row) + E2 negatives
+
+## EXP-09-self-contained-final-sql — Final answer binding: submit exactly the executed SQL
+- Applicability: every run, before answering
+- Scope: GenSQL final envelope vs executed statement
+- Required tools: execute_sql
+- Procedure:
+  1. Execute the SQL, then bind the final answer to the exact text executed — copy character for character including format literals
+  2. Never reformat, re-indent or re-derive the submitted SQL from memory after execution
+  3. If a later statement supersedes an earlier one, the last executed successful statement is the one submitted
+- Output contract: final_sql span identical to the executed statement
+- NULL/empty: unknown/failed executions stay in the denominator — submit nothing rather than an unexecuted SQL
+- Mismatch fallback: none — this is a submission discipline, always applicable
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: p2 d2-patterns card submission discipline (validated in POWE-146/149)
+
+## EXP-10-pre-aggregation-precision-v2 — typed admission + first-generation cast + NULL-preserving aggregation
+- Applicability (typed, machine-checkable by exp10_admission.py offline): ADMIT when AVG (or SUM/COUNT division) has an integer-valued operand — integer columns, TIMESTAMPDIFF/DATEDIFF/COUNT-derived values, CASE...END over them — or a decimal6-contract numeric mean; REJECT for COUNT(*)/IDs/text, operands already CAST, or DECIMAL scale>=6. Admission decision on the V4-24 failing SQL was ADMIT (AVG(TIMESTAMPDIFF(...)) integer operand).
+- Scope: birdbench numeric outputs under the normative solving contract (G3 decimal6, abs tolerance 5e-7); engine 5.7.25-OceanBase-v4.3.5.5, div_precision_increment=4
+- Required tools: execute_sql
+- Procedure:
+  1. Engine fact (zero-model verified): AVG over an integer argument returns DECIMAL with only 4 fractional digits; a terminal ROUND(...,6) applied after the bare AVG CANNOT recover the lost scale.
+  2. Apply the inner CAST at FIRST SQL generation, not as a mismatch fallback: wrap the aggregate argument as AVG(CAST(<arg> AS DECIMAL(60,18))), or equivalently CAST(AVG(<arg>) AS DECIMAL(30,10)); both forms are engine-verified to match the oracle. Counterexample (H4 V4-24 S4 r3, exposed diagnostic): the v1 card was consulted only at fallback and the naked AVG(TIMESTAMPDIFF(SECOND,...)) survived into the final SQL — 8 cells failed the 5e-7 oracle by lost scale alone (typology precision_miss).
+  3. Keep existing NULL guards unchanged: CASE WHEN <match> THEN <arg> END stays around the argument; AVG over an empty or all-NULL set yields NULL with or without CAST (engine-verified).
+  4. Do NOT round-ratio habits from EXP-07 onto integer AVG: ROUND may be applied only AFTER the cast, never as the only precision measure.
+- Output contract: numeric mean columns emitted with >=6 exact fractional digits (decimal6 contract); aggregate outputs for unmatched/empty groups stay NULL
+- NULL/empty (strengthened by counterexample): never substitute COALESCE(<aggregate>, 0) for empty groups. Counterexample (H4 V4-27 S4 r1, exposed diagnostic): COALESCE(ROUND(<agg-alias>,6),0) rewrote 21 NULL mean cells to 0 (typology null_vs_zero) while every other cell matched; the normative oracle expects NULL. If a display alias must be substituted, do it only at the outermost presentation layer and never for group-level aggregates.
+- Mismatch fallback: if an emitted mean differs from a verified high-precision value only in the 4th-6th fractional digits, suspect lost AVG scale first: recompute with the inner CAST form before changing any join/filter logic
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Counter-guards (recorded counterexamples):
+  - applies to integer-argument aggregates and decimal6 means only — do NOT cast COUNT(*)/IDs/text (COUNT is invariant under CAST but casting adds nothing)
+  - cast scale must be >=6; DECIMAL(n,<6) is forbidden (insufficient scale is as wrong as none)
+  - non-temporal migration: the rule is family-independent (observed on AVG(Amount) probes), not a temporal-only habit
+  - NULL-substitution counter-guard: COALESCE-to-0 around aggregate-derived columns (attached, future_count, mean_abs) is a typed failure (null_vs_zero), not a presentation choice
+  - admission-typing counter-guard: if the offline admission predicate returns REJECT (COUNT/ID/text/scale>=6), adding CAST is the over-CAST failure mode, not extra safety
+- Source: refined from v1 (POWE-158 distill.py lineage freeze/s4-manifest.json) by distill5.py from two exposed-H4 counterexample traces and the executable admission/typology tool; lineage in freeze/r5-distill-manifest.json
+## EXP-11-final-sql-revision-consistency — Submit the last executed revision that produced your verified values
+- Applicability: every run, at final submission; observed violation form: a later executed statement already returned contract-precise values, but sql_query_final reverted to an earlier lower-precision form; detected cases: h3/C/r1/V3-14
+- Scope: GenSQL final envelope vs executed statement history
+- Required tools: execute_sql
+- Procedure:
+  1. the final submitted SQL must be character-for-character the LAST executed statement whose result you are submitting; never reformat, re-derive from memory, or fall back to an earlier draft
+  2. if a later execution corrected precision (e.g. a CAST revision), that corrected statement is the one to submit — the scorer binds the final answer to the execution of sql_query_final
+  3. when exploring multiple forms, verify once, then submit exactly that form
+- Output contract: final_sql span identical to the last verified executed statement
+- NULL/empty: unknown/failed executions stay in the denominator; submit nothing unexecuted
+- Mismatch fallback: none — submission discipline, always applicable (extends EXP-09)
+- Inherits guards: G-EXACT-OUTPUT, G-NO-ROUND, G-DISTINCT-LIST, G-SCOPE-DENOM, G-SEMANTIC-BINDING, G-TIME-BOUNDARY, G-GROUP-KEY, G-NULL-EMPTY
+- Source: distilled from failure traces by distill.py (lineage in freeze/s4-manifest.json); class counts {}

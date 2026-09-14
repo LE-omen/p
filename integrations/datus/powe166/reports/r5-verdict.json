@@ -1,0 +1,87 @@
+{
+ "interference_supported": false,
+ "interference_evidence": {
+  "A10-A00": {
+   "mean": 0.1905,
+   "ci95": [
+    -0.0284,
+    0.4094
+   ],
+   "wins": 5,
+   "losses": 1,
+   "ties": 15
+  },
+  "A11-A01": {
+   "mean": 0.0952,
+   "ci95": [
+    -0.0914,
+    0.2819
+   ],
+   "wins": 3,
+   "losses": 1,
+   "ties": 17
+  },
+  "typed_attributed_failures": []
+ },
+ "c_routing_recommendation": "C (structure experience expansion) — no controlled interference evidence; A案 cards stay unconditional",
+ "exp10_benefit_retained": true,
+ "exp10_benefit_evidence": {
+  "A10-A00": {
+   "mean": 0.9333,
+   "ci95": [
+    0.7903,
+    1.0763
+   ],
+   "wins": 14,
+   "losses": 0
+  },
+  "A11-A01": {
+   "mean": 0.7333,
+   "ci95": [
+    0.4798,
+    0.9868
+   ],
+   "wins": 11,
+   "losses": 0
+  }
+ },
+ "better_result_conditions": {
+  "noninferior_all12": true,
+  "precision_improved": true,
+  "nonprecision_mean_ge_minus_0.5": true,
+  "no_typed_regressions": true,
+  "evidence": {
+   "all12": {
+    "mean": 0.0278,
+    "ci95": [
+     -0.0996,
+     0.1552
+    ]
+   },
+   "precision": {
+    "mean": 0.0667,
+    "ci95": [
+     -0.0763,
+     0.2097
+    ]
+   },
+   "non_precision": {
+    "mean": 0.0,
+    "ci95": [
+     -0.1913,
+     0.1913
+    ]
+   },
+   "typed_regressions": []
+  }
+ },
+ "better_result": true,
+ "delivery_integrity_ok": true,
+ "delivery_violations": {
+  "A00": [],
+  "A10": [],
+  "A01": [],
+  "A11": [],
+  "A11v2": []
+ }
+}

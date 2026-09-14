@@ -1,0 +1,58 @@
+{
+ "per_arm": {
+  "A00": {
+   "runs": 36,
+   "requests_started": 134,
+   "requests_with_usage": 134,
+   "missing_usage_requests": 0,
+   "input_tokens": 6946044,
+   "output_tokens": 482228
+  },
+  "A10": {
+   "runs": 36,
+   "requests_started": 120,
+   "requests_with_usage": 120,
+   "missing_usage_requests": 0,
+   "input_tokens": 6298686,
+   "output_tokens": 479022
+  },
+  "A01": {
+   "runs": 36,
+   "requests_started": 135,
+   "requests_with_usage": 135,
+   "missing_usage_requests": 0,
+   "input_tokens": 7227246,
+   "output_tokens": 521143
+  },
+  "A11": {
+   "runs": 36,
+   "requests_started": 124,
+   "requests_with_usage": 124,
+   "missing_usage_requests": 0,
+   "input_tokens": 6625959,
+   "output_tokens": 524390
+  },
+  "A11v2": {
+   "runs": 36,
+   "requests_started": 124,
+   "requests_with_usage": 124,
+   "missing_usage_requests": 0,
+   "input_tokens": 6690025,
+   "output_tokens": 541072
+  }
+ },
+ "total": {
+  "runs": 180,
+  "requests_started": 637,
+  "requests_with_usage": 637,
+  "input_tokens": 33787960,
+  "output_tokens": 2547855,
+  "missing_usage_requests": 0
+ },
+ "budget": {
+  "request_attempts_cap": 900,
+  "input_tokens_cap": 45000000,
+  "output_tokens_cap": 3500000
+ },
+ "note": "input/output tokens are the recorded-usage lower bound; requests_started minus requests_with_usage are timed-out requests without final usage (disclosed, not zero-filled)"
+}

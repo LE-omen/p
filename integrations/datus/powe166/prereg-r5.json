@@ -1,0 +1,138 @@
+{
+ "frozen_at": "2026-09-14T15:02:00Z",
+ "round": "POWE-166 R5",
+ "matrix": {
+  "arms": {
+   "A00": {
+    "label": "s3v2 base (no EXP-10/11)",
+    "common_sha256": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+    "exp10": false,
+    "exp11": false
+   },
+   "A10": {
+    "label": "s3v2 + EXP-10 v1",
+    "common_sha256": "1d01feff03aec6c064c1db356ca9e8cef8598a45bc631f0a4ea9294ba7d0673a",
+    "exp10": true,
+    "exp11": false
+   },
+   "A01": {
+    "label": "s3v2 + EXP-11",
+    "common_sha256": "d838310e3fa73dbcdd405cbcc622c3e91cd55af96debd4a97c38dd7127a2ab40",
+    "exp10": false,
+    "exp11": true
+   },
+   "A11": {
+    "label": "s3v2 + EXP-10 v1 + EXP-11 (== S4 common e4af9661)",
+    "common_sha256": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+    "exp10": true,
+    "exp11": true
+   },
+   "A11v2": {
+    "label": "s3v2 + EXP-10 v2 + EXP-11 (refined candidate)",
+    "common_sha256": "f1b4f769892d53fc6ca9f06c76fca079c7863d195c2c8deef98629d7f00f9121",
+    "exp10": "v2",
+    "exp11": true
+   }
+  },
+  "arm_artifact_lineage": {
+   "a00.txt": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+   "a10.txt": "1d01feff03aec6c064c1db356ca9e8cef8598a45bc631f0a4ea9294ba7d0673a",
+   "a01.txt": "d838310e3fa73dbcdd405cbcc622c3e91cd55af96debd4a97c38dd7127a2ab40",
+   "a11.txt": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+   "a11v2.txt": "f1b4f769892d53fc6ca9f06c76fca079c7863d195c2c8deef98629d7f00f9121"
+  },
+  "questions": [
+   "V3-13",
+   "V3-14",
+   "V4-24",
+   "V4-25",
+   "V4-26",
+   "V4-27",
+   "V4-31",
+   "V4-32",
+   "V4-36",
+   "V4-38",
+   "V4-39",
+   "V4-45"
+  ],
+  "families": {
+   "precision": [
+    "V3-13",
+    "V3-14",
+    "V4-24",
+    "V4-25",
+    "V4-26"
+   ],
+   "null_semantics": [
+    "V4-27"
+   ],
+   "state_lookup": [
+    "V4-31"
+   ],
+   "strict_structure": [
+    "V4-32",
+    "V4-36",
+    "V4-38",
+    "V4-39"
+   ],
+   "weighted_semantics": [
+    "V4-45"
+   ]
+  },
+  "reps": 3,
+  "skills_dir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-152-4bed59acb45b/workdir/artifacts/p2-additive",
+  "skill_names": [
+   "d2-patterns",
+   "legacy-patterns",
+   "negative-guards"
+  ],
+  "inject": true,
+  "contract_sha256": "3b94b35a3d39cfe1f8ce14168986186ed4ec1e154d1919965c240f81b997fbf1",
+  "contract_now_actually_delivered": true,
+  "delivery_assert": "per-run result.delivered_common_sha256 must equal expected sha256(arm_common + contract + answer protocol); violations void same-field claims for that run"
+ },
+ "runtime": {
+  "model": {
+   "model": "deepseek-v4-flash-0731",
+   "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  },
+  "temperature": 0,
+  "max_turns": 8,
+  "timeout_s": 420,
+  "concurrency": 3,
+  "current_date": "2026-09-13",
+  "runner_sha256": "c27267566e1779819a440d72bd0e26a27a04b816a6290a2e95c463ffe8c56377",
+  "runner_base": "run_qa_r4.py 895076bc + D1 contract payload fix + D2 r5patch + D3 delivery digests",
+  "r5patch_sha256": "d36fabd253e1b4409ad625c6a64a48a44c6b4ebaf5d0c753a262ac62998ed8ba",
+  "fixture_battery": {
+   "failed": [],
+   "cases": 10
+  },
+  "datus_runtime": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-152-4bed59acb45b/workdir/datus-runtime/.venv/bin/python"
+ },
+ "metrics": {
+  "J2": "correct AND S_agent<=2 (per family and overall; S_agent = online tool-call attempts)",
+  "J4": "exploratory: correct AND S_agent<=4, reported for strict_structure/weighted_semantics families",
+  "unknown": "stays in denominator; typed as timeout/max_turns/handoff_no_sql_context/final_binding/run_failed/other",
+  "failure_typology": "incorrect runs typed precision_miss/null_vs_zero/null_semantics/semantic (multiset-aligned cell comparison, rel<=1e-3 => precision)",
+  "paired_unit": "rep-matched (question, rep) correctness diffs; 3 reps estimate stability, not 3x independent samples"
+ },
+ "judgment_rules": {
+  "interference_supported": "EXP-10 marginal effect (A10-A00 and A11-A01) on non-precision questions: mean<0 in BOTH, losses>wins in BOTH, AND >=1 typed null-family failure attributable to EXP-10 presence",
+  "c_routing": "interference_supported -> recommend B (conditional delivery); else recommend C (structure expansion priority); A案 cards remain unconditional meanwhile",
+  "exp10_benefit_retained": "A10-A00 and A11-A01 mean>0 on precision family",
+  "better_result_branch": "A11v2 vs A11: all-12 mean>=0 AND precision mean>0 AND non-precision mean>=-0.5 AND zero typed null-family regressions -> push branch swift/powe-166-r5 (standing authorization, no PR/no merge)",
+  "no_post_hoc": "no metric, threshold, arm, or question changes after unblinding; unstable results are reported as cannot-determine, no best-of reruns"
+ },
+ "budget": {
+  "request_attempts_cap": 900,
+  "input_tokens_cap": 45000000,
+  "output_tokens_cap": 3500000
+ },
+ "known_limits": [
+  "all 12 questions are exposed diagnostic material (H3/H4); no generalization claim",
+  "A11 common == S4 champion bytes; its EXP-10 text was authored against V3-13/14 family (exposure bias disclosed)",
+  "common-text length differs across arms (A00 shortest, A11/A11v2 longest); if EXP-10 differences appear, an equal-length placeholder control is the preregistered follow-up, not an in-round ad-hoc",
+  "n=3 reps, 5-7 questions per family: low power; CI widths disclosed"
+ ]
+}

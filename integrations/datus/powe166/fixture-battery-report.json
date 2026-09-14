@@ -1,0 +1,110 @@
+{
+ "patch_install": {
+  "installed": true,
+  "already": false
+ },
+ "runtime": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-152-4bed59acb45b/workdir/datus-runtime/.venv/bin/python",
+ "cases": [
+  {
+   "id": "F1",
+   "req": "MUST_FIX",
+   "expected": "dict_with_sql",
+   "baseline": "type:list",
+   "patched": "dict_with_sql",
+   "source": "h41-S4_qV4-36_gensql_response.txt",
+   "len": 2443,
+   "pass": true
+  },
+  {
+   "id": "F2",
+   "req": "MUST_FIX",
+   "expected": "dict_with_sql",
+   "baseline": "type:list",
+   "patched": "dict_with_sql",
+   "source": "h43-S4_qV4-36_gensql_response.txt",
+   "len": 2614,
+   "pass": true
+  },
+  {
+   "id": "F3",
+   "req": "MUST_FIX",
+   "expected": "dict_with_sql",
+   "baseline": "type:list",
+   "patched": "dict_with_sql",
+   "source": "h42-H0_qV4-36_gensql_response.txt",
+   "len": 2537,
+   "pass": true
+  },
+  {
+   "id": "F4",
+   "req": "MUST_HOLD",
+   "expected": "sql_none",
+   "baseline": "none",
+   "patched": "none",
+   "source": "h42-S4_qV4-36_gensql_response.txt",
+   "len": 1480,
+   "pass": true
+  },
+  {
+   "id": "F5",
+   "req": "MUST_HOLD",
+   "expected": "none",
+   "baseline": "none",
+   "patched": "none",
+   "source": "h42-S4_qV4-31_gensql_response.txt",
+   "len": 337,
+   "pass": true
+  },
+  {
+   "id": "F6",
+   "req": "MUST_HOLD",
+   "expected": "dict_with_sql",
+   "baseline": "dict_with_sql",
+   "patched": "dict_with_sql",
+   "source": "synthetic",
+   "len": 34,
+   "pass": true
+  },
+  {
+   "id": "F7",
+   "req": "MUST_HOLD",
+   "expected": "dict_with_sql",
+   "baseline": "dict_with_sql",
+   "patched": "dict_with_sql",
+   "source": "synthetic",
+   "len": 46,
+   "pass": true
+  },
+  {
+   "id": "F8",
+   "req": "MUST_FIX",
+   "expected": "dict_with_sql_braces",
+   "baseline": "dict_with_sql",
+   "patched": "dict_with_sql",
+   "source": "synthetic",
+   "len": 78,
+   "pass": true
+  },
+  {
+   "id": "F9",
+   "req": "MUST_FIX",
+   "expected": "dict_with_sql",
+   "baseline": "type:list",
+   "patched": "dict_with_sql",
+   "source": "synthetic",
+   "len": 54,
+   "pass": true
+  },
+  {
+   "id": "F10",
+   "req": "MUST_HOLD",
+   "expected": "baseline_equal",
+   "baseline": "dict_with_sql",
+   "patched": "dict_with_sql",
+   "source": "synthetic",
+   "len": 43,
+   "pass": true
+  }
+ ],
+ "failed": []
+}
