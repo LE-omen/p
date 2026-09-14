@@ -23,7 +23,9 @@ REPOSITORY_ROOT = Path(__file__).parents[1]
 SCRIPT = REPOSITORY_ROOT / "scripts" / "scan_e2e_evidence.sh"
 
 
-def run_scan(tmp_path: Path, *, fake_docker: str) -> subprocess.CompletedProcess[str]:
+def run_scan(
+    tmp_path: Path, *, fake_docker: str, env_overrides: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     docker = tmp_path / "docker"
     docker.write_text(fake_docker, encoding="utf-8")
     docker.chmod(0o755)
@@ -38,8 +40,12 @@ def run_scan(tmp_path: Path, *, fake_docker: str) -> subprocess.CompletedProcess
         "DIAGNOSTICS_PATH": str(diagnostics),
         "EVIDENCE_PATH": str(evidence),
         "SCENARIO_OUTCOME": "failure",
-        "TRUFFLEHOG_IMAGE": "example/trufflehog@sha256:deadbeef",
+        "TRUFFLEHOG_IMAGE": (
+            "example/trufflehog@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ),
     }
+    if env_overrides is not None:
+        env.update(env_overrides)
     bash = shutil.which("bash")
     assert bash is not None
     command = [bash, str(SCRIPT)]
@@ -113,6 +119,30 @@ exit 125
     assert "https://user:secret@example.test" not in summary
 
 
+def test_clean_scan_accepts_immutable_image_and_safe_headers(tmp_path: Path) -> None:
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+exit 0
+""",
+        env_overrides={
+            "DATABASE": "sqlite",
+            "SCENARIO_OUTCOME": "failure",
+            "TRUFFLEHOG_IMAGE": (
+                "ghcr.io/trufflesecurity/trufflehog@sha256:"
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            ),
+        },
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    assert result.returncode == 0
+    assert "database=sqlite" in summary
+    assert "scenario_outcome=failure" in summary
+    assert "scanner_image=ghcr.io/trufflesecurity/trufflehog@sha256:" in summary
+    assert "scan_status=clean" in summary
+
+
 def test_findings_redact_unsafe_detector_and_path_values(tmp_path: Path) -> None:
     result = run_scan(
         tmp_path,
@@ -128,3 +158,48 @@ exit 183
     assert "SyntheticP4ss!" not in summary
     assert "password" not in summary
     assert "finding=[REDACTED] path=[REDACTED]" in summary
+
+
+def test_findings_redact_non_ascii_values(tmp_path: Path) -> None:
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+printf '%s\n' '{"DetectorName":"泄漏检测器","SourceMetadata":{"Data":{"Filesystem":{"file":"/evidence/秘密.json"}}}}'
+exit 183
+""",
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    assert result.returncode == 1
+    assert "泄漏检测器" not in summary
+    assert "秘密.json" not in summary
+    assert "finding=[REDACTED] path=[REDACTED]" in summary
+
+
+def test_summary_redacts_untrusted_header_environment_values(tmp_path: Path) -> None:
+    marker = tmp_path / "docker-called"
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+touch "$DOCKER_CALLED"
+exit 183
+""",
+        env_overrides={
+            "DATABASE": "sqlite\npassword=SyntheticP4ss!",
+            "SCENARIO_OUTCOME": "failure\nAuthorization: Basic dXNlcjpzZWNyZXQ=",
+            "TRUFFLEHOG_IMAGE": "https://user:secret@example.test/trufflehog@sha256:deadbeef",
+            "DOCKER_CALLED": str(marker),
+        },
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    assert result.returncode == 1
+    assert "scanner_attempts=0" in summary
+    assert "scanner_error_category=configuration" in summary
+    assert not marker.exists()
+    assert "database=[REDACTED]" in summary
+    assert "scenario_outcome=[REDACTED]" in summary
+    assert "scanner_image=[REDACTED]" in summary
+    assert "SyntheticP4ss!" not in summary
+    assert "Basic dXNlcjpzZWNyZXQ=" not in summary
+    assert "https://user:secret@example.test" not in summary

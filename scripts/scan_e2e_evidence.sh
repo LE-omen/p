@@ -27,12 +27,47 @@ mkdir -p "${DIAGNOSTICS_PATH}"
 summary="${DIAGNOSTICS_PATH}/summary.txt"
 scanner_json="${DIAGNOSTICS_PATH}/trufflehog.jsonl"
 scanner_stderr="${DIAGNOSTICS_PATH}/trufflehog.stderr.log"
+sanitize_database() {
+    case "$1" in
+        sqlite|oceanbase) printf '%s' "$1" ;;
+        *) printf '[REDACTED]' ;;
+    esac
+}
+
+sanitize_scenario_outcome() {
+    case "$1" in
+        success|failure|cancelled|skipped) printf '%s' "$1" ;;
+        *) printf '[REDACTED]' ;;
+    esac
+}
+
+sanitize_scanner_image() {
+    if test "${#1}" -le 240 \
+        && printf '%s' "$1" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._/-]{0,200}@sha256:[0-9A-Fa-f]{64}$'; then
+        printf '%s' "$1"
+    else
+        printf '[REDACTED]'
+    fi
+}
+
+scanner_image_summary="$(sanitize_scanner_image "${TRUFFLEHOG_IMAGE}")"
 {
-    echo "database=${DATABASE}"
+    echo "database=$(sanitize_database "${DATABASE}")"
     echo "diagnostic_format=powercontext-e2e-v1"
-    echo "scenario_outcome=${SCENARIO_OUTCOME}"
-    echo "scanner_image=${TRUFFLEHOG_IMAGE}"
+    echo "scenario_outcome=$(sanitize_scenario_outcome "${SCENARIO_OUTCOME}")"
+    echo "scanner_image=${scanner_image_summary}"
 } > "${summary}"
+
+if test "${scanner_image_summary}" = "[REDACTED]"; then
+    {
+        echo "scan_status=infra_error"
+        echo "scanner_attempts=0"
+        echo "scanner_exit_code=2"
+        echo "scanner_error_category=configuration"
+    } >> "${summary}"
+    echo "Replay evidence scanning configuration is invalid; raw evidence will not be uploaded." >&2
+    exit 1
+fi
 
 if ! test -d "${EVIDENCE_PATH}"; then
     echo "evidence_status=missing" >> "${summary}"
@@ -72,9 +107,9 @@ sanitize_detector() {
     local lower_value="${value,,}"
     if test "${#value}" -le 120; then
         case "${value}" in
-            ""|[![:alnum:]]*) ;;
+            ""|[!A-Za-z0-9]*) ;;
             *)
-                if test -z "$(printf '%s' "${value}" | tr -d '[:alnum:] _./-')"; then
+                if test -z "$(printf '%s' "${value}" | tr -d 'A-Za-z0-9 _./-')"; then
                     case "${lower_value}" in
                         *password*|*secret*|*authorization*|*bearer*|*basic*|*api_key*|*api-key*|*api\ key*|*://*|*@*|*=*)
                             ;;
@@ -97,9 +132,9 @@ sanitize_path() {
         printf 'unknown'
     elif test "${#value}" -le 240; then
         case "${value}" in
-            [![:alnum:]]*|*..*) ;;
+            [!A-Za-z0-9]*|*..*) ;;
             *)
-                if test -z "$(printf '%s' "${value}" | tr -d '[:alnum:]_.\/-')"; then
+                if test -z "$(printf '%s' "${value}" | tr -d 'A-Za-z0-9_.\/-')"; then
                     case "${lower_value}" in
                         *password*|*secret*|*authorization*|*bearer*|*basic*|*api_key*|*api-key*|*api\ key*|*://*|*@*|*=*)
                             ;;

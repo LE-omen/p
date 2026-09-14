@@ -19,12 +19,45 @@ from __future__ import annotations
 
 import re
 import sys
+from collections import deque
 from pathlib import Path
 
 import yaml
 
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 SUPPORTED_SUFFIXES = {".yaml", ".yml"}
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """Reject duplicate mapping keys so validation matches one YAML meaning."""
+
+
+class _DuplicateKeyError(yaml.YAMLError):
+    def __init__(self) -> None:
+        super().__init__("duplicate YAML key")
+
+
+class _InvalidMappingKeyError(yaml.YAMLError):
+    def __init__(self) -> None:
+        super().__init__("unhashable YAML mapping key")
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False
+) -> dict[object, object]:
+    mapping: dict[object, object] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            if key in mapping:
+                raise _DuplicateKeyError()
+            mapping[key] = loader.construct_object(value_node, deep=deep)
+        except TypeError as error:
+            raise _InvalidMappingKeyError() from error
+    return mapping
+
+
+_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
 
 
 def _files_to_scan(arguments: list[str]) -> list[Path]:
@@ -51,16 +84,31 @@ def _files_to_scan(arguments: list[str]) -> list[Path]:
 
 def _action_references(value: object) -> list[str]:
     references: list[str] = []
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == "uses":
-                references.append(child if isinstance(child, str) else "")
-            else:
-                references.extend(_action_references(child))
-    elif isinstance(value, list):
-        for child in value:
-            references.extend(_action_references(child))
+    pending = deque([value])
+    visited: set[int] = set()
+    while pending:
+        current = pending.popleft()
+        if not isinstance(current, (dict, list)):
+            continue
+        current_id = id(current)
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        if isinstance(current, dict):
+            for key, child in current.items():
+                if key == "uses":
+                    references.append(child if isinstance(child, str) else "")
+                else:
+                    pending.append(child)
+        else:
+            pending.extend(current)
     return references
+
+
+def _display_reference(reference: str) -> str:
+    if re.fullmatch(r"[A-Za-z0-9_.@/-]{1,240}", reference):
+        return reference
+    return "[REDACTED]"
 
 
 def main(arguments: list[str]) -> int:
@@ -68,16 +116,20 @@ def main(arguments: list[str]) -> int:
     violations: list[str] = []
     for path in _files_to_scan(arguments or [".github/workflows", ".github/actions"]):
         try:
-            document = yaml.safe_load(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, yaml.YAMLError) as error:
-            print(f"{path}: could not parse YAML: {error}", file=sys.stderr)
+            document = yaml.load(
+                path.read_text(encoding="utf-8"),
+                Loader=_UniqueKeyLoader,  # noqa: S506
+            )
+        except (OSError, UnicodeError, RecursionError, yaml.YAMLError):
+            print(f"{path}: could not parse YAML", file=sys.stderr)
             return 1
         for reference in _action_references(document):
             references_checked += 1
             if reference.startswith("./") or reference.startswith("../"):
                 continue
             if "@" not in reference or not COMMIT_SHA.fullmatch(reference.rsplit("@", 1)[1]):
-                violations.append(f"{path}: uses reference '{reference}' must use a 40-character commit SHA")
+                display_reference = _display_reference(reference)
+                violations.append(f"{path}: uses reference '{display_reference}' must use a 40-character commit SHA")
 
     if violations:
         print("\n".join(violations), file=sys.stderr)

@@ -67,6 +67,7 @@ jobs:
 
     assert result.returncode == 1
     assert "must use a 40-character commit SHA" in result.stderr
+    assert "checkout@v7" in result.stderr
 
 
 def test_workflow_action_checker_parses_flow_style_and_quoted_references(tmp_path: Path) -> None:
@@ -110,12 +111,73 @@ jobs:
 
 def test_workflow_action_checker_rejects_malformed_yaml(tmp_path: Path) -> None:
     workflow = tmp_path / "workflow.yml"
-    workflow.write_text("jobs:\n  check:\n    steps: [\n", encoding="utf-8")
+    workflow.write_text("jobs:\n  check: [password: SyntheticP4ss!\n", encoding="utf-8")
 
     result = run_checker(workflow)
 
     assert result.returncode == 1
     assert "could not parse" in result.stderr
+    assert "SyntheticP4ss!" not in result.stderr
+
+
+def test_workflow_action_checker_redacts_unsafe_reference_diagnostics(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+jobs:
+  check:
+    steps:
+      - uses: "https://user:secret@example.test/action@v1"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 1
+    assert "must use a 40-character commit SHA" in result.stderr
+    assert "https://user:secret@example.test" not in result.stderr
+    assert "[REDACTED]" in result.stderr
+
+
+def test_workflow_action_checker_rejects_duplicate_yaml_keys(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+jobs:
+  check:
+    steps:
+      - uses: actions/checkout@v7
+        uses: actions/checkout@0123456789abcdef0123456789abcdef01234567
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 1
+    assert "could not parse YAML" in result.stderr
+
+
+def test_workflow_action_checker_handles_recursive_yaml_alias(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text("loop: &loop [*loop]\n", encoding="utf-8")
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 0
+    assert "0 action references checked" in result.stdout
+
+
+def test_workflow_action_checker_rejects_unhashable_yaml_keys(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text("? [a, b]\n: c\n", encoding="utf-8")
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 1
+    assert "could not parse" in result.stderr
+    assert "Traceback" not in result.stderr
 
 
 def test_workflow_action_checker_scans_nested_composite_actions(tmp_path: Path) -> None:
