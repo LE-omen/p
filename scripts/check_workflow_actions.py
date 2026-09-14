@@ -23,6 +23,7 @@ from collections import deque
 from pathlib import Path
 
 import yaml
+from yaml.resolver import BaseResolver
 
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 SUPPORTED_SUFFIXES = {".yaml", ".yml"}
@@ -57,7 +58,7 @@ def _construct_unique_mapping(
     return mapping
 
 
-_UniqueKeyLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
+_UniqueKeyLoader.add_constructor(BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping)
 
 
 def _files_to_scan(arguments: list[str]) -> list[Path]:
