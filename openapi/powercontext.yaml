@@ -3792,8 +3792,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [memory.extract, memory.rerank, experience.incubate, experience.generate, skill.generate, handoff.generate, topic_memory.probe, topic_memory.global, topic_memory.planner, topic_memory.evolve, topic_memory.temporary, topic_memory.reduce, topic_memory.reconcile]
-            enum: [memory.extract, memory.rerank, experience.incubate, experience.generate, skill.generate, handoff.generate, profile.generate, topic_memory.probe, topic_memory.global, topic_memory.planner, topic_memory.evolve, topic_memory.temporary, topic_memory.reduce, topic_memory.reconcile]
+            enum: [memory.extract, memory.rerank, experience.incubate, experience.generate, skill.generate, handoff.generate, topic_memory.probe, topic_memory.global, topic_memory.planner, topic_memory.evolve, topic_memory.temporary, topic_memory.reduce, topic_memory.reconcile, profile.generate]
       requestBody:
         required: true
         content:
@@ -8993,7 +8992,7 @@ components:
           nullable: true
     PromptKey:
       type: string
-      enum: [memory.extract, memory.rerank, experience.incubate, experience.generate, skill.generate, handoff.generate, profile.generate, topic_memory.probe, topic_memory.global, topic_memory.planner, topic_memory.evolve, topic_memory.temporary, topic_memory.reduce, topic_memory.reconcile]
+      enum: [memory.extract, memory.rerank, experience.incubate, experience.generate, skill.generate, handoff.generate, topic_memory.probe, topic_memory.global, topic_memory.planner, topic_memory.evolve, topic_memory.temporary, topic_memory.reduce, topic_memory.reconcile, profile.generate]
     PromptContent:
       type: object
       additionalProperties: false

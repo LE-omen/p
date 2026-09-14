@@ -43,7 +43,7 @@ _EXPERIENCE = {
 }
 
 
-def _case(key: str) -> dict[str, Any]:
+def _case(key: str) -> dict[str, Any]:  # noqa: C901 - one branch per prompt key fixture
     if key == "profile.generate":
         return {
             "input": {
