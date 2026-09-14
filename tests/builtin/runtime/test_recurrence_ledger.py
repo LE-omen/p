@@ -447,6 +447,48 @@ def test_unresolvable_receipt_does_not_fallback_to_scope_heads() -> None:
     asyncio.run(scenario())
 
 
+def test_receipt_pointing_to_missing_handoff_does_not_fallback_to_scope_heads() -> None:
+    async def scenario() -> None:
+        async with SQLiteProfile.open(
+            SQLiteConfig(), tables=SCOPE_TABLES + SHARED_TABLES + RECURRENCE_TABLES
+        ) as profile:
+            sources = SourceRepository((CONTENT_SOURCE_ADAPTER,))
+            repository = RecurrenceRepository()
+            async with profile.database.transaction() as connection:
+                await _seed_scope(connection)
+                artifacts = await _seed_artifacts(connection, sources)
+                missing_handoff = ArtifactRef(family=Handoff.family, artifact_id="missing-handoff", revision=1)
+                await _add_source(
+                    sources,
+                    connection,
+                    RECEIPT_REF.source_id,
+                    HandoffReceipt(
+                        receiver="agent-b",
+                        status="accepted",
+                        selection="exact",
+                        selected_revision=missing_handoff,
+                        evidence_status="available",
+                    ).model_dump_json(),
+                )
+                outcome = _failed_outcome()
+                await _add_source(sources, connection, "outcome-missing-handoff", outcome.model_dump_json())
+
+            async with profile.database.transaction() as connection:
+                rows = await _window(sources, connection)
+                ledger = RelationalRecurrenceLedger(
+                    database=profile.database,
+                    scope_id=SCOPE,
+                    sources=sources,
+                    artifacts=artifacts,
+                    recurrence=repository,
+                )
+                await ledger.record_window(connection, rows)
+                assert await repository.matches(connection, SCOPE) == ()
+                assert await repository.observations(connection, SCOPE) == ()
+
+    asyncio.run(scenario())
+
+
 def test_the_ledger_module_performs_no_read_path_instrumentation() -> None:
     """The write path must stay out of retrieval: only this module may append."""
 

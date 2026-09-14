@@ -396,10 +396,13 @@ class RelationalRecurrenceLedger:
         handoff_ref = receipt.selected_revision
         if handoff_ref is None or handoff_ref.family != Handoff.family:
             return _UNRESOLVED_HANDOFF
+        contents = await self._handoff_experiences(connection, handoff_ref)
+        if contents is None:
+            return _UNRESOLVED_HANDOFF
         return _LinkedHandoff(
             receipt_ref=receipt_ref,
             handoff_ref=handoff_ref,
-            contents=await self._handoff_experiences(connection, handoff_ref),
+            contents=contents,
         )
 
     async def _receipt(self, connection: AsyncConnection, receipt_ref: SourceRef, /) -> HandoffReceipt | None:
@@ -422,13 +425,13 @@ class RelationalRecurrenceLedger:
         connection: AsyncConnection,
         handoff_ref: ArtifactRef,
         /,
-    ) -> _Contents:
+    ) -> _Contents | None:
         try:
             handoff = await self.artifacts.get(connection, self.scope_id, handoff_ref)
         except RepositoryNotFoundError:
-            return ()
+            return None
         if not isinstance(handoff.content, HandoffContent):
-            return ()
+            return None
         citations = _unique_refs(handoff_experience_citations(handoff.content))[:MAX_RECURRENCE_CANDIDATES]
         return await self._contents(connection, citations)
 
