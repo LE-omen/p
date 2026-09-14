@@ -1,0 +1,19 @@
+{
+ "recorded_at": "2026-09-14T04:52:50Z",
+ "a1_totals": {
+  "N-old": 0,
+  "N-full": 1,
+  "S3V2-old": 0,
+  "S3V2-full": 0
+ },
+ "prereg_primary_criterion_contract_only_raises_correct": "NOT MET (S3V2 0=0; N 1>0 with n=6)",
+ "prereg_secondary_no_residual_4dp_signature": "NOT MET - 4-decimal day-mean signature persists in full-arm final SQLs (e.g. S3V2-full r1 V3-13 ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6) -> 23.5931)",
+ "prereg_J_guard": "N-full mean S_agent rose (4.0->7.5 / 6.5->8.33 on V3-13/14): when the model finds a precision fix it does so by costly exploration, exceeding the J budget",
+ "causal_direction_finding": [
+  "A0 (zero-model) proves the engine-level cause: AVG over integer expressions returns DECIMAL scale 4; ROUND(...,6) after it cannot recover; inner CAST DECIMAL(60,18) / outer CAST DECIMAL(>=20,>=10) match the oracle at 5e-7",
+  "A1 proves G1-G5 prose delivery alone does NOT change emitted SQL: models keep AVG(int)/ROUND(AVG,6) forms; the single N-full success (r2 V3-14, s_agent=6) self-discovered a CAST form through exploration",
+  "Therefore the actionable integer-AVG-scale rule must reach the model as an explicit distilled experience entry (EXP-10) with the A0-validated fix forms - this is the round's core self-distillation deliverable, proceeding as planned",
+  "B/C (conditional delivery / temporal descriptors) remain conditioned on residual failures AFTER the diagnostic round, per parent task"
+ ],
+ "decision": "proceed to distillation + diagnostic round (per task work items 2-3); canary purpose (causal direction) fulfilled with the above finding"
+}

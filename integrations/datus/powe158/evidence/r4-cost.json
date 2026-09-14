@@ -1,0 +1,254 @@
+{
+ "rows": [
+  {
+   "stage": "a1",
+   "batch": "N-full-r1",
+   "runs": 2,
+   "requests": 10,
+   "input_tokens": 77020,
+   "output_tokens": 17140,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "N-full-r2",
+   "runs": 2,
+   "requests": 11,
+   "input_tokens": 105193,
+   "output_tokens": 22028,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "N-full-r3",
+   "runs": 2,
+   "requests": 14,
+   "input_tokens": 132823,
+   "output_tokens": 20492,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "N-old-r1",
+   "runs": 2,
+   "requests": 10,
+   "input_tokens": 79416,
+   "output_tokens": 17240,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "N-old-r2",
+   "runs": 2,
+   "requests": 12,
+   "input_tokens": 71935,
+   "output_tokens": 10235,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "N-old-r3",
+   "runs": 2,
+   "requests": 13,
+   "input_tokens": 110253,
+   "output_tokens": 16781,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-full-r1",
+   "runs": 2,
+   "requests": 4,
+   "input_tokens": 188255,
+   "output_tokens": 16503,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-full-r2",
+   "runs": 2,
+   "requests": 4,
+   "input_tokens": 183675,
+   "output_tokens": 12260,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-full-r3",
+   "runs": 2,
+   "requests": 4,
+   "input_tokens": 183860,
+   "output_tokens": 11967,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-old-r1",
+   "runs": 2,
+   "requests": 4,
+   "input_tokens": 184842,
+   "output_tokens": 13995,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-old-r2",
+   "runs": 2,
+   "requests": 5,
+   "input_tokens": 231349,
+   "output_tokens": 12511,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "a1",
+   "batch": "S3V2-old-r3",
+   "runs": 2,
+   "requests": 4,
+   "input_tokens": 183635,
+   "output_tokens": 11578,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "H0-r1",
+   "runs": 12,
+   "requests": 32,
+   "input_tokens": 419807,
+   "output_tokens": 78274,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "H0-r2",
+   "runs": 12,
+   "requests": 30,
+   "input_tokens": 373161,
+   "output_tokens": 63487,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "H0-r3",
+   "runs": 12,
+   "requests": 33,
+   "input_tokens": 428025,
+   "output_tokens": 69810,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "N-r1",
+   "runs": 12,
+   "requests": 67,
+   "input_tokens": 520328,
+   "output_tokens": 83646,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "N-r2",
+   "runs": 12,
+   "requests": 59,
+   "input_tokens": 466706,
+   "output_tokens": 92410,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "N-r3",
+   "runs": 12,
+   "requests": 59,
+   "input_tokens": 450234,
+   "output_tokens": 87095,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "P2-r1",
+   "runs": 12,
+   "requests": 27,
+   "input_tokens": 1196680,
+   "output_tokens": 91484,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "P2-r2",
+   "runs": 12,
+   "requests": 25,
+   "input_tokens": 1076290,
+   "output_tokens": 72932,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "P2-r3",
+   "runs": 12,
+   "requests": 25,
+   "input_tokens": 1092311,
+   "output_tokens": 90481,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "S4-r1",
+   "runs": 12,
+   "requests": 26,
+   "input_tokens": 1255316,
+   "output_tokens": 89506,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "S4-r2",
+   "runs": 12,
+   "requests": 25,
+   "input_tokens": 1204642,
+   "output_tokens": 94040,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "diag",
+   "batch": "S4-r3",
+   "runs": 12,
+   "requests": 33,
+   "input_tokens": 1698291,
+   "output_tokens": 98003,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "r",
+   "batch": "S4-r1",
+   "runs": 23,
+   "requests": 50,
+   "input_tokens": 2251041,
+   "output_tokens": 27846,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "r",
+   "batch": "S4-r2",
+   "runs": 23,
+   "requests": 47,
+   "input_tokens": 2112388,
+   "output_tokens": 26594,
+   "fallback_runs": 0
+  },
+  {
+   "stage": "r",
+   "batch": "S4-r3",
+   "runs": 23,
+   "requests": 48,
+   "input_tokens": 2155623,
+   "output_tokens": 24102,
+   "fallback_runs": 0
+  }
+ ],
+ "total": {
+  "runs": 237,
+  "requests": 681,
+  "input_tokens": 18433099,
+  "output_tokens": 1272440
+ },
+ "note": "failure/unknown run usage fully counted (cumulative or per-request fallback)"
+}

@@ -1,0 +1,568 @@
+{
+ "resolved_ip": "47.111.140.230",
+ "probes": {
+  "version": "5.7.25-OceanBase-v4.3.5.5",
+  "div_precision_increment": 4,
+  "int_1_2_2": {
+   "exprs": [
+    "AVG(n)",
+    "ROUND(AVG(n),6)",
+    "CAST(AVG(n) AS DECIMAL(30,10))",
+    "ROUND(AVG(CAST(n AS DECIMAL(60,18))),6)",
+    "SUM(n)/COUNT(n)",
+    "AVG(CAST(n AS DECIMAL(60,18)))"
+   ],
+   "values": [
+    "1.6667",
+    "1.6667",
+    "1.6666666660",
+    "1.666667",
+    "1.6667",
+    "1.6666666666666666666667"
+   ],
+   "python_types": [
+    "Decimal",
+    "Decimal",
+    "Decimal",
+    "Decimal",
+    "Decimal",
+    "Decimal"
+   ],
+   "field_types": [
+    246,
+    246,
+    246,
+    246,
+    246,
+    246
+   ]
+  }
+ },
+ "v3_variants": {
+  "V3-13": {
+   "ref_inner_cast": {
+    "mean_expr": "ROUND(AVG(CAST(DATEDIFF(Date,md) AS DECIMAL(60,18))),6)",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.593148",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.106061",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "bare_avg": {
+    "mean_expr": "AVG(DATEDIFF(Date,md))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1061",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 2,
+    "mismatches": [
+     {
+      "kind": "cell",
+      "row": 0,
+      "col": 3,
+      "got": "23.5931",
+      "exp": "23.593148",
+      "absdiff": "0.000048"
+     },
+     {
+      "kind": "cell",
+      "row": 1,
+      "col": 3,
+      "got": "23.1061",
+      "exp": "23.106061",
+      "absdiff": "0.000039"
+     }
+    ],
+    "matches_oracle": false
+   },
+   "round6_of_bare": {
+    "mean_expr": "ROUND(AVG(DATEDIFF(Date,md)),6)",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1061",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 2,
+    "mismatches": [
+     {
+      "kind": "cell",
+      "row": 0,
+      "col": 3,
+      "got": "23.5931",
+      "exp": "23.593148",
+      "absdiff": "0.000048"
+     },
+     {
+      "kind": "cell",
+      "row": 1,
+      "col": 3,
+      "got": "23.1061",
+      "exp": "23.106061",
+      "absdiff": "0.000039"
+     }
+    ],
+    "matches_oracle": false
+   },
+   "outer_cast30_10": {
+    "mean_expr": "CAST(AVG(DATEDIFF(Date,md)) AS DECIMAL(30,10))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931477510",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1060606060",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "outer_cast20_10": {
+    "mean_expr": "CAST(AVG(DATEDIFF(Date,md)) AS DECIMAL(20,10))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931477510",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1060606060",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "inner_cast_noround": {
+    "mean_expr": "AVG(CAST(DATEDIFF(Date,md) AS DECIMAL(60,18)))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931477516059957173448",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1060606060606060606061",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "inner_cast_scale6": {
+    "mean_expr": "AVG(CAST(DATEDIFF(Date,md) AS DECIMAL(30,6)))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "0",
+      "23.5931477516",
+      "40711.263983"
+     ],
+     [
+      "EUR",
+      "66",
+      "0",
+      "23.1060606061",
+      "682.097424"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   }
+  },
+  "V3-14": {
+   "ref_inner_cast": {
+    "mean_expr": "ROUND(AVG(CAST(ABS(DATEDIFF(Date,md)) AS DECIMAL(60,18))),6)",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.361884",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.515152",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "bare_avg": {
+    "mean_expr": "AVG(ABS(DATEDIFF(Date,md)))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3619",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5152",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 2,
+    "mismatches": [
+     {
+      "kind": "cell",
+      "row": 0,
+      "col": 3,
+      "got": "9.3619",
+      "exp": "9.361884",
+      "absdiff": "0.000016"
+     },
+     {
+      "kind": "cell",
+      "row": 1,
+      "col": 3,
+      "got": "9.5152",
+      "exp": "9.515152",
+      "absdiff": "0.000048"
+     }
+    ],
+    "matches_oracle": false
+   },
+   "round6_of_bare": {
+    "mean_expr": "ROUND(AVG(ABS(DATEDIFF(Date,md))),6)",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3619",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5152",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 2,
+    "mismatches": [
+     {
+      "kind": "cell",
+      "row": 0,
+      "col": 3,
+      "got": "9.3619",
+      "exp": "9.361884",
+      "absdiff": "0.000016"
+     },
+     {
+      "kind": "cell",
+      "row": 1,
+      "col": 3,
+      "got": "9.5152",
+      "exp": "9.515152",
+      "absdiff": "0.000048"
+     }
+    ],
+    "matches_oracle": false
+   },
+   "outer_cast30_10": {
+    "mean_expr": "CAST(AVG(ABS(DATEDIFF(Date,md))) AS DECIMAL(30,10))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3618843680",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5151515150",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "outer_cast20_10": {
+    "mean_expr": "CAST(AVG(ABS(DATEDIFF(Date,md))) AS DECIMAL(20,10))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3618843680",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5151515150",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "inner_cast_noround": {
+    "mean_expr": "AVG(CAST(ABS(DATEDIFF(Date,md)) AS DECIMAL(60,18)))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3618843683083511777302",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5151515151515151515152",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   },
+   "inner_cast_scale6": {
+    "mean_expr": "AVG(CAST(ABS(DATEDIFF(Date,md)) AS DECIMAL(30,6)))",
+    "values": [
+     [
+      "CZK",
+      "934",
+      "822",
+      "9.3618843683",
+      "17451.102741"
+     ],
+     [
+      "EUR",
+      "66",
+      "59",
+      "9.5151515152",
+      "164.867273"
+     ]
+    ],
+    "field_types": [
+     253,
+     8,
+     246,
+     246,
+     246
+    ],
+    "n_mismatch_cells": 0,
+    "mismatches": [],
+    "matches_oracle": true
+   }
+  }
+ },
+ "migration": {
+  "avg_amount_bigint": {
+   "labels": [
+    "AVG(Amount)",
+    "CAST(AVG AS DEC(30,10))",
+    "ROUND(AVG(CAST AS DEC(60,18)),6)",
+    "COUNT(*)",
+    "COUNT(cast PK)",
+    "SUM",
+    "CAST SUM DEC(60,18)"
+   ],
+   "values": [
+    "19.6780",
+    "19.6780000000",
+    "19.678000",
+    "1000",
+    "1000",
+    "19678",
+    "19678.000000000000000000"
+   ],
+   "field_types": [
+    8
+   ],
+   "decimal_reference_sum_div_n": "19.678",
+   "count_invariant_under_cast": true
+  },
+  "avg_price_double": {
+   "labels": [
+    "AVG(Price)",
+    "AVG(CAST Price DEC(38,6))",
+    "CAST(AVG(Price) AS DEC(38,6))"
+   ],
+   "values": [
+    "425.5761600000001",
+    "425.5761600000",
+    "425.576160"
+   ],
+   "field_types": [
+    5,
+    246,
+    246
+   ]
+  },
+  "avg_all_null": "None",
+  "avg_empty": "None",
+  "avg_cast_all_null": "None"
+ }
+}

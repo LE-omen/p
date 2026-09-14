@@ -1,0 +1,244 @@
+{
+ "N-old": {
+  "per_run": {
+   "V3-13": {
+    "r1": {
+     "correct": false,
+     "s_agent": 4,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": null,
+     "s_agent": null,
+     "in_budget": null,
+     "unknown_reason": "run_failed"
+    },
+    "r3": {
+     "correct": null,
+     "s_agent": null,
+     "in_budget": null,
+     "unknown_reason": "run_failed"
+    }
+   },
+   "V3-14": {
+    "r1": {
+     "correct": null,
+     "s_agent": null,
+     "in_budget": null,
+     "unknown_reason": "run_failed"
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 5,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 8,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   }
+  },
+  "agg": {
+   "V3-13": {
+    "correct_of_3": 0,
+    "mean_s_agent": 4.0
+   },
+   "V3-14": {
+    "correct_of_3": 0,
+    "mean_s_agent": 6.5
+   }
+  },
+  "total_correct_of_6": 0
+ },
+ "N-full": {
+  "per_run": {
+   "V3-13": {
+    "r1": {
+     "correct": false,
+     "s_agent": 6,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 9,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": null,
+     "s_agent": null,
+     "in_budget": null,
+     "unknown_reason": "run_failed"
+    }
+   },
+   "V3-14": {
+    "r1": {
+     "correct": false,
+     "s_agent": 11,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": true,
+     "s_agent": 6,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 8,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   }
+  },
+  "agg": {
+   "V3-13": {
+    "correct_of_3": 0,
+    "mean_s_agent": 7.5
+   },
+   "V3-14": {
+    "correct_of_3": 1,
+    "mean_s_agent": 8.33
+   }
+  },
+  "total_correct_of_6": 1
+ },
+ "S3V2-old": {
+  "per_run": {
+   "V3-13": {
+    "r1": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 2,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   },
+   "V3-14": {
+    "r1": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   }
+  },
+  "agg": {
+   "V3-13": {
+    "correct_of_3": 0,
+    "mean_s_agent": 1.33
+   },
+   "V3-14": {
+    "correct_of_3": 0,
+    "mean_s_agent": 1.0
+   }
+  },
+  "total_correct_of_6": 0
+ },
+ "S3V2-full": {
+  "per_run": {
+   "V3-13": {
+    "r1": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   },
+   "V3-14": {
+    "r1": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r2": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    },
+    "r3": {
+     "correct": false,
+     "s_agent": 1,
+     "in_budget": false,
+     "unknown_reason": null
+    }
+   }
+  },
+  "agg": {
+   "V3-13": {
+    "correct_of_3": 0,
+    "mean_s_agent": 1.0
+   },
+   "V3-14": {
+    "correct_of_3": 0,
+    "mean_s_agent": 1.0
+   }
+  },
+  "total_correct_of_6": 0
+ },
+ "causal_N": {
+  "per_q_diff": [
+   0,
+   1
+  ],
+  "mean": 0.5,
+  "ci95": [
+   -5.853,
+   6.853
+  ]
+ },
+ "causal_S3V2": {
+  "per_q_diff": [
+   0,
+   0
+  ],
+  "mean": 0.0,
+  "ci95": [
+   0.0,
+   0.0
+  ]
+ }
+}

@@ -1,0 +1,49 @@
+{
+ "frozen_at": "2026-09-14T04:56:32Z",
+ "purpose": "diagnostic-round launch gate (prereg-r4.json diagnostic_round section unchanged)",
+ "s4_artifact": {
+  "path": "r4/artifacts/s4.txt",
+  "sha256": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+  "composition": "s3v2.txt (champion common, sha 1d848b16bd85a507…) + distiller-generated EXP-10 (pre-aggregation precision) + EXP-11 (final-SQL revision consistency)"
+ },
+ "s4_manifest": {
+  "path": "r4/freeze/s4-manifest.json",
+  "sha256": "b5c2249bdddaf791d519755bde515f0c85a4566c02ad87a7369ad584fb0f8d34",
+  "corpus": "66 runs (24 A1 + 42 POWE-155 V3-13/14): 51 precision_scale_only, 1 submission_reversion (auto-detected C4 h31 V3-14), 7 unknown, 7 correct; no handwritten rule text - all fields induced from trace evidence + A0 engine canary"
+ },
+ "counterexample_tests": {
+  "path": "r4/evidence/ce-tests.json",
+  "all_pass": true,
+  "families": [
+   "CE1 non-temporal integer AVG migration (cast forms match exact Decimal mean; bare/ROUND6 fail)",
+   "CE2 NULL boundary (all-NULL AVG stays NULL with/without CAST; counts preserve rows)",
+   "CE3a insufficient outer scale fails (scale>=6 necessary for outer CAST)",
+   "CE3b COUNT/DISTINCT/text invariance under casts"
+  ]
+ },
+ "a1_verdict": {
+  "path": "r4/freeze/a1-verdict.json",
+  "sha256": "46ca0ac91ed92e22eca9d0766ccbbc47192605c7a49c457e3b245d7431f1d393",
+  "summary": "contract prose alone insufficient; causal repair = distilled explicit rule (EXP-10); proceed as planned; B/C stay conditioned on residual failures after diagnostic round"
+ },
+ "arms_all_receive_unified_contract": [
+  "S4",
+  "P2",
+  "H0",
+  "N"
+ ],
+ "questions_12": [
+  "V3-13",
+  "V3-14",
+  "V3-44",
+  "V3-45",
+  "V3-16",
+  "V3-17",
+  "V3-29",
+  "V3-30",
+  "V3-35",
+  "V3-36",
+  "V3-37",
+  "V3-46"
+ ]
+}

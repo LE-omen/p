@@ -1,0 +1,4000 @@
+{
+ "frozen_at": "2026-09-14T04:55:38Z",
+ "base_common_s3v2_sha256": "1d848b16bd85a5078fd7e155c19596a017a9f32934ad137b58a0fd83baa450dd",
+ "s4_sha256": "e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+ "entries": {
+  "EXP-10": {
+   "id": "EXP-10-pre-aggregation-precision",
+   "title": "Integer-argument aggregates: cast before AVG — ROUND after cannot recover scale",
+   "applicability": "any AVG (or SUM/COUNT division) whose argument is an integer-typed expression — DATEDIFF(...), integer columns (e.g. Amount), or CASE...END over them — and any decimal6-contract numeric mean; observed failing forms: ROUND(AVG(v),6); AVG(m.Consumption); AVG(Consumption); ROUND(AVG(d),6)",
+   "scope": "birdbench numeric outputs under the normative solving contract (G3 decimal6, abs tolerance 5e-7); engine 5.7.25-OceanBase-v4.3.5.5, div_precision_increment=4",
+   "required_tools": [
+    "execute_sql"
+   ],
+   "procedure": [
+    "Engine fact (zero-model verified): AVG over an integer argument returns DECIMAL with only 4 fractional digits; a terminal ROUND(...,6) applied after the bare AVG CANNOT recover the lost scale (verified: bare_avg, round6_of_bare all fail the 5e-7 oracle match).",
+    "Fix at SQL generation time, inside the same single statement: wrap the aggregate argument as AVG(CAST(<arg> AS DECIMAL(60,18))), or equivalently cast the aggregate as CAST(AVG(<arg>) AS DECIMAL(30,10)); both forms are engine-verified to match the oracle (verified: inner_cast_noround, inner_cast_scale6, outer_cast20_10, outer_cast30_10, ref_inner_cast).",
+    "Keep existing NULL guards unchanged: CASE WHEN <match> THEN <arg> END stays around the argument, and AVG over an empty or all-NULL set still yields NULL (engine-verified with and without CAST).",
+    "Do NOT round-ratio habits from EXP-07 onto integer AVG: ROUND may be applied only AFTER the cast, never as the only precision measure of an integer-argument AVG."
+   ],
+   "output_granularity": "numeric mean columns emitted with >=6 exact fractional digits (decimal6 contract)",
+   "null_empty_semantics": "AVG over no matched values is NULL; unmatched rows are preserved in counts; CAST does not alter NULL/empty semantics or COUNT results (engine-verified)",
+   "mismatch_fallback": "if an emitted mean differs from a verified high-precision value only in the 4th-6th fractional digits, suspect lost AVG scale first: recompute with the inner CAST form before changing any join/filter logic",
+   "guards": [
+    "G-EXACT-OUTPUT",
+    "G-NO-ROUND",
+    "G-DISTINCT-LIST",
+    "G-SCOPE-DENOM",
+    "G-SEMANTIC-BINDING",
+    "G-TIME-BOUNDARY",
+    "G-GROUP-KEY",
+    "G-NULL-EMPTY"
+   ],
+   "counter_guards": [
+    "applies to integer-argument aggregates and decimal6 means only — do NOT cast COUNT(*)/IDs/text (COUNT is invariant under CAST but casting adds nothing)",
+    "cast scale must be >=6; DECIMAL(n,<6) is forbidden (insufficient scale is as wrong as none)",
+    "non-temporal migration: the rule is family-independent (observed on AVG(Amount) probes), not a temporal-only habit"
+   ],
+   "source": {
+    "corpus": {
+     "runs": 66,
+     "classes": {
+      "precision_scale_only": 51,
+      "unknown": 7,
+      "correct": 7,
+      "submission_reversion": 1
+     }
+    },
+    "precision_failures": [
+     {
+      "qid": "V3-13",
+      "cond": "N-old",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(att.age_days)",
+       "AVG(att.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "cffd0d2bcfb6836a1cc1bcff117f8fbd6b76de122aa72444f9556b39a6ac5e90"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "N-full",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(CASE WHEN Consumption IS NOT NULL THEN DATEDIFF(Date, month_day) END)",
+       "AVG(CASE WHEN Consumption IS NOT NULL THEN Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "8eac86cb0c5c87a4b5591e75bddf4d475e716146d2fe3f15cd813baa93ef841f"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "N-full",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(day_dist)",
+       "AVG(consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "c893b690a87ef2dc3f3aff39e84073229754249e0a41cff52daa63ea3b8dfa67"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(age_days),6)",
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "ae47c3725bc54eb7d43afcf23d21b3b3006b30e77f7cdb5cf477b72b89f3a15b"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(d),6)",
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "482639dc38dd6cb1cfefb091ce0d04dd2c1514a0e0af08230cc886beb4c41576"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "a05886cdd8250edab941c2a80369deb0d31b66049e274c50f496c2b0c641e61c"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(s.ad)",
+       "AVG(s.v)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "b33a1da64c3f55bbc952cd4a899e7358d83159f6bcb3eaf993f98119a5a09d4d"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "N-old",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "396b2d348b45992f22062ad783840179d5dd37c22e5d87d024763f28dd780e5a"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "N-full",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(ym.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "44d7334ba083be61b4c167722d47bc8b2199330fcb40b7e6e12cd5ae2f07a421"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(age_days), 6)",
+       "ROUND(AVG(v), 6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "b760cb82ec3e298eee1346f345f48f6cb214743df51b9053d22ff0e30771add4"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "54afde45fd9e27f2e9d1b93d67eba7d46e3e464f196b73992df57ebaeb3c3575"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(DATEDIFF(a.Date,a.md)),6)",
+       "ROUND(AVG(z.v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "8c737d9b701ed01893f7cdebec59ee6fed2df29262229113bac266268e410fa7"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(b.d),6)",
+       "ROUND(AVG(b.v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "1ba5f0e79b076e17396456fcbe1c1ce694a2585b9e7a191b0242520d9ac8981d"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "N-old",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(abs_days)",
+       "AVG(Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "54f53e451a80eba6630d074b1c88a86f9053a294e0fc8367afbf451f921f72a3"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "N-full",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(m.AbsDays)",
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "a4424778620efef49342df20c7b7f89d54ff708a893330d4d95e660ea3d893f1"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN DATEDIFF(a.Date,a.match_md) END),6)",
+       "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN x.v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "9c7d48edf5009327d896cd8c7e2fc95217b47b2e80f134fcae57a9c4f8db8ddd"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-old",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(x.dist),6)",
+       "ROUND(AVG(x.v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "413a4c8bd2f174371b7c0f6dadfa822f876df802ebe5d7aa5df603fedcf67d7f"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(d,md) END),6)",
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "6934f3eb6d0089d18707fd03f55e47f93fb8357069316c94f1c29dc61e5d854f"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2-full",
+      "stage": "a1",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(dist)",
+       "AVG(v)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "6bfdeaca5bb340a3e733ccd0e2ec9ac60a098f24f9d9965fc11fd3b1c549af28"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN DATEDIFF(a.tdate, a.obs_day) END), 6)",
+       "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN m.v END), 6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "2d77608fafaf42395fece9868c1b71de5e0e65828ee457e3d7e0ac6ea1329cb8"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "6495df3cd7c858598d93a5e3fe2d8f2565ef5638f8febaa568afe3cbdbb084bb"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+       "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "7c01dd37d8be792b8f44cadc2272c562d65546877c90eb353d73526eb6642e24"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(d)",
+       "AVG(v)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "9e2361e1f39993bc323a26197d89ae6423b4bb9771146ff21baffb259d003fad"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(CASE WHEN ym.CustomerID IS NOT NULL THEN ym.Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "e221dcede870352f39205f0643e29b06d4e6ec797b0097507ea9f682a91180bf"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(m.day_dist)",
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "b0ceb100fb178ea1c8cea6cbcc905e143fbf2898f6d61bd9cdc79033464e3ca6"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "M",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(s.abs_days)",
+       "AVG(s.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "f4914554dc1f580215d5e3d3c42378257d9ad8c2cfeed444afe9993abb08814d"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(ym.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "d7bfaef3e045a2258304eba9501af703e91f15b3fe826fbcebbe3c6e21e9946c"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(b.abs_days)",
+       "AVG(b.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "8f3be3ab35fcd9bcc966c6f9ad9d07923f5a22fba316f6902cc1dce29de126ab"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "C",
+      "stage": "h3",
+      "rep": 1,
+      "mean_exprs": [
+       "AVG(CASE WHEN ym.Date IS NOT NULL THEN ym.Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "d2d10013733fdd6d4f807135d130218920c116f4b727df19fdc94eb2980ef06e"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(age),6)",
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "efaea6fb15c117368a43443116aa2b023db7c967a0b29656e861628bd0bc4d71"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(ad)",
+       "AVG(v)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "193cda747b7a7ee9804f33c9aa56f36490b7143cb52547330bf2cc3977d2ff93"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN DATEDIFF(a.Date,a.md) END),6)",
+       "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN m.v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "4a5109795cd785a9ef8b6f3a5b0322a288c93da5741fe227c7d9db47f66c4fd5"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(x.d)",
+       "AVG(x.v)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "7dde8712ce08534a9bba793c3376fa0bc736f3753e2146ca80d16a607e2d53ef"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(CASE WHEN l.attach_day IS NOT NULL THEN DATEDIFF(l.Date, l.attach_day) END)",
+       "AVG(CASE WHEN l.attach_day IS NOT NULL THEN c2.Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "c27116a2dd9e68222dfa98df1270a550c126b3f8cf965e3c9b0dab548d856f6c"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(abs_days)",
+       "AVG(Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "5fd596890222e7a952f1129d96504c131c144f3f66a144c57ba8ed72c94e682a"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "N",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(b.abs_days)",
+       "AVG(b.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "3c5644dc94c13166590080eed622a2d84edc4ffac9467e8d4bf35b55811156fa"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "M",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(CASE WHEN rn = 1 THEN age_days END)",
+       "AVG(CASE WHEN rn = 1 THEN Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "c2d8d471b5026269e8e7947850a54977e05beaf30ba17466ec65b921492a2532"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(c.age_days)",
+       "AVG(c.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "960ea35c6640cb80193893372c5f0850b62e9c2331a435700d7b5814dc73fdea"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(m.day_distance)",
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "0dea8015ab6fa395a9ce1a391ff567e6e5c0c4d83cd73134b0fbefba2ace9da7"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "C",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(CASE WHEN first_day IS NOT NULL THEN age_days END)",
+       "AVG(CASE WHEN first_day IS NOT NULL THEN Consumption END)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "2e40fdd165c434e28b167fc28ae40fb725c7a4a52bdcae877cecde98f2ca882c"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "C",
+      "stage": "h3",
+      "rep": 2,
+      "mean_exprs": [
+       "AVG(AbsDays)",
+       "AVG(Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "d17048f6207d66891b23ff98aefaa7538b7c84a615d1c59da681ff0b518c9b4c"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN DATEDIFF(x.Date,x.attach_day) END),6)",
+       "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN m.v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "57206b98a3e68012e655d3fb04b7e7b508b19837714f077a6ee146ed07ed6a33"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "S3V2",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(d),6)",
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "f7bd7a151b283d2aec1aa82a629f708689aeef48e2087d117eed5dd6525bf2de"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(CASE WHEN v IS NOT NULL THEN age_days END),6)",
+       "ROUND(AVG(CASE WHEN v IS NOT NULL THEN v END),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "e7daa316a94dec6a2c6a1be625d17d6ea1ecd041498267ceabf09ae555bd9ed2"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "P2",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "ROUND(AVG(d),6)",
+       "ROUND(AVG(v),6)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "6cf751ea760f5685f0fc1795a07068cf763c9387667d21efd143d9855dcee8fb"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(IF(bm.CustomerID IS NOT NULL, ym.Consumption, NULL))"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "f9980201b655cc8c19493a5e54603b3386b54b81b5a9d0354c64e66c1d18b9d5"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "H0",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(day_dist)",
+       "AVG(Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "bac7b17e58643eeecc83a1da0ee05df9d0bbd5809d0b9f6d446080262fa0ed84"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "M",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(m.day_dist)",
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "92ab284db143fd1722caec7ff68e6953decf875c8dda759e0ac1e17337e926d5"
+     },
+     {
+      "qid": "V3-13",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "23.5931",
+        "exp": "23.593148",
+        "absdiff": "0.000048",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "23.1061",
+        "exp": "23.106061",
+        "absdiff": "0.000039",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "3a8aa7b1320f874bc98805fb0edd142b3b8dbf747a8c4549e48ee5833b6f5e06"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "B",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(b.day_dist)",
+       "AVG(b.consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "318094a01b1806ddf6148ddfd954a8162ea0b5877b6345796d65cf5ccea69c99"
+     },
+     {
+      "qid": "V3-14",
+      "cond": "C",
+      "stage": "h3",
+      "rep": 3,
+      "mean_exprs": [
+       "AVG(m.abs_days)",
+       "AVG(m.Consumption)"
+      ],
+      "mismatch_cells": [
+       {
+        "row": 0,
+        "col": 3,
+        "got": "9.3619",
+        "exp": "9.361884",
+        "absdiff": "0.000016",
+        "scale_like": true
+       },
+       {
+        "row": 1,
+        "col": 3,
+        "got": "9.5152",
+        "exp": "9.515152",
+        "absdiff": "0.000048",
+        "scale_like": true
+       }
+      ],
+      "trace_sha256": "9b990a9a02dccc891d81351ffde51cdf59bcd3df5368fbf94ba9737dbeb59a18"
+     }
+    ],
+    "corrected_forms_observed": [
+     "CAST(AVG(m.Consumption) AS DECIMAL(30,10))",
+     "CAST(AVG(Consumption) AS DECIMAL(30,10))",
+     "CAST(AVG(m.abs_days) AS DECIMAL(30,10))",
+     "CAST(AVG(att.age_days) AS DECIMAL(20,10))",
+     "CAST(AVG(att.Consumption) AS DECIMAL(30,10))",
+     "CAST(AVG(age_days) AS DECIMAL(30,10))",
+     "CAST(AVG(m.abs_days) AS DECIMAL(20,10))",
+     "CAST(AVG(CASE WHEN j.matched_customer IS NOT NULL AND j.rn = 1 THEN j.age_days END) AS DECIMAL(30,10))"
+    ],
+    "a0_evidence_sha256": "b9f7eb9cd02932dd4439929faf0a0742ffb1296dca3f0bdb55e93db71b9f9bc0",
+    "distilled_at": "2026-09-14T04:55:38Z"
+   }
+  },
+  "EXP-11": {
+   "id": "EXP-11-final-sql-revision-consistency",
+   "title": "Submit the last executed revision that produced your verified values",
+   "applicability": "every run, at final submission; observed violation form: a later executed statement already returned contract-precise values, but sql_query_final reverted to an earlier lower-precision form; detected cases: h3/C/r1/V3-14",
+   "scope": "GenSQL final envelope vs executed statement history",
+   "required_tools": [
+    "execute_sql"
+   ],
+   "procedure": [
+    "the final submitted SQL must be character-for-character the LAST executed statement whose result you are submitting; never reformat, re-derive from memory, or fall back to an earlier draft",
+    "if a later execution corrected precision (e.g. a CAST revision), that corrected statement is the one to submit — the scorer binds the final answer to the execution of sql_query_final",
+    "when exploring multiple forms, verify once, then submit exactly that form"
+   ],
+   "output_granularity": "final_sql span identical to the last verified executed statement",
+   "null_empty_semantics": "unknown/failed executions stay in the denominator; submit nothing unexecuted",
+   "mismatch_fallback": "none — submission discipline, always applicable (extends EXP-09)",
+   "guards": [
+    "G-EXACT-OUTPUT",
+    "G-NO-ROUND",
+    "G-DISTINCT-LIST",
+    "G-SCOPE-DENOM",
+    "G-SEMANTIC-BINDING",
+    "G-TIME-BOUNDARY",
+    "G-GROUP-KEY",
+    "G-NULL-EMPTY"
+   ],
+   "source": {
+    "reversion_cases": [
+     {
+      "qid": "V3-14",
+      "cond": "C",
+      "stage": "h3",
+      "rep": 1,
+      "lost": [
+       {
+        "seq": 252,
+        "sql_tail": " CAST(AVG(CAST(m.day_dist AS DOUBLE)) AS CHAR) AS mean_absolute_days,\n       CAST(AVG(m.Consumption) AS CHAR) AS mean_attached_consumption\nFROM matched AS m\nGROUP BY m.Currency\nORDER BY m.Currency ASC",
+        "mean_exprs": [
+         "AVG(CAST(m.day_dist AS DOUBLE))",
+         "AVG(m.Consumption)"
+        ]
+       }
+      ],
+      "trace_sha256": "dca589846baabb14cd9fb14d0ba764d4fac07ddce4c1e36760d6377958797532"
+     }
+    ],
+    "historical_evidence": "POWE-155 C4 h31 V3-14 (executed seq270 high-precision form lost in final SQL), per POWE-157 research E3",
+    "distilled_at": "2026-09-14T04:55:38Z"
+   }
+  }
+ },
+ "corpus_summary": {
+  "runs": 66,
+  "classes": {
+   "precision_scale_only": 51,
+   "unknown": 7,
+   "correct": 7,
+   "submission_reversion": 1
+  },
+  "failing_shapes": {
+   "ROUND(AVG(v),6)": 7,
+   "AVG(m.Consumption)": 7,
+   "AVG(Consumption)": 4,
+   "ROUND(AVG(d),6)": 3,
+   "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)": 3,
+   "AVG(v)": 3,
+   "AVG(day_dist)": 2,
+   "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)": 2,
+   "AVG(ym.Consumption)": 2,
+   "AVG(abs_days)": 2
+  },
+  "corrected_shapes": {
+   "CAST(AVG(m.Consumption) AS DECIMAL(30,10))": 2,
+   "CAST(AVG(Consumption) AS DECIMAL(30,10))": 2,
+   "CAST(AVG(m.abs_days) AS DECIMAL(30,10))": 1,
+   "CAST(AVG(att.age_days) AS DECIMAL(20,10))": 1,
+   "CAST(AVG(att.Consumption) AS DECIMAL(30,10))": 1,
+   "CAST(AVG(age_days) AS DECIMAL(30,10))": 1,
+   "CAST(AVG(m.abs_days) AS DECIMAL(20,10))": 1,
+   "CAST(AVG(CASE WHEN j.matched_customer IS NOT NULL AND j.rn = 1 THEN j.age_days END) AS DECIMAL(30,10))": 1,
+   "CAST(AVG(CASE WHEN j.matched_customer IS NOT NULL AND j.rn = 1 THEN j.Consumption END) AS DECIMAL(30,10))": 1,
+   "CAST(AVG(AbsDays) AS DECIMAL(30,10))": 1
+  },
+  "lost_validated_shapes": {
+   "AVG(CAST(m.day_dist AS DOUBLE))": 1,
+   "AVG(m.Consumption)": 1
+  },
+  "a0_fix_forms_ok": [
+   "inner_cast_noround",
+   "inner_cast_scale6",
+   "outer_cast20_10",
+   "outer_cast30_10",
+   "ref_inner_cast"
+  ],
+  "a0_fix_forms_bad": [
+   "bare_avg",
+   "round6_of_bare"
+  ],
+  "engine": {
+   "version": "5.7.25-OceanBase-v4.3.5.5",
+   "div_precision_increment": 4,
+   "int_1_2_2": {
+    "exprs": [
+     "AVG(n)",
+     "ROUND(AVG(n),6)",
+     "CAST(AVG(n) AS DECIMAL(30,10))",
+     "ROUND(AVG(CAST(n AS DECIMAL(60,18))),6)",
+     "SUM(n)/COUNT(n)",
+     "AVG(CAST(n AS DECIMAL(60,18)))"
+    ],
+    "values": [
+     "1.6667",
+     "1.6667",
+     "1.6666666660",
+     "1.666667",
+     "1.6667",
+     "1.6666666666666666666667"
+    ],
+    "python_types": [
+     "Decimal",
+     "Decimal",
+     "Decimal",
+     "Decimal",
+     "Decimal",
+     "Decimal"
+    ],
+    "field_types": [
+     246,
+     246,
+     246,
+     246,
+     246,
+     246
+    ]
+   }
+  }
+ },
+ "runs": [
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r1/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(att.age_days)",
+    "AVG(att.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 4,
+   "trace_sha256": "cffd0d2bcfb6836a1cc1bcff117f8fbd6b76de122aa72444f9556b39a6ac5e90",
+   "class": "precision_scale_only",
+   "executed_count": 20,
+   "executed_mean_exprs": [
+    "AVG(att.age_days)",
+    "AVG(att.Consumption)",
+    "AVG(att.age_days)",
+    "AVG(att.Consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r1/qV3-14",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "de7bc05386507deaba7f40540c59157dcf8a4a547b59795f27d0d19c4515ae28",
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r1/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN DATEDIFF(Date, month_day) END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 6,
+   "trace_sha256": "8eac86cb0c5c87a4b5591e75bddf4d475e716146d2fe3f15cd813baa93ef841f",
+   "class": "precision_scale_only",
+   "executed_count": 25,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN DATEDIFF(Date, month_day) END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN Consumption END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN DATEDIFF(Date, month_day) END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN Consumption END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN DATEDIFF(Date, month_day) END)",
+    "AVG(CASE WHEN Consumption IS NOT NULL THEN Consumption END)"
+   ],
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r1/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(day_dist)",
+    "AVG(consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 11,
+   "trace_sha256": "c893b690a87ef2dc3f3aff39e84073229754249e0a41cff52daa63ea3b8dfa67",
+   "class": "precision_scale_only",
+   "executed_count": 33,
+   "executed_mean_exprs": [
+    "AVG(day_dist)",
+    "AVG(consumption)",
+    "AVG(day_dist)",
+    "AVG(consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r1/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(age_days),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "ae47c3725bc54eb7d43afcf23d21b3b3006b30e77f7cdb5cf477b72b89f3a15b",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(age_days),6)",
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(age_days),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r1/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "482639dc38dd6cb1cfefb091ce0d04dd2c1514a0e0af08230cc886beb4c41576",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r1/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "a05886cdd8250edab941c2a80369deb0d31b66049e274c50f496c2b0c641e61c",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r1/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(s.ad)",
+    "AVG(s.v)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "b33a1da64c3f55bbc952cd4a899e7358d83159f6bcb3eaf993f98119a5a09d4d",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(s.ad)",
+    "AVG(s.v)",
+    "AVG(s.ad)",
+    "AVG(s.v)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r2/qV3-13",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "da701cb5db03da573f95ee78ab432b742b78151b70814c08fc0d7bc7d64aacbe",
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r2/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 5,
+   "trace_sha256": "396b2d348b45992f22062ad783840179d5dd37c22e5d87d024763f28dd780e5a",
+   "class": "precision_scale_only",
+   "executed_count": 21,
+   "executed_mean_exprs": [
+    "AVG(m.Consumption)",
+    "AVG(m.Consumption)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r2/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(ym.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 9,
+   "trace_sha256": "44d7334ba083be61b4c167722d47bc8b2199330fcb40b7e6e12cd5ae2f07a421",
+   "class": "precision_scale_only",
+   "executed_count": 29,
+   "executed_mean_exprs": [
+    "AVG(ym.Consumption)",
+    "AVG(CASE WHEN rn = 1 AND first_day IS NOT NULL THEN age_days END)",
+    "AVG(CASE WHEN rn = 1 AND first_day IS NOT NULL THEN Consumption END)",
+    "AVG(ym.Consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r2/qV3-14",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(m.abs_days) AS DECIMAL(30,10))",
+    "CAST(AVG(m.Consumption) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 6,
+   "trace_sha256": "ae5d14f49d15786ebaaf98c6741fbe7c2b275c5d4148df778ad36f0cad388f57",
+   "class": "correct",
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(age_days), 6)",
+    "ROUND(AVG(v), 6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "b760cb82ec3e298eee1346f345f48f6cb214743df51b9053d22ff0e30771add4",
+   "class": "precision_scale_only",
+   "executed_count": 12,
+   "executed_mean_exprs": [
+    "ROUND(AVG(age_days), 6)",
+    "ROUND(AVG(v), 6)",
+    "ROUND(AVG(age_days), 6)",
+    "ROUND(AVG(v), 6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r2/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "54afde45fd9e27f2e9d1b93d67eba7d46e3e464f196b73992df57ebaeb3c3575",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(DATEDIFF(a.Date,a.md)),6)",
+    "ROUND(AVG(z.v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "8c737d9b701ed01893f7cdebec59ee6fed2df29262229113bac266268e410fa7",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(DATEDIFF(a.Date,a.md)),6)",
+    "ROUND(AVG(z.v),6)",
+    "ROUND(AVG(DATEDIFF(a.Date,a.md)),6)",
+    "ROUND(AVG(z.v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r2/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(b.d),6)",
+    "ROUND(AVG(b.v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "1ba5f0e79b076e17396456fcbe1c1ce694a2585b9e7a191b0242520d9ac8981d",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(b.d),6)",
+    "ROUND(AVG(b.v),6)",
+    "ROUND(AVG(b.d),6)",
+    "ROUND(AVG(b.v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r3/qV3-13",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "f94062ec73783f48f3acb3211e3b3bf82ff1b235e9fe2798c6182fcc3516da07",
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-old-r3/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(abs_days)",
+    "AVG(Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 8,
+   "trace_sha256": "54f53e451a80eba6630d074b1c88a86f9053a294e0fc8367afbf451f921f72a3",
+   "class": "precision_scale_only",
+   "executed_count": 29,
+   "executed_mean_exprs": [
+    "AVG(abs_days)",
+    "AVG(Consumption)",
+    "CAST(AVG(abs_days) AS DECIMAL(30,10))",
+    "CAST(AVG(Consumption) AS DECIMAL(30,10))",
+    "AVG(abs_days)",
+    "AVG(Consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-old",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r3/qV3-13",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "3afd96e6d63da1528fbaff9885265fdf4e55182166d860fe13425fa85e3e2850",
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/N-full-r3/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.AbsDays)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 8,
+   "trace_sha256": "a4424778620efef49342df20c7b7f89d54ff708a893330d4d95e660ea3d893f1",
+   "class": "precision_scale_only",
+   "executed_count": 29,
+   "executed_mean_exprs": [
+    "AVG(m.AbsDays)",
+    "AVG(m.Consumption)",
+    "AVG(m.AbsDays)",
+    "AVG(m.Consumption)",
+    "ROUND(AVG(m.AbsDays), 10)",
+    "ROUND(AVG(m.Consumption), 10)",
+    "AVG(m.AbsDays)",
+    "AVG(m.Consumption)",
+    "AVG(m.AbsDays)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "a1",
+   "cond": "N-full",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r3/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN DATEDIFF(a.Date,a.match_md) END),6)",
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN x.v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "9c7d48edf5009327d896cd8c7e2fc95217b47b2e80f134fcae57a9c4f8db8ddd",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN DATEDIFF(a.Date,a.match_md) END),6)",
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN x.v END),6)",
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN DATEDIFF(a.Date,a.match_md) END),6)",
+    "ROUND(AVG(CASE WHEN a.match_md IS NOT NULL THEN x.v END),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-old-r3/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(x.dist),6)",
+    "ROUND(AVG(x.v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "413a4c8bd2f174371b7c0f6dadfa822f876df802ebe5d7aa5df603fedcf67d7f",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(x.dist),6)",
+    "ROUND(AVG(x.v),6)",
+    "ROUND(AVG(x.dist),6)",
+    "ROUND(AVG(x.v),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-old",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r3/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(d,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "6934f3eb6d0089d18707fd03f55e47f93fb8357069316c94f1c29dc61e5d854f",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(d,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(d,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-158-b9f7480a29e1/workdir/r4/evidence/a1/S3V2-full-r3/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(dist)",
+    "AVG(v)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "6bfdeaca5bb340a3e733ccd0e2ec9ac60a098f24f9d9965fc11fd3b1c549af28",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(dist)",
+    "AVG(v)",
+    "AVG(dist)",
+    "AVG(v)"
+   ],
+   "stage": "a1",
+   "cond": "S3V2-full",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-S3V2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN DATEDIFF(a.tdate, a.obs_day) END), 6)",
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN m.v END), 6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "2d77608fafaf42395fece9868c1b71de5e0e65828ee457e3d7e0ac6ea1329cb8",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN DATEDIFF(a.tdate, a.obs_day) END), 6)",
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN m.v END), 6)",
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN DATEDIFF(a.tdate, a.obs_day) END), 6)",
+    "ROUND(AVG(CASE WHEN a.obs_day IS NOT NULL THEN m.v END), 6)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-S3V2/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "6495df3cd7c858598d93a5e3fe2d8f2565ef5638f8febaa568afe3cbdbb084bb",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-P2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "7c01dd37d8be792b8f44cadc2272c562d65546877c90eb353d73526eb6642e24",
+   "class": "precision_scale_only",
+   "executed_count": 12,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN DATEDIFF(Date,md) END),6)",
+    "ROUND(AVG(CASE WHEN md IS NOT NULL THEN v END),6)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-P2/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(d)",
+    "AVG(v)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "9e2361e1f39993bc323a26197d89ae6423b4bb9771146ff21baffb259d003fad",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(d)",
+    "AVG(v)",
+    "AVG(d)",
+    "AVG(v)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-H0/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN ym.CustomerID IS NOT NULL THEN ym.Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "e221dcede870352f39205f0643e29b06d4e6ec797b0097507ea9f682a91180bf",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN ym.CustomerID IS NOT NULL THEN ym.Consumption END)",
+    "AVG(CASE WHEN ym.CustomerID IS NOT NULL THEN ym.Consumption END)"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-H0/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "b0ceb100fb178ea1c8cea6cbcc905e143fbf2898f6d61bd9cdc79033464e3ca6",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)",
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-N/qV3-13",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "6b609e996cb5b17be8039af65bc289e4f9e6896fa297e46aa4af644f53dc10c0",
+   "stage": "h3",
+   "cond": "N",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-N/qV3-14",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "ac75599065f91efec4c75155372fb2f981ea7c31a2f205b7a0886947b20359e2",
+   "stage": "h3",
+   "cond": "N",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-M/qV3-13",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(att.age_days) AS DECIMAL(20,10))",
+    "CAST(AVG(att.Consumption) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 6,
+   "trace_sha256": "220ef02bde8cb89c3aee96059d197884d30574cbee2de803842b34348d2a7878",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "M",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-M/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(s.abs_days)",
+    "AVG(s.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "f4914554dc1f580215d5e3d3c42378257d9ad8c2cfeed444afe9993abb08814d",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(s.abs_days)",
+    "AVG(s.Consumption)",
+    "AVG(s.abs_days)",
+    "AVG(s.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "M",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-B/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(ym.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "d7bfaef3e045a2258304eba9501af703e91f15b3fe826fbcebbe3c6e21e9946c",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(ym.Consumption)",
+    "AVG(ym.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-B/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "8f3be3ab35fcd9bcc966c6f9ad9d07923f5a22fba316f6902cc1dce29de126ab",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)",
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-C/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN ym.Date IS NOT NULL THEN ym.Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "d2d10013733fdd6d4f807135d130218920c116f4b727df19fdc94eb2980ef06e",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN ym.Date IS NOT NULL THEN ym.Consumption END)",
+    "AVG(CASE WHEN ym.Date IS NOT NULL THEN ym.Consumption END)"
+   ],
+   "stage": "h3",
+   "cond": "C",
+   "rep": 1,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h31-C/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "dca589846baabb14cd9fb14d0ba764d4fac07ddce4c1e36760d6377958797532",
+   "class": "submission_reversion",
+   "lost_validated_revisions": [
+    {
+     "seq": 252,
+     "sql_tail": " CAST(AVG(CAST(m.day_dist AS DOUBLE)) AS CHAR) AS mean_absolute_days,\n       CAST(AVG(m.Consumption) AS CHAR) AS mean_attached_consumption\nFROM matched AS m\nGROUP BY m.Currency\nORDER BY m.Currency ASC",
+     "mean_exprs": [
+      "AVG(CAST(m.day_dist AS DOUBLE))",
+      "AVG(m.Consumption)"
+     ]
+    }
+   ],
+   "executed_count": 13,
+   "executed_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)",
+    "AVG(CAST(m.day_dist AS DOUBLE))",
+    "AVG(m.Consumption)",
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "C",
+   "rep": 1,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-S3V2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(age),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "efaea6fb15c117368a43443116aa2b023db7c967a0b29656e861628bd0bc4d71",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(age),6)",
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(age),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-S3V2/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(ad)",
+    "AVG(v)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "193cda747b7a7ee9804f33c9aa56f36490b7143cb52547330bf2cc3977d2ff93",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(ad)",
+    "AVG(v)",
+    "AVG(ad)",
+    "AVG(v)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-P2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN DATEDIFF(a.Date,a.md) END),6)",
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN m.v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "4a5109795cd785a9ef8b6f3a5b0322a288c93da5741fe227c7d9db47f66c4fd5",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN DATEDIFF(a.Date,a.md) END),6)",
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN m.v END),6)",
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN DATEDIFF(a.Date,a.md) END),6)",
+    "ROUND(AVG(CASE WHEN a.md IS NOT NULL THEN m.v END),6)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-P2/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(x.d)",
+    "AVG(x.v)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "7dde8712ce08534a9bba793c3376fa0bc736f3753e2146ca80d16a607e2d53ef",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(x.d)",
+    "AVG(x.v)",
+    "AVG(x.d)",
+    "AVG(x.v)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-H0/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN DATEDIFF(l.Date, l.attach_day) END)",
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN c2.Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "c27116a2dd9e68222dfa98df1270a550c126b3f8cf965e3c9b0dab548d856f6c",
+   "class": "precision_scale_only",
+   "executed_count": 12,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN DATEDIFF(l.Date, l.attach_day) END)",
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN c2.Consumption END)",
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN DATEDIFF(l.Date, l.attach_day) END)",
+    "AVG(CASE WHEN l.attach_day IS NOT NULL THEN c2.Consumption END)"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-H0/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(abs_days)",
+    "AVG(Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "5fd596890222e7a952f1129d96504c131c144f3f66a144c57ba8ed72c94e682a",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(abs_days)",
+    "AVG(Consumption)",
+    "AVG(abs_days)",
+    "AVG(Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-N/qV3-13",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(age_days) AS DECIMAL(30,10))",
+    "CAST(AVG(Consumption) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 5,
+   "trace_sha256": "2bb55e4096037fbd874e2a7e38f3c96d5ab62c99bd91562fbecdcff8caf92c56",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "N",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-N/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 11,
+   "trace_sha256": "3c5644dc94c13166590080eed622a2d84edc4ffac9467e8d4bf35b55811156fa",
+   "class": "precision_scale_only",
+   "executed_count": 34,
+   "executed_mean_exprs": [
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)",
+    "AVG(b.abs_days)",
+    "AVG(b.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "N",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-M/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN rn = 1 THEN age_days END)",
+    "AVG(CASE WHEN rn = 1 THEN Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 5,
+   "trace_sha256": "c2d8d471b5026269e8e7947850a54977e05beaf30ba17466ec65b921492a2532",
+   "class": "precision_scale_only",
+   "executed_count": 23,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN rn = 1 THEN age_days END)",
+    "AVG(CASE WHEN rn = 1 THEN Consumption END)",
+    "AVG(CASE WHEN rn = 1 THEN age_days END)",
+    "AVG(CASE WHEN rn = 1 THEN Consumption END)"
+   ],
+   "stage": "h3",
+   "cond": "M",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-M/qV3-14",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(m.abs_days) AS DECIMAL(20,10))",
+    "CAST(AVG(m.Consumption) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 6,
+   "trace_sha256": "5c77dc08680249da7162f76ffae1a4381626b9810a91a653105c1747b3dc094f",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "M",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-B/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(c.age_days)",
+    "AVG(c.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "960ea35c6640cb80193893372c5f0850b62e9c2331a435700d7b5814dc73fdea",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(c.age_days)",
+    "AVG(c.Consumption)",
+    "AVG(c.age_days)",
+    "AVG(c.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-B/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.day_distance)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "0dea8015ab6fa395a9ce1a391ff567e6e5c0c4d83cd73134b0fbefba2ace9da7",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(m.day_distance)",
+    "AVG(m.Consumption)",
+    "AVG(m.day_distance)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-C/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(CASE WHEN first_day IS NOT NULL THEN age_days END)",
+    "AVG(CASE WHEN first_day IS NOT NULL THEN Consumption END)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "2e40fdd165c434e28b167fc28ae40fb725c7a4a52bdcae877cecde98f2ca882c",
+   "class": "precision_scale_only",
+   "executed_count": 13,
+   "executed_mean_exprs": [
+    "AVG(CASE WHEN first_day IS NOT NULL THEN age_days END)",
+    "AVG(CASE WHEN first_day IS NOT NULL THEN Consumption END)",
+    "AVG(age_days)",
+    "AVG(Consumption)",
+    "AVG(CASE WHEN first_day IS NOT NULL THEN age_days END)",
+    "AVG(CASE WHEN first_day IS NOT NULL THEN Consumption END)"
+   ],
+   "stage": "h3",
+   "cond": "C",
+   "rep": 2,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h32-C/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(AbsDays)",
+    "AVG(Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "d17048f6207d66891b23ff98aefaa7538b7c84a615d1c59da681ff0b518c9b4c",
+   "class": "precision_scale_only",
+   "executed_count": 13,
+   "executed_mean_exprs": [
+    "AVG(AbsDays)",
+    "AVG(Consumption)",
+    "AVG(AbsDays)",
+    "AVG(Consumption)",
+    "AVG(AbsDays)",
+    "AVG(Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "C",
+   "rep": 2,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-S3V2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN DATEDIFF(x.Date,x.attach_day) END),6)",
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN m.v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "57206b98a3e68012e655d3fb04b7e7b508b19837714f077a6ee146ed07ed6a33",
+   "class": "precision_scale_only",
+   "executed_count": 13,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN DATEDIFF(x.Date,x.attach_day) END),6)",
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN m.v END),6)",
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN DATEDIFF(x.Date,x.attach_day) END),6)",
+    "ROUND(AVG(CASE WHEN x.attach_day IS NOT NULL THEN m.v END),6)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-S3V2/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "f7bd7a151b283d2aec1aa82a629f708689aeef48e2087d117eed5dd6525bf2de",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "h3",
+   "cond": "S3V2",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-P2/qV3-13",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN age_days END),6)",
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN v END),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "e7daa316a94dec6a2c6a1be625d17d6ea1ecd041498267ceabf09ae555bd9ed2",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN age_days END),6)",
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN v END),6)",
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN age_days END),6)",
+    "ROUND(AVG(CASE WHEN v IS NOT NULL THEN v END),6)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-P2/qV3-14",
+   "final_sql_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "6cf751ea760f5685f0fc1795a07068cf763c9387667d21efd143d9855dcee8fb",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)",
+    "ROUND(AVG(d),6)",
+    "ROUND(AVG(v),6)"
+   ],
+   "stage": "h3",
+   "cond": "P2",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-H0/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(IF(bm.CustomerID IS NOT NULL, ym.Consumption, NULL))"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "f9980201b655cc8c19493a5e54603b3386b54b81b5a9d0354c64e66c1d18b9d5",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(IF(bm.CustomerID IS NOT NULL, ym.Consumption, NULL))",
+    "AVG(IF(bm.CustomerID IS NOT NULL, ym.Consumption, NULL))"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-H0/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(day_dist)",
+    "AVG(Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "bac7b17e58643eeecc83a1da0ee05df9d0bbd5809d0b9f6d446080262fa0ed84",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(day_dist)",
+    "AVG(Consumption)",
+    "AVG(day_dist)",
+    "AVG(Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "H0",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-N/qV3-13",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(CASE WHEN j.matched_customer IS NOT NULL AND j.rn = 1 THEN j.age_days END) AS DECIMAL(30,10))",
+    "CAST(AVG(CASE WHEN j.matched_customer IS NOT NULL AND j.rn = 1 THEN j.Consumption END) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 3,
+   "trace_sha256": "ed7d774e190221d138555e8d803d5f69c7fd0af40c48f82b28f1f65762ce8225",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "N",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-N/qV3-14",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(AbsDays) AS DECIMAL(30,10))",
+    "CAST(AVG(Consumption) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 8,
+   "trace_sha256": "9ee69f06dabfa9b7021d4678f7ef1b8a5de04e98154ae7fe19efd9d218b877a1",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "N",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-M/qV3-13",
+   "final_sql_mean_exprs": [
+    "CAST(AVG(CASE WHEN c.cand_date IS NOT NULL THEN DATEDIFF(u.Date, c.cand_date) END) AS DECIMAL(30,10))",
+    "CAST(AVG(CASE WHEN c.cand_date IS NOT NULL THEN c.Consumption END) AS DECIMAL(30,10))"
+   ],
+   "mismatches": [],
+   "n_mismatch": 0,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "19beec73a1259e20c91e2e31db8e19aff42a87bb9b6894c0f030b17e6717a0b5",
+   "class": "correct",
+   "stage": "h3",
+   "cond": "M",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-M/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 10,
+   "trace_sha256": "92ab284db143fd1722caec7ff68e6953decf875c8dda759e0ac1e17337e926d5",
+   "class": "precision_scale_only",
+   "executed_count": 33,
+   "executed_mean_exprs": [
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)",
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)",
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)",
+    "AVG(m.day_dist)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "M",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-B/qV3-13",
+   "final_sql_mean_exprs": [
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "23.5931",
+     "exp": "23.593148",
+     "absdiff": "0.000048",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "23.1061",
+     "exp": "23.106061",
+     "absdiff": "0.000039",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 2,
+   "trace_sha256": "3a8aa7b1320f874bc98805fb0edd142b3b8dbf747a8c4549e48ee5833b6f5e06",
+   "class": "precision_scale_only",
+   "executed_count": 13,
+   "executed_mean_exprs": [
+    "AVG(m.Consumption)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-B/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(b.day_dist)",
+    "AVG(b.consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "318094a01b1806ddf6148ddfd954a8162ea0b5877b6345796d65cf5ccea69c99",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(b.day_dist)",
+    "AVG(b.consumption)",
+    "AVG(b.day_dist)",
+    "AVG(b.consumption)"
+   ],
+   "stage": "h3",
+   "cond": "B",
+   "rep": 3,
+   "qid": "V3-14"
+  },
+  {
+   "class": "unknown",
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-C/qV3-13",
+   "error": "IntegrityError: native node failed",
+   "trace_sha256": "2c9ece1de97024fc82ff871024cbc5d13dd4153461680a4830548bec0ea0fa13",
+   "stage": "h3",
+   "cond": "C",
+   "rep": 3,
+   "qid": "V3-13"
+  },
+  {
+   "qdir": "/home/rongfeng.frf/.multica/workspaces/powercontex-948fa5029861/powe-155-30296b5c919c/workdir/h3eval/evidence/h33-C/qV3-14",
+   "final_sql_mean_exprs": [
+    "AVG(m.abs_days)",
+    "AVG(m.Consumption)"
+   ],
+   "mismatches": [
+    {
+     "row": 0,
+     "col": 3,
+     "got": "9.3619",
+     "exp": "9.361884",
+     "absdiff": "0.000016",
+     "scale_like": true
+    },
+    {
+     "row": 1,
+     "col": 3,
+     "got": "9.5152",
+     "exp": "9.515152",
+     "absdiff": "0.000048",
+     "scale_like": true
+    }
+   ],
+   "n_mismatch": 2,
+   "only_scale": true,
+   "s_agent": 1,
+   "trace_sha256": "9b990a9a02dccc891d81351ffde51cdf59bcd3df5368fbf94ba9737dbeb59a18",
+   "class": "precision_scale_only",
+   "executed_count": 11,
+   "executed_mean_exprs": [
+    "AVG(m.abs_days)",
+    "AVG(m.Consumption)",
+    "AVG(m.abs_days)",
+    "AVG(m.Consumption)"
+   ],
+   "stage": "h3",
+   "cond": "C",
+   "rep": 3,
+   "qid": "V3-14"
+  }
+ ]
+}

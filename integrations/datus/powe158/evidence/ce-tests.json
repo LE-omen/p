@@ -1,0 +1,60 @@
+{
+ "resolved_ip": "47.111.140.230",
+ "tests": {
+  "CE1_nontemporal_integer_avg": {
+   "n": 239,
+   "exact_decimal_mean": "4.372384937238493723849372385",
+   "values": {
+    "AVG(Amount)": "4.3724",
+    "ROUND(AVG(Amount),6)": "4.3724",
+    "CAST(AVG AS DEC(30,10))": "4.3723849370",
+    "AVG(CAST AS DEC(60,18))": "4.3723849372384937238494"
+   },
+   "within_5e7": {
+    "AVG(Amount)": false,
+    "ROUND(AVG(Amount),6)": false,
+    "CAST(AVG AS DEC(30,10))": true,
+    "AVG(CAST AS DEC(60,18))": true
+   },
+   "pass": true
+  },
+  "CE2_null_boundary": {
+   "labels": [
+    "AVG(case-all-null)",
+    "AVG(CAST case-all-null)",
+    "COUNT(*)",
+    "SUM(v IS NULL)"
+   ],
+   "values": [
+    "None",
+    "None",
+    "1000",
+    "1000"
+   ],
+   "avg_all_null_is_null": true,
+   "rows_preserved_in_count": true,
+   "pass": true
+  },
+  "CE3a_insufficient_scale": {
+   "values": {
+    "CAST(AVG AS DEC(30,4))": "4.3724",
+    "AVG(CAST AS DEC(30,4))": "4.37238494"
+   },
+   "exact": "4.372384937238493723849372385",
+   "within_5e7": {
+    "outer4": false,
+    "inner4": true
+   },
+   "pass": true
+  },
+  "CE3b_overcast_invariance": {
+   "count_star": 1000,
+   "distinct_id": 517,
+   "distinct_id_cast": 517,
+   "sum_int_equals_cast_sum": true,
+   "text_equality_under_cast": true,
+   "pass": true
+  }
+ },
+ "all_pass": true
+}

@@ -1,0 +1,1365 @@
+{
+ "arms": {
+  "S4": {
+   "per_question": {
+    "V3-13": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-14": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-16": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-17": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-29": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-30": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.33
+    },
+    "V3-35": {
+     "correct_of_3": 2,
+     "j_of_3": 2,
+     "unknown_of_3": 0,
+     "mean_s_agent": 2.0
+    },
+    "V3-36": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-37": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-44": {
+     "correct_of_3": 2,
+     "j_of_3": 2,
+     "unknown_of_3": 1,
+     "mean_s_agent": 2.0
+    },
+    "V3-45": {
+     "correct_of_3": 1,
+     "j_of_3": 1,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-46": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    }
+   },
+   "per_run": {
+    "V3-13": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-14": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-16": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-17": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-29": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-30": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-35": {
+     "r1": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-36": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-37": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-44": {
+     "r1": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     }
+    },
+    "V3-45": {
+     "r1": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-46": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    }
+   },
+   "meanC": 0.8889,
+   "total_correct_of_36": 32,
+   "j_rate": 0.8889,
+   "temporal_correct_of_12": 9,
+   "control_correct_of_24": 23,
+   "s_agent_mean": 1.17
+  },
+  "P2": {
+   "per_question": {
+    "V3-13": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-14": {
+     "correct_of_3": 1,
+     "j_of_3": 1,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-16": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-17": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-29": {
+     "correct_of_3": 2,
+     "j_of_3": 2,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-30": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-35": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-36": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-37": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-44": {
+     "correct_of_3": 3,
+     "j_of_3": 2,
+     "unknown_of_3": 0,
+     "mean_s_agent": 3.33
+    },
+    "V3-45": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-46": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    }
+   },
+   "per_run": {
+    "V3-13": {
+     "r1": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-14": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-16": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-17": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-29": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-30": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-35": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-36": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-37": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-44": {
+     "r1": {
+      "correct": true,
+      "s_agent": 6,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-45": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-46": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    }
+   },
+   "meanC": 0.8333,
+   "total_correct_of_36": 30,
+   "j_rate": 0.8056,
+   "temporal_correct_of_12": 7,
+   "control_correct_of_24": 23,
+   "s_agent_mean": 1.19
+  },
+  "H0": {
+   "per_question": {
+    "V3-13": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 1.5
+    },
+    "V3-14": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 3.0
+    },
+    "V3-16": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.33
+    },
+    "V3-17": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-29": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-30": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-35": {
+     "correct_of_3": 2,
+     "j_of_3": 1,
+     "unknown_of_3": 0,
+     "mean_s_agent": 2.33
+    },
+    "V3-36": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-37": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    },
+    "V3-44": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.33
+    },
+    "V3-45": {
+     "correct_of_3": 3,
+     "j_of_3": 2,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.67
+    },
+    "V3-46": {
+     "correct_of_3": 3,
+     "j_of_3": 3,
+     "unknown_of_3": 0,
+     "mean_s_agent": 1.0
+    }
+   },
+   "per_run": {
+    "V3-13": {
+     "r1": {
+      "correct": false,
+      "s_agent": 2,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     }
+    },
+    "V3-14": {
+     "r1": {
+      "correct": false,
+      "s_agent": 4,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 2,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-16": {
+     "r1": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-17": {
+     "r1": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-29": {
+     "r1": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-30": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-35": {
+     "r1": {
+      "correct": true,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-36": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-37": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-44": {
+     "r1": {
+      "correct": true,
+      "s_agent": 2,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    },
+    "V3-45": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-46": {
+     "r1": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 1,
+      "in_budget": true,
+      "unknown_reason": null
+     }
+    }
+   },
+   "meanC": 0.6389,
+   "total_correct_of_36": 23,
+   "j_rate": 0.5833,
+   "temporal_correct_of_12": 6,
+   "control_correct_of_24": 17,
+   "s_agent_mean": 1.38
+  },
+  "N": {
+   "per_question": {
+    "V3-13": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 2,
+     "mean_s_agent": 5.0
+    },
+    "V3-14": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 5.5
+    },
+    "V3-16": {
+     "correct_of_3": 3,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 4.33
+    },
+    "V3-17": {
+     "correct_of_3": 1,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 9.5
+    },
+    "V3-29": {
+     "correct_of_3": 0,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 3.0
+    },
+    "V3-30": {
+     "correct_of_3": 3,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 6.0
+    },
+    "V3-35": {
+     "correct_of_3": 1,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 10.0
+    },
+    "V3-36": {
+     "correct_of_3": 1,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 10.5
+    },
+    "V3-37": {
+     "correct_of_3": 3,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 7.0
+    },
+    "V3-44": {
+     "correct_of_3": 2,
+     "j_of_3": 0,
+     "unknown_of_3": 1,
+     "mean_s_agent": 6.0
+    },
+    "V3-45": {
+     "correct_of_3": 2,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 5.67
+    },
+    "V3-46": {
+     "correct_of_3": 3,
+     "j_of_3": 0,
+     "unknown_of_3": 0,
+     "mean_s_agent": 3.0
+    }
+   },
+   "per_run": {
+    "V3-13": {
+     "r1": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     }
+    },
+    "V3-14": {
+     "r1": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 6,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-16": {
+     "r1": {
+      "correct": true,
+      "s_agent": 6,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 4,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-17": {
+     "r1": {
+      "correct": true,
+      "s_agent": 7,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 12,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-29": {
+     "r1": {
+      "correct": false,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 1,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-30": {
+     "r1": {
+      "correct": true,
+      "s_agent": 7,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 4,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 7,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-35": {
+     "r1": {
+      "correct": true,
+      "s_agent": 6,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 9,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 15,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-36": {
+     "r1": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r2": {
+      "correct": false,
+      "s_agent": 12,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 9,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-37": {
+     "r1": {
+      "correct": true,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 11,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-44": {
+     "r1": {
+      "correct": null,
+      "s_agent": null,
+      "in_budget": null,
+      "unknown_reason": "run_failed"
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 8,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 4,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-45": {
+     "r1": {
+      "correct": true,
+      "s_agent": 5,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 4,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": false,
+      "s_agent": 8,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    },
+    "V3-46": {
+     "r1": {
+      "correct": true,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r2": {
+      "correct": true,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     },
+     "r3": {
+      "correct": true,
+      "s_agent": 3,
+      "in_budget": false,
+      "unknown_reason": null
+     }
+    }
+   },
+   "meanC": 0.5278,
+   "total_correct_of_36": 19,
+   "j_rate": 0.0,
+   "temporal_correct_of_12": 4,
+   "control_correct_of_24": 15,
+   "s_agent_mean": 6.17
+  }
+ },
+ "paired": {
+  "S4_vs_P2": {
+   "per_q_diff": [
+    3,
+    2,
+    0,
+    0,
+    1,
+    0,
+    -1,
+    0,
+    0,
+    -1,
+    -2,
+    0
+   ],
+   "mean": 0.1667,
+   "ci95": [
+    -0.6829,
+    1.0162
+   ]
+  },
+  "S4_vs_H0": {
+   "per_q_diff": [
+    3,
+    3,
+    0,
+    3,
+    3,
+    0,
+    0,
+    0,
+    0,
+    -1,
+    -2,
+    0
+   ],
+   "mean": 0.75,
+   "ci95": [
+    -0.3711,
+    1.8711
+   ]
+  },
+  "S4_vs_N": {
+   "per_q_diff": [
+    3,
+    3,
+    0,
+    2,
+    3,
+    0,
+    1,
+    2,
+    0,
+    0,
+    -1,
+    0
+   ],
+   "mean": 1.0833,
+   "ci95": [
+    0.1662,
+    2.0004
+   ]
+  }
+ }
+}

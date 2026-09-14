@@ -1,0 +1,25 @@
+{
+ "freeze_id": "POWE-3-R4-CHAMPION-1",
+ "frozen_at": "2026-09-14T06:17:31Z",
+ "arm": "S4",
+ "composition": {
+  "skills": "p2-additive 3-card tree (d2-patterns/legacy-patterns/negative-guards)",
+  "common": "s4.txt sha256 e4af9661cba81a7bb9e2ecad14a97a8cf4a1e2fec2826858fea56df176f5d01d",
+  "contract": "unified numeric contract (G1-G5 verbatim) sha256 3b94b35a3d39cfe1f8ce14168986186ed4ec1e154d1919965c240f81b997fbf1",
+  "runner": "run_qa_r4.py sha256 895076bc79a925b4af57e91c70dddb4f24452761685c72ec8f03a7ed72660f0a (frozen runner + contract append only)"
+ },
+ "selection": "preregistered: highest meanC over 12q x 3 (S4 0.889 > P2 0.833 > H0 0.639 > N 0.528)",
+ "diagnostic_evidence": {
+  "S4 C/36": 32,
+  "temporal_12": 9,
+  "control_24": 23,
+  "J_rate": 0.889,
+  "meanS": 1.17,
+  "V3-13": "3/3 (all other arms 0/3)",
+  "V3-14": "3/3 (P2 1/3, H0/N 0/3)",
+  "paired_vs_N_CI_lo": 0.166,
+  "paired_vs_P2": "+0.167 [-0.683,+1.016]"
+ },
+ "residual_failure_disclosure": "S4 misses are semantic (V3-45 x2 interpolation weighting, V3-35 r3 covariance scope) + 1 run_failed (V3-44 r3); no over-CAST signature observed (casts present in correct runs)",
+ "frozen_before": "old-R x3 regression"
+}
