@@ -21,7 +21,8 @@ import re
 import sys
 from pathlib import Path
 
-ACTION_REFERENCE = re.compile(r"^\s*(?:-\s*)?uses:\s*([^\s#]+)", re.MULTILINE)
+import yaml
+
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 SUPPORTED_SUFFIXES = {".yaml", ".yml"}
 
@@ -48,21 +49,35 @@ def _files_to_scan(arguments: list[str]) -> list[Path]:
     return sorted(set(files), key=lambda path: str(path).lower())
 
 
+def _action_references(value: object) -> list[str]:
+    references: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "uses":
+                references.append(child if isinstance(child, str) else "")
+            else:
+                references.extend(_action_references(child))
+    elif isinstance(value, list):
+        for child in value:
+            references.extend(_action_references(child))
+    return references
+
+
 def main(arguments: list[str]) -> int:
     references_checked = 0
     violations: list[str] = []
     for path in _files_to_scan(arguments or [".github/workflows", ".github/actions"]):
-        text = path.read_text(encoding="utf-8")
-        for match in ACTION_REFERENCE.finditer(text):
+        try:
+            document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, yaml.YAMLError) as error:
+            print(f"{path}: could not parse YAML: {error}", file=sys.stderr)
+            return 1
+        for reference in _action_references(document):
             references_checked += 1
-            reference = match.group(1)
-            line_number = text.count("\n", 0, match.start()) + 1
             if reference.startswith("./") or reference.startswith("../"):
                 continue
             if "@" not in reference or not COMMIT_SHA.fullmatch(reference.rsplit("@", 1)[1]):
-                violations.append(
-                    f"{path}:{line_number}: uses reference '{reference}' must use a 40-character commit SHA"
-                )
+                violations.append(f"{path}: uses reference '{reference}' must use a 40-character commit SHA")
 
     if violations:
         print("\n".join(violations), file=sys.stderr)

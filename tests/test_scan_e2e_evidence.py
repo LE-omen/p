@@ -95,7 +95,7 @@ def test_infrastructure_failure_retries_once_and_keeps_only_redacted_tail(tmp_pa
     result = run_scan(
         tmp_path,
         fake_docker="""#!/usr/bin/env bash
-printf '%s\n' 'network token=super-secret-value' >&2
+printf '%s\n' 'network timeout: {"password":"SyntheticP4ss!"} Authorization: Basic dXNlcjpzZWNyZXQ= https://user:secret@example.test' >&2
 exit 125
 """,
     )
@@ -105,7 +105,26 @@ exit 125
     assert "scan_status=infra_error" in summary
     assert "scanner_exit_code=125" in summary
     assert "scanner_attempts=2" in summary
-    assert "token=[REDACTED]" in summary
-    assert "super-secret-value" not in summary
-    assert "scanner_stderr_tail_begin" in summary
-    assert "scanner_stderr_tail_end" in summary
+    assert "scanner_error_category=network" in summary
+    assert "scanner_stderr_tail_lines=1" in summary
+    assert "scanner_stderr_sha256=" in summary
+    assert "SyntheticP4ss!" not in summary
+    assert "Basic dXNlcjpzZWNyZXQ=" not in summary
+    assert "https://user:secret@example.test" not in summary
+
+
+def test_findings_redact_unsafe_detector_and_path_values(tmp_path: Path) -> None:
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+printf '%s\n' '{"DetectorName":"{\\\"password\\\":\\\"SyntheticP4ss!\\\"}","SourceMetadata":{"Data":{"Filesystem":{"file":"/evidence/{\\\"password\\\":\\\"SyntheticP4ss!\\\"}"}}}}'
+exit 183
+""",
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    assert result.returncode == 1
+    assert "scan_status=findings" in summary
+    assert "SyntheticP4ss!" not in summary
+    assert "password" not in summary
+    assert "finding=[REDACTED] path=[REDACTED]" in summary

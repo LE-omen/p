@@ -69,6 +69,55 @@ jobs:
     assert "must use a 40-character commit SHA" in result.stderr
 
 
+def test_workflow_action_checker_parses_flow_style_and_quoted_references(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+jobs:
+  check:
+    steps:
+      - {uses: actions/checkout@v7}
+      - "uses": actions/setup-python@v7
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 1
+    assert "checkout@v7" in result.stderr
+    assert "setup-python@v7" in result.stderr
+
+
+def test_workflow_action_checker_accepts_quoted_sha_and_local_references(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text(
+        """
+jobs:
+  check:
+    steps:
+      - uses: "actions/checkout@0123456789abcdef0123456789abcdef01234567"
+      - uses: "./.github/actions/setup-python-env"
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 0, result.stderr
+    assert "2 action references checked" in result.stdout
+
+
+def test_workflow_action_checker_rejects_malformed_yaml(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yml"
+    workflow.write_text("jobs:\n  check:\n    steps: [\n", encoding="utf-8")
+
+    result = run_checker(workflow)
+
+    assert result.returncode == 1
+    assert "could not parse" in result.stderr
+
+
 def test_workflow_action_checker_scans_nested_composite_actions(tmp_path: Path) -> None:
     workflow = tmp_path / "workflow.yml"
     workflow.write_text(

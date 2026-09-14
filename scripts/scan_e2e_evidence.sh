@@ -67,6 +67,77 @@ run_scan() {
         --json > "${json_output}" 2> "${stderr_output}" || return $?
 }
 
+sanitize_detector() {
+    local value="$1"
+    local lower_value="${value,,}"
+    if test "${#value}" -le 120; then
+        case "${value}" in
+            ""|[![:alnum:]]*) ;;
+            *)
+                if test -z "$(printf '%s' "${value}" | tr -d '[:alnum:] _./-')"; then
+                    case "${lower_value}" in
+                        *password*|*secret*|*authorization*|*bearer*|*basic*|*api_key*|*api-key*|*api\ key*|*://*|*@*|*=*)
+                            ;;
+                        *)
+                            printf '%s' "${value}"
+                            return
+                            ;;
+                    esac
+                fi
+                ;;
+        esac
+    fi
+    printf '[REDACTED]'
+}
+
+sanitize_path() {
+    local value="$1"
+    local lower_value="${value,,}"
+    if [[ -z "${value}" ]]; then
+        printf 'unknown'
+    elif test "${#value}" -le 240; then
+        case "${value}" in
+            [![:alnum:]]*|*..*) ;;
+            *)
+                if test -z "$(printf '%s' "${value}" | tr -d '[:alnum:]_.\/-')"; then
+                    case "${lower_value}" in
+                        *password*|*secret*|*authorization*|*bearer*|*basic*|*api_key*|*api-key*|*api\ key*|*://*|*@*|*=*)
+                            ;;
+                        *)
+                            printf '%s' "${value}"
+                            return
+                            ;;
+                    esac
+                fi
+                ;;
+        esac
+    fi
+    printf '[REDACTED]'
+}
+
+file_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$1" | awk '{print $1}'
+    else
+        printf 'unavailable'
+    fi
+}
+
+scanner_error_category() {
+    local stderr_file="$1"
+    if grep -Eiq 'docker daemon|cannot connect to the docker daemon|is the docker daemon running' "${stderr_file}"; then
+        printf 'docker_daemon'
+    elif grep -Eiq 'pull|manifest|image|ghcr\.io|not found' "${stderr_file}"; then
+        printf 'image_pull'
+    elif grep -Eiq 'network|timeout|connection|dns|resolve' "${stderr_file}"; then
+        printf 'network'
+    else
+        printf 'unknown'
+    fi
+}
+
 if run_scan "${scanner_json}" "${scanner_stderr}"; then
     scanner_status=0
 else
@@ -91,23 +162,26 @@ if test "${scanner_status}" -eq 183; then
     echo "scan_status=findings" >> "${summary}"
     echo "scanner_exit_code=183" >> "${summary}"
     if command -v jq >/dev/null 2>&1; then
-        jq -r '
-            select(.DetectorName? != null)
-            | [
-                (.DetectorName | tostring | .[0:120]),
-                ((.SourceMetadata.Data.Filesystem.file // .SourceMetadata.Data.Filesystem.path // "unknown")
-                    | tostring
-                    | sub("^/evidence/?"; "")
-                    | .[0:240])
-              ]
-            | @tsv
-        ' "${scanner_json}" 2>/dev/null \
-            | head -n 20 \
-            | sed $'s/^/finding=/; s/\t/ path=/' \
-            | sed -E \
-                -e 's/(Authorization:[[:space:]]*Bearer[[:space:]]+)[^[:space:]]+/\1[REDACTED]/Ig' \
-                -e 's/((token|secret|password|api[_-]?key)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
-                -e 's/[A-Za-z0-9+\/_=-]{32,}/[REDACTED]/g' >> "${summary}" || true
+        while IFS=$'\t' read -r detector path; do
+            detector="${detector%$'\r'}"
+            path="${path%$'\r'}"
+            printf 'finding=%s path=%s\n' \
+                "$(sanitize_detector "${detector}")" \
+                "$(sanitize_path "${path}")" >> "${summary}"
+        done < <(
+            jq -r '
+                limit(20;
+                    select(.DetectorName? != null)
+                    | [
+                        (.DetectorName | tostring),
+                        ((.SourceMetadata.Data.Filesystem.file // .SourceMetadata.Data.Filesystem.path // "unknown")
+                            | tostring
+                            | sub("^/evidence/?"; ""))
+                      ]
+                    | @tsv
+                )
+            ' "${scanner_json}" 2>/dev/null || true
+        )
     else
         echo "finding_diagnostics=jq_unavailable" >> "${summary}"
     fi
@@ -118,16 +192,13 @@ fi
 if test "${scanner_status}" -ne 0; then
     echo "scan_status=infra_error" >> "${summary}"
     echo "scanner_exit_code=${scanner_status}" >> "${summary}"
-    {
-        echo "scanner_stderr_tail_begin"
-        tail -n 50 "${scanner_stderr}" \
-            | tr -cd '\11\12\15\40-\176' \
-            | sed -E \
-                -e 's/(Authorization:[[:space:]]*Bearer[[:space:]]+)[^[:space:]]+/\1[REDACTED]/Ig' \
-                -e 's/((token|secret|password|api[_-]?key)[=:][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig' \
-                -e 's/[A-Za-z0-9+\/_=-]{32,}/[REDACTED]/g'
-        echo "scanner_stderr_tail_end"
-    } >> "${summary}"
+    stderr_lines="$(wc -l < "${scanner_stderr}" | tr -d '[:space:]')"
+    if test "${stderr_lines}" -gt 50; then
+        stderr_lines=50
+    fi
+    echo "scanner_error_category=$(scanner_error_category "${scanner_stderr}")" >> "${summary}"
+    echo "scanner_stderr_tail_lines=${stderr_lines}" >> "${summary}"
+    echo "scanner_stderr_sha256=$(file_sha256 "${scanner_stderr}")" >> "${summary}"
     echo "Replay evidence scanning failed due to infrastructure error; raw evidence will not be uploaded." >&2
     exit 1
 fi
