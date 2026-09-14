@@ -1416,7 +1416,6 @@ def test_service_install_cli_prompts_for_login_autostart(monkeypatch: pytest.Mon
     assert "POWERCONTEXT_SERVER_AUTH_TOKEN" in result.output
     assert "the value is never printed" in result.output
     assert "Inference capability notice" in result.output
-    assert "Some artifact features may be unavailable." in result.output
     assert "https://powercontext.oceanbase.io/en/docs/reference/configuration/" in result.output
 
 

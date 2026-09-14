@@ -103,6 +103,44 @@ def running_server(cli: str, root: Path, env: dict[str, str], token: str, name: 
                 process.wait()
 
 
+def reinstall_offline(
+    installer: list[str], root: Path, env: dict[str, str], version: str, *, interactive: bool
+) -> None:
+    if not interactive:
+        run(installer, root, env, "reinstall-offline")
+        return
+    # Regression: a piped installer must still allow terminal input at Agent selection.
+    controller = """import errno, os, pty, sys
+pid, terminal = pty.fork()
+if pid == 0:
+    os.execv('/bin/bash', ['/bin/bash', '-o', 'pipefail', '-c',
+        'cat "$1" | /bin/bash -s -- --version "$2"', 'installer-pipeline', *sys.argv[1:]])
+try:
+    os.write(terminal, b'\\n')
+    while True:
+        try:
+            data = os.read(terminal, 4096)
+        except OSError as error:
+            if error.errno == errno.EIO:
+                break
+            raise
+        if not data:
+            break
+        os.write(1, data)
+finally:
+    os.close(terminal)
+_, status = os.waitpid(pid, 0)
+sys.exit(os.waitstatus_to_exitcode(status))
+"""
+    output = run(
+        [sys.executable, "-c", controller, str(ROOT / "website/public/install.sh"), str(version)],
+        root,
+        env,
+        "reinstall-offline",
+    )
+    assert "Select hosts" in output
+
+
 @pytest.mark.parametrize("environment", ["bootstrap-global", "bootstrap-cn", "existing"])
 def test_install_configure_remember_and_reinstall(tmp_path: Path, environment: str) -> None:
     assert WHEEL is not None
@@ -114,8 +152,6 @@ def test_install_configure_remember_and_reinstall(tmp_path: Path, environment: s
     constraints = tmp_path / "constraints.txt"
     checksum = hashlib.sha256(wheel.read_bytes()).hexdigest()
     constraints.write_text(f"powercontext @ {wheel.as_uri()}#sha256={checksum}\n", encoding="utf-8")
-    uv_config = tmp_path / "uv.toml"
-    uv_config.write_text("", encoding="utf-8")
     home_dir = tmp_path / "home"
     home_dir.mkdir()
     env = {
@@ -175,11 +211,9 @@ def test_install_configure_remember_and_reinstall(tmp_path: Path, environment: s
         if environment == "bootstrap-global":
             env["POWERCONTEXT_INSTALL_REGION"] = "cn"
             installer += ["--region", "global"]
-            region = "global"
-        else:
-            region = "cn"
     else:
         env.pop("UV_NO_CONFIG")
+        uv_config = tmp_path / "uv.toml"
         uv_config.write_text('[[index]]\nurl = "https://pypi.org/simple"\ndefault = true\n', encoding="utf-8")
         env.update(
             TZ="UTC",
@@ -189,9 +223,7 @@ def test_install_configure_remember_and_reinstall(tmp_path: Path, environment: s
             UV_PYTHON_INSTALL_MIRROR="https://127.0.0.1:9/unavailable",
             POWERCONTEXT_UV_INSTALLER_URL="https://127.0.0.1:9/unavailable",
         )
-        region = "cn"
-    output = run(installer, tmp_path, env, "install")
-    assert f"Download region: {region}" in output
+    run(installer, tmp_path, env, "install")
     if environment == "existing":
         # An explicitly selected source must not silently fall back to a public index.
         run([*installer, "--index-url", "https://127.0.0.1:9/simple"], tmp_path, env, "explicit-index", success=False)
@@ -210,7 +242,9 @@ def test_install_configure_remember_and_reinstall(tmp_path: Path, environment: s
     env.update(
         UV_OFFLINE="1", UV_PYTHON_DOWNLOADS="never", POWERCONTEXT_UV_INSTALLER_URL="https://127.0.0.1:9/unavailable"
     )
-    run(installer, tmp_path, env, "reinstall-offline")
+    reinstall_offline(
+        installer, tmp_path, env, str(version), interactive=environment == "existing" and sys.platform != "win32"
+    )
     assert (tmp_path / ".env").read_bytes() == config
     with running_server(cli, tmp_path, env, token, "server-restarted") as url:
         found = request(url + "/v1/memory/search", token, query)

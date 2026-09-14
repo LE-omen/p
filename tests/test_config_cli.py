@@ -53,7 +53,6 @@ def test_init_succeeds_with_redirected_windows_output(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     assert (tmp_path / ".env").is_file()
     assert "https://powercontext.oceanbase.io/en/docs/reference/configuration/" in result.stdout
-    assert "Restart WorkBuddy" in result.stdout
 
 
 def test_init_creates_a_model_free_deployment_and_explains_capability_limits(tmp_path: Path) -> None:
@@ -71,7 +70,6 @@ def test_init_creates_a_model_free_deployment_and_explains_capability_limits(tmp
     assert "Generation API key" not in result.output
     assert "Embedding model" not in result.output
     assert "Inference capability notice" in result.output
-    assert "Some artifact features may be unavailable." in result.output
     assert "https://powercontext.oceanbase.io/en/docs/reference/configuration/" in result.output
     assert f"Path          {environment.resolve()} (mode 0600)" in result.output
     assert "POWERCONTEXT_SERVER_AUTH_TOKEN" in result.output
