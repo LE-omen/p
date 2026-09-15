@@ -92,7 +92,8 @@ exit 183
     assert result.returncode == 1
     assert "scan_status=findings" in summary
     assert "scanner_exit_code=183" in summary
-    assert "finding=GitHub Token path=replay.json" in summary
+    assert "finding=GitHub Token path=[REDACTED]" in summary
+    assert "replay.json" not in summary
     assert "raw-secret-value" not in summary
     assert "scanner_attempts=1" in summary
 
@@ -158,6 +159,44 @@ exit 183
     assert "SyntheticP4ss!" not in summary
     assert "password" not in summary
     assert "finding=[REDACTED] path=[REDACTED]" in summary
+
+
+def test_findings_redact_credential_shaped_paths(tmp_path: Path) -> None:
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+printf '%s\n' '{"DetectorName":"GitHub Token","SourceMetadata":{"Data":{"Filesystem":{"file":"/evidence/ghp_abcdefghijklmnopqrstuvwxyz1234567890/replay.json"}}}}'
+exit 183
+""",
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    assert result.returncode == 1
+    assert "scan_status=findings" in summary
+    assert "finding=GitHub Token path=[REDACTED]" in summary
+    assert "ghp_abcdefghijklmnopqrstuvwxyz1234567890" not in summary
+    assert "replay.json" not in summary
+
+
+def test_findings_limit_applies_to_complete_jsonl_stream(tmp_path: Path) -> None:
+    result = run_scan(
+        tmp_path,
+        fake_docker="""#!/usr/bin/env bash
+i=1
+while test "$i" -le 45; do
+    printf '{"DetectorName":"Generic Detector %02d","SourceMetadata":{"Data":{"Filesystem":{"file":"/evidence/path-%02d.json"}}}}\n' "$i" "$i"
+    i=$((i + 1))
+done
+exit 183
+""",
+    )
+
+    summary = (tmp_path / "diagnostics" / "summary.txt").read_text(encoding="utf-8")
+    finding_lines = [line for line in summary.splitlines() if line.startswith("finding=")]
+    assert result.returncode == 1
+    assert len(finding_lines) == 20
+    assert "finding=Generic Detector 20 path=[REDACTED]" in summary
+    assert "Generic Detector 21" not in summary
 
 
 def test_findings_redact_non_ascii_values(tmp_path: Path) -> None:

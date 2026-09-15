@@ -127,27 +127,11 @@ sanitize_detector() {
 
 sanitize_path() {
     local value="$1"
-    local lower_value="${value,,}"
     if [[ -z "${value}" ]]; then
         printf 'unknown'
-    elif test "${#value}" -le 240; then
-        case "${value}" in
-            [!A-Za-z0-9]*|*..*) ;;
-            *)
-                if test -z "$(printf '%s' "${value}" | tr -d 'A-Za-z0-9_.\/-')"; then
-                    case "${lower_value}" in
-                        *password*|*secret*|*authorization*|*bearer*|*basic*|*api_key*|*api-key*|*api\ key*|*://*|*@*|*=*)
-                            ;;
-                        *)
-                            printf '%s' "${value}"
-                            return
-                            ;;
-                    esac
-                fi
-                ;;
-        esac
+    else
+        printf '[REDACTED]'
     fi
-    printf '[REDACTED]'
 }
 
 file_sha256() {
@@ -204,9 +188,10 @@ if test "${scanner_status}" -eq 183; then
                 "$(sanitize_detector "${detector}")" \
                 "$(sanitize_path "${path}")" >> "${summary}"
         done < <(
-            jq -r '
+            jq -nr '
                 limit(20;
-                    select(.DetectorName? != null)
+                    inputs
+                    | select(.DetectorName? != null)
                     | [
                         (.DetectorName | tostring),
                         ((.SourceMetadata.Data.Filesystem.file // .SourceMetadata.Data.Filesystem.path // "unknown")
