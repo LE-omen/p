@@ -19,7 +19,7 @@ import re
 from pathlib import Path
 
 import pytest
-from sqlalchemy import insert
+from sqlalchemy import String, insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection
 
@@ -62,6 +62,8 @@ KEY = signature_key("openapi contract changed without regenerating the client")
 def test_recurrence_match_mode_column_fits_every_declared_mode() -> None:
     column = RECURRENCE_MATCH_TABLE.c.candidate_set_mode
 
+    assert isinstance(column.type, String)
+    assert column.type.length is not None
     assert column.type.length >= max(len("handoff_citations"), len("scope_heads"))
 
 

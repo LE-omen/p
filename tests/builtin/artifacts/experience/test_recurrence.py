@@ -27,7 +27,6 @@ from powercontext.builtin.artifacts.experience import (
     FailureVerification,
 )
 from powercontext.builtin.artifacts.experience.recurrence import (
-    MAX_RECURRENCE_CANDIDATES,
     NEAR_DUPLICATE_BIGRAM_OVERLAP,
     RECURRENCE_REVIEW_STREAK_THRESHOLD,
     RecurrenceEvent,
@@ -230,14 +229,11 @@ def test_match_result_is_deterministic_and_never_chooses() -> None:
     assert match_result(9) == "ambiguous"
 
 
-def test_candidate_sets_are_deduplicated_sorted_and_bounded() -> None:
-    refs = tuple(
-        ArtifactRef(family="experience", artifact_id=f"experience-{index}", revision=1)
-        for index in range(MAX_RECURRENCE_CANDIDATES + 5)
-    )
+def test_candidate_sets_are_deduplicated_and_sorted() -> None:
+    refs = tuple(ArtifactRef(family="experience", artifact_id=f"experience-{index}", revision=1) for index in range(69))
     frozen = freeze_candidate_set(mode="scope_heads", refs=refs + refs[:1])
 
-    assert len(frozen) == MAX_RECURRENCE_CANDIDATES
+    assert len(frozen) == len(refs)
     assert frozen == tuple(sorted(frozen, key=lambda ref: (ref.family, ref.artifact_id, ref.revision)))
     assert candidate_set_digest(frozen) == candidate_set_digest(frozen)
     assert candidate_set_digest(frozen) != candidate_set_digest(frozen[:-1])

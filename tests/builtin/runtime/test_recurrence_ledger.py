@@ -417,6 +417,63 @@ def test_unlinked_failure_window_still_records_recurrence() -> None:
     asyncio.run(scenario())
 
 
+def test_unlinked_failure_matches_after_sixty_four_non_failure_experiences() -> None:
+    """Regression for #1586: ordinary heads must not hide a later failure cue."""
+
+    async def scenario() -> None:
+        async with SQLiteProfile.open(
+            SQLiteConfig(), tables=SCOPE_TABLES + SHARED_TABLES + RECURRENCE_TABLES
+        ) as profile:
+            sources = SourceRepository((CONTENT_SOURCE_ADAPTER,))
+            repository = RecurrenceRepository()
+            matching_ref = ArtifactRef(family=Experience.family, artifact_id="experience-z", revision=1)
+            async with profile.database.transaction() as connection:
+                await _seed_scope(connection)
+                artifacts = ArtifactRepository((Handoff, Experience), sources=sources)
+                ordinary = _experience().model_copy(update={"failure": None}).model_dump(mode="json")
+                for index in range(64):
+                    await artifacts.create(
+                        connection,
+                        SCOPE,
+                        f"experience-{index:03d}",
+                        artifacts.draft(Experience.family, ordinary),
+                    )
+                await artifacts.create(
+                    connection,
+                    SCOPE,
+                    matching_ref.artifact_id,
+                    artifacts.draft(Experience.family, _experience().model_dump(mode="json")),
+                )
+                outcome = _outcome(
+                    status="failed",
+                    observations=_failed_outcome().observations,
+                    checks=_failed_outcome().checks,
+                    linked=False,
+                )
+                await _add_source(sources, connection, "outcome-after-ordinary-heads", outcome.model_dump_json())
+
+            async with profile.database.transaction() as connection:
+                rows = await _window(sources, connection)
+                ledger = RelationalRecurrenceLedger(
+                    database=profile.database,
+                    scope_id=SCOPE,
+                    sources=sources,
+                    artifacts=artifacts,
+                    recurrence=repository,
+                )
+                await ledger.record_window(connection, rows)
+                matches = await repository.matches(connection, SCOPE)
+                observations = await repository.observations(connection, SCOPE)
+
+            assert len(matches) == 1
+            assert matches[0].result == "matched"
+            assert matches[0].artifact_ref == matching_ref
+            assert len(matches[0].candidate_refs) == 65
+            assert tuple(observation.event for observation in observations) == ("recurred",)
+
+    asyncio.run(scenario())
+
+
 def test_unresolvable_receipt_does_not_fallback_to_scope_heads() -> None:
     async def scenario() -> None:
         async with SQLiteProfile.open(

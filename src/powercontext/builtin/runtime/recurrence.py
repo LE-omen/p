@@ -35,7 +35,6 @@ from powercontext.builtin.artifacts.experience import Experience
 from powercontext.builtin.artifacts.experience.incubation import TASK_OUTCOME_SOURCE_KIND
 from powercontext.builtin.artifacts.experience.models import ExperienceContent
 from powercontext.builtin.artifacts.experience.recurrence import (
-    MAX_RECURRENCE_CANDIDATES,
     RECURRENCE_REVIEW_STREAK_THRESHOLD,
     CandidateSetMode,
     RecurrenceMatch,
@@ -432,11 +431,11 @@ class RelationalRecurrenceLedger:
             return None
         if not isinstance(handoff.content, HandoffContent):
             return None
-        citations = _unique_refs(handoff_experience_citations(handoff.content))[:MAX_RECURRENCE_CANDIDATES]
+        citations = _unique_refs(handoff_experience_citations(handoff.content))
         return await self._contents(connection, citations)
 
     async def _experience_heads(self, connection: AsyncConnection, /) -> _Contents:
-        """Snapshot the active Experience heads of this scope, bounded and sorted."""
+        """Snapshot all active Experience heads of this scope in stable order."""
 
         rows = (
             await connection.execute(
@@ -450,7 +449,6 @@ class RelationalRecurrenceLedger:
                     ARTIFACT_HEADS_TABLE.c.lifecycle_state == "active",
                 )
                 .order_by(ARTIFACT_HEADS_TABLE.c.artifact_id, ARTIFACT_HEADS_TABLE.c.revision)
-                .limit(MAX_RECURRENCE_CANDIDATES)
             )
         ).all()
         refs = tuple(

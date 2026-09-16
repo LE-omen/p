@@ -37,7 +37,6 @@ from powercontext.sources import SourceRef
 
 RECURRENCE_REVIEW_STREAK_THRESHOLD = 3
 NEAR_DUPLICATE_BIGRAM_OVERLAP = 0.8
-MAX_RECURRENCE_CANDIDATES = 64
 MAX_RECURRENCE_HANDOFF_SCAN = 64
 
 RecurrenceEvent: TypeAlias = Literal["selected", "recurred", "avoided"]
@@ -160,13 +159,13 @@ def freeze_candidate_set(
     mode: CandidateSetMode,
     refs: tuple[ArtifactRef, ...],
 ) -> tuple[ArtifactRef, ...]:
-    """Sort, deduplicate, and bound one candidate snapshot before digesting it."""
+    """Sort and deduplicate one complete candidate snapshot before digesting it."""
 
     unique: dict[tuple[str, str, int], ArtifactRef] = {}
     for ref in refs:
         unique.setdefault(_ref_identity(ref), ref)
     ordered = tuple(unique[key] for key in sorted(unique))
-    return ordered[:MAX_RECURRENCE_CANDIDATES]
+    return ordered
 
 
 def candidate_set_digest(refs: tuple[ArtifactRef, ...], /) -> str:
@@ -636,7 +635,6 @@ def _bigrams(value: str) -> frozenset[tuple[str, ...]]:
 
 
 __all__ = [
-    "MAX_RECURRENCE_CANDIDATES",
     "MAX_RECURRENCE_HANDOFF_SCAN",
     "NEAR_DUPLICATE_BIGRAM_OVERLAP",
     "RECURRENCE_REVIEW_STREAK_THRESHOLD",
