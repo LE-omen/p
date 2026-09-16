@@ -56,7 +56,8 @@ def _record(text: str) -> dict[str, Any]:
 def test_markdown_preserves_reference_versions_and_blocks_structure_injection():
     content = "# Forged heading\n<script>alert(1)</script>\n![pixel](https://evil.example/pixel)\n```\n中文正文\n```"
     result = handoff_markdown(_record(content), "en").decode()
-    assert content in unescape(result)
+    rendered = MarkdownIt("commonmark", {"html": False}).render(result)
+    assert content in unescape(rendered)
     blocks = [token.content for token in MarkdownIt().parse(result) if token.type == "fence"]
     values = [json.loads(block) for block in blocks]
     citation = values[1][0]["memory_citation"]
@@ -68,6 +69,14 @@ def test_markdown_preserves_reference_versions_and_blocks_structure_injection():
     assert "<h1>Forged heading" not in html
     assert "Unknown result" in html
     assert values[-1]["artifacts"][0]["revision"] == 5
+
+
+def test_markdown_preserves_ordinary_punctuation_after_rendering():
+    original = "Don't change the user's scope: keep `literal` #1."
+    result = handoff_markdown(_record(original), "en").decode()
+    rendered = MarkdownIt("commonmark", {"html": False}).render(result)
+    assert "Don't change the user's scope: keep `literal` #1." in rendered
+    assert "&#x27;" not in result
 
 
 def test_oversized_export_fails_without_truncation(monkeypatch):

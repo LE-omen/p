@@ -17,10 +17,11 @@
 import re
 from html import unescape
 from typing import Any
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 
 import pytest
 from fastapi.testclient import TestClient
+from markdown_it import MarkdownIt
 
 from powercontext.server.dashboard.api import DashboardAPI
 from tests.test_dashboard import commit_handoff, create_scope
@@ -145,9 +146,10 @@ def test_handoff_download_stays_exact_and_retains_all_citations(dashboard):
     assert result.headers["cache-control"] == "no-store"
     assert result.headers["x-content-type-options"] == "nosniff"
     decoded = unescape(result.text)
-    assert "Review remains in progress." in decoded
-    assert "Continue the review." in decoded
-    assert "A newer objective" not in decoded
+    rendered = unescape(MarkdownIt("commonmark", {"html": False}).render(result.text))
+    assert "Review remains in progress." in rendered
+    assert "Continue the review." in rendered
+    assert "A newer objective" not in rendered
     assert first.json()["content_digest"] in decoded
     assert ref["artifact_id"] in decoded
     assert '"source_id": "review"' in decoded
@@ -223,6 +225,35 @@ def test_sign_in_rejects_unsafe_return_targets(dashboard, destination):
     )
     assert response.status_code == 303
     assert response.headers["location"] == "/dashboard/home"
+
+
+def test_sign_in_preserves_theme_and_language_in_reading_return(dashboard):
+    scope = create_scope(dashboard, "Reading preferences")["scope_id"]
+    ref = commit_handoff(dashboard, scope)
+    target = "/dashboard/handoff-detail?" + urlencode({
+        "scope": scope,
+        "artifact": ref["artifact_id"],
+        "revision": ref["revision"],
+        "lang": "en",
+        "theme": "dark",
+    })
+    token = dashboard.headers.pop("Authorization").removeprefix("Bearer ")
+    login = dashboard.get(target)
+    assert login.status_code == 401
+    next_field = re.search(r'name="next" value="([^"]+)"', login.text)
+    assert next_field is not None
+    next_url = unescape(next_field[1])
+    next_query = parse_qs(urlsplit(next_url).query)
+    assert next_query["lang"] == ["en"]
+    assert next_query["theme"] == ["dark"]
+    resumed = dashboard.post(
+        "/dashboard/session",
+        data={"token": token, "next": next_url},
+        headers={"Origin": "http://testserver"},
+    )
+    assert resumed.status_code == 200
+    assert resumed.url.path == "/dashboard/handoff-detail"
+    assert resumed.url.query.decode() == urlsplit(next_url).query
 
 
 def test_invalid_and_missing_downloads_never_become_attachments(dashboard):

@@ -62,15 +62,29 @@ def profile_html(content: str) -> Markup:
 
 
 def _literal(value: str) -> str:
-    # Entity-encode Markdown punctuation as well as HTML. Preserve line boundaries
-    # without allowing a business statement to introduce headings, images or links.
+    # Escape Markdown syntax while leaving ordinary punctuation (including quotes)
+    # byte-for-byte intact. HTML entities are only used for characters that could
+    # otherwise start an HTML tag or entity; do not run a second escaping pass over
+    # those entities.
     value = value.replace("\r\n", "\n").replace("\r", "\n")
-    value = escape(value, quote=True)
-    value = re.sub(r"([\\`*_{}\[\]()#+.!|>~:-])", lambda match: f"&#{ord(match[0])};", value)
-    return "\n".join(
-        "".join(char if ord(char) >= 32 and ord(char) != 127 else f"&#{ord(char)};" for char in line)
-        for line in value.split("\n")
-    )
+    special = set(r"\\`*_{}[]()#+-.!|>~:")
+    result: list[str] = []
+    for char in value:
+        if char == "\n":
+            result.append(char)
+        elif char == "&":
+            result.append("&amp;")
+        elif char == "<":
+            result.append("&lt;")
+        elif char == ">":
+            result.append("&gt;")
+        elif char in special:
+            result.extend(("\\", char))
+        elif ord(char) < 32 or ord(char) == 127:
+            result.append(f"&#{ord(char)};")
+        else:
+            result.append(char)
+    return "".join(result)
 
 
 def _json_block(value: Any) -> str:

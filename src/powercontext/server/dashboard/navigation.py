@@ -21,7 +21,7 @@ from fastapi import Request
 
 from powercontext.server.dashboard.errors import ReadError
 
-COMMON = {"scope", "period", "lang"}
+COMMON = {"scope", "period", "lang", "theme"}
 HISTORY = {"view", "profile_cursor", "profile_history"}
 COLLECTION = {"cursor", "handoff_history"}
 
@@ -49,7 +49,11 @@ def _parameters(raw: str, maximum: int) -> tuple[str, dict[str, str]]:
     scope = params.get("scope", "")
     if not scope.strip() or len(scope) > 256:
         raise ValueError
-    if params.get("lang", "zh") not in {"zh", "en"} or params.get("period", "7d") not in {"today", "7d", "30d"}:
+    if (
+        params.get("lang", "zh") not in {"zh", "en"}
+        or params.get("period", "7d") not in {"today", "7d", "30d"}
+        or params.get("theme", "light") not in {"light", "dark"}
+    ):
         raise ValueError
     return url.path, params
 
