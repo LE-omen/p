@@ -79,6 +79,17 @@ def test_markdown_preserves_ordinary_punctuation_after_rendering():
     assert "&#x27;" not in result
 
 
+def test_markdown_does_not_escape_punctuation_inside_indented_code():
+    original = '    print("literal")\n    if enabled: # keep this branch\n<script>alert(1)</script>'
+    result = handoff_markdown(_record(original), "en").decode()
+    assert 'print("literal")' in result
+    assert r'print\("literal"\)' not in result
+    rendered = unescape(MarkdownIt("commonmark", {"html": False}).render(result))
+    assert 'print("literal")' in rendered
+    assert r'print\("literal"\)' not in rendered
+    assert "<script>" not in MarkdownIt("commonmark", {"html": True}).render(result)
+
+
 def test_oversized_export_fails_without_truncation(monkeypatch):
     monkeypatch.setattr("powercontext.server.dashboard.markdown.MAX_DOWNLOAD_BYTES", 100)
     with pytest.raises(ReadError) as caught:

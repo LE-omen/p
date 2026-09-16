@@ -62,11 +62,19 @@ def profile_html(content: str) -> Markup:
 
 
 def _literal(value: str) -> str:
-    # Escape Markdown syntax while leaving ordinary punctuation (including quotes)
-    # byte-for-byte intact. HTML entities are only used for characters that could
-    # otherwise start an HTML tag or entity; do not run a second escaping pass over
-    # those entities.
+    # An indented first line would make Markdown treat this value as an indented
+    # code block. Put that case in a fenced block instead: backslash escapes are
+    # literal inside indented code, which used to leak into exported code.
     value = value.replace("\r\n", "\n").replace("\r", "\n")
+    first_line = value.split("\n", 1)[0]
+    prefix = "    " if first_line.startswith("    ") else "\t" if first_line.startswith("\t") else ""
+    if prefix:
+        body = "\n".join(line[len(prefix) :] if line.startswith(prefix) else line for line in value.split("\n"))
+        fence = "`" * max(3, 1 + max((len(run) for run in re.findall(r"`+", body)), default=0))
+        controls = "".join(
+            char if char == "\n" or (ord(char) >= 32 and ord(char) != 127) else f"&#{ord(char)};" for char in body
+        )
+        return f"{fence}\n{controls}\n{fence}"
     special = set(r"\\`*_{}[]()#+-.!|>~:")
     result: list[str] = []
     for char in value:
