@@ -66,7 +66,8 @@ async function prepareRfcContent(locale: string) {
       .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
       .map(async (entry) => {
         const filePath = path.join(rfcDir, entry.name);
-        const content = await readFile(filePath, 'utf8');
+        const content = (await readFile(filePath, 'utf8'))
+          .replace(/(!\[[^\]]*\]\()\.\.\/\.\.\/assets\//g, '$1/docs-assets/');
         if (/^---\r?\n/.test(content)) return;
 
         const title = formatRfcTitle(entry.name, content);
@@ -147,6 +148,10 @@ await Promise.all([
     force: true,
   }),
   cp(path.join(repositoryDir, 'docs', 'assets'), path.join(generatedDocsDir, 'assets'), {
+    recursive: true,
+    force: true,
+  }),
+  cp(path.join(repositoryDir, 'docs', 'assets'), path.join(publicDir, 'docs-assets'), {
     recursive: true,
     force: true,
   }),
