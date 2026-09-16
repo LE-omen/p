@@ -99,6 +99,11 @@ Agent or public API, then refresh Memories in the same Scope. Experiences, skill
 saved records. The Dashboard does not capture sessions, run generation, or approve candidates. The Dashboard and Agent
 must use the same Server and Scope.
 
+Open **Profile** to read the saved profile, inspect **Version history**, or verify its sources. Selecting a historical
+revision does not change the current profile. In **Handoff**, use **Export Markdown** on a collection entry or its
+detail page to download that exact revision, including its full text, omissions, and citations. If sign-in expires,
+sign in again to return to the selected detail, then repeat the download.
+
 All token holders use one identity. Multi-user RBAC deployments should leave the Dashboard disabled and use the API,
 MCP, or host integrations. See [Deploy the Server](../operate/deploy-server.md) for network and credential configuration.
 

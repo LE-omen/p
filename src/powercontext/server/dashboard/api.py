@@ -30,21 +30,20 @@ from pydantic import ValidationError
 from powercontext.artifacts import ArtifactRef
 from powercontext.builtin.artifacts.experience import ExperienceContent
 from powercontext.builtin.artifacts.handoff.models import HandoffContent
+from powercontext.builtin.artifacts.profile.models import ProfileContent
 from powercontext.builtin.artifacts.skill import SkillContent
 from powercontext.builtin.artifacts.topic_memory import TopicMemoryBrowseCursor
 from powercontext.builtin.runtime.models import GetTopicMemoryRequest
 from powercontext.errors import ArtifactNotFoundError
+from powercontext.server.dashboard.errors import ReadError as ReadError
 from powercontext.server.dashboard.session import authentication_headers
 
-CONTENT_MODELS = {"handoff": HandoffContent, "experience": ExperienceContent, "skill": SkillContent}
-
-
-class ReadError(Exception):
-    def __init__(self, status: int, code: str, request_id: str | None = None) -> None:
-        self.status = status
-        self.code = code
-        self.request_id = request_id
-        super().__init__(code)
+CONTENT_MODELS = {
+    "handoff": HandoffContent,
+    "experience": ExperienceContent,
+    "skill": SkillContent,
+    "profile": ProfileContent,
+}
 
 
 def segment(value: str) -> str:
@@ -87,9 +86,16 @@ class DashboardAPI:
                 },
             )
             return self.family_record(family, value)
-        value = await self.read(
+        value = await self.artifact_revision(scope, family, artifact, revision)
+        return self.artifact_record(value)
+
+    async def artifact_revision(self, scope: str, family: str, artifact: str, revision: int) -> dict[str, Any]:
+        return await self.read(
             f"/v1/scopes/{segment(scope)}/artifacts/{family}/{segment(artifact)}/revisions/{revision}"
         )
+
+    def artifact_record(self, value: dict[str, Any]) -> dict[str, Any]:
+        family = value["family"]
         return self.family_record(
             family,
             {

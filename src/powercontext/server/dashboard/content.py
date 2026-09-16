@@ -16,10 +16,13 @@
 
 import asyncio
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import Request
 
-from powercontext.server.dashboard.api import DashboardAPI, ReadError
+from powercontext.server.dashboard.api import DashboardAPI, ReadError, segment
+from powercontext.server.dashboard.markdown import profile_html
+from powercontext.server.dashboard.navigation import positive_revision
 from powercontext.server.dashboard.pagination import PAGE_SIZE, cursor_links, list_links, list_page
 from powercontext.server.dashboard.presenters import memory_view, usage_view
 
@@ -159,8 +162,16 @@ async def load_content(api: DashboardAPI, request: Request, ctx: dict[str, Any])
         await load_collection(api, request, ctx, ctx["method_kind"])
     elif page == "usage":
         await load_stats(api, ctx)
-    elif page == "topics":
+    else:
+        await load_additional_page(api, request, ctx)
+
+
+async def load_additional_page(api: DashboardAPI, request: Request, ctx: dict[str, Any]) -> None:
+    page = ctx["page"]
+    if page == "topics":
         await load_topics(api, request, ctx)
+    elif page == "profile":
+        await load_profile(api, request, ctx)
     elif page == "prompts":
         await load_prompts(api, ctx)
     elif page in RECORDS:
@@ -220,3 +231,35 @@ async def load_prompts(api: DashboardAPI, ctx: dict[str, Any]) -> None:
             ctx["data"]["prompts"].append(value)
         except ReadError as error:
             ctx["errors"].setdefault("prompts", error)
+
+
+async def load_profile(api: DashboardAPI, request: Request, ctx: dict[str, Any]) -> None:
+    query = request.query_params
+    revision = query.get("revision")
+    view = query.get("view")
+    if view is not None and (view != "history" or revision is not None):
+        raise ReadError(422, "invalid_request")
+    scope = ctx["scope"]
+    base = f"/v1/scopes/{segment(scope)}/artifacts/profile/profile"
+    ctx["profile_history_view"] = view == "history"
+    selected_revision = revision
+    if revision is None:
+        # An absent artifact has no owner; the scope-authorized collection is the
+        # only reliable empty-state discovery under enforced access control.
+        heads = await api.read(f"/v1/scopes/{segment(scope)}/artifacts/profile?limit=1")
+        if not heads["items"]:
+            return
+        selected_revision = str(heads["items"][0]["revision"])
+    if view == "history":
+        params = {"limit": str(PAGE_SIZE)}
+        if "profile_cursor" in query:
+            params["cursor"] = query["profile_cursor"]
+        result = await api.read(base + "/revisions?" + urlencode(params))
+        ctx["profile_revisions"] = result["items"]
+        ctx["profile_pager"] = cursor_links(request, ctx, "profile", result["next_cursor"])
+        return
+    record = await api.record(scope, "profile", "profile", positive_revision(selected_revision))
+    ctx["data"]["profile"] = record
+    ctx["profile_html"] = profile_html(record["content"])
+    ctx["source_record"] = record
+    ctx["related_sources"] = [source for source in record["sources"] if source["source_type"] == "content"]

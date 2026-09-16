@@ -89,13 +89,14 @@ def test_topic_dashboard_opens_without_content(dashboard: TestClient) -> None:
     assert "Artifacts" not in topics.text
 
 
-def test_prompt_dashboard_opens_without_profile_page(dashboard: TestClient) -> None:
+def test_prompt_and_profile_dashboards_open_without_content(dashboard: TestClient) -> None:
     prompts = dashboard.get("/dashboard/prompts", params={"lang": "en"})
     profile = dashboard.get("/dashboard/profile", params={"lang": "en"})
     assert prompts.status_code == 200
     assert "Prompts" in prompts.text
-    assert profile.status_code == 404
-    assert "Profile" not in prompts.text
+    assert profile.status_code == 200
+    assert "No profile in this scope" in profile.text
+    assert "Prompts" in prompts.text
 
 
 def test_dashboard_favicons_use_square_viewports(dashboard: TestClient) -> None:

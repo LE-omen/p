@@ -93,6 +93,10 @@ powercontext server run --env-file /path/to/powercontext.env
 再刷新同一 Scope 的记忆页即可查看。经验、技能、交接和用量也来自实际保存记录；页面不采集会话、不运行生成，
 也不批准候选。Dashboard 和 Agent 必须连接同一个 Server、使用同一个 Scope。
 
+打开**画像**查看已保存内容，通过**版本历史**阅读历史修订或核对来源；阅读旧版本不会改变当前画像。
+在**交接**目录条目或详情页点击**导出 Markdown**，可下载该精确版本的完整正文、遗漏和引用。
+若登录失效，重新登录后会返回所选详情，再次点击导出即可。
+
 所有 token 持有者使用同一个身份。多成员 RBAC 部署应保持 Dashboard 关闭，通过 API、MCP 或宿主集成访问内容。
 网络与凭据配置见[部署 Server](../operate/deploy-server.md)。
 
