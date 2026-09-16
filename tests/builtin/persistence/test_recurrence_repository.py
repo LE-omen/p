@@ -42,6 +42,7 @@ from powercontext.builtin.persistence import RecurrenceRepository
 from powercontext.builtin.persistence.recurrence import RecurrenceRepository as SameRecurrenceRepository
 from powercontext.builtin.persistence.sqlite import SQLiteConfig, SQLiteProfile
 from powercontext.builtin.persistence.tables import (
+    RECURRENCE_MATCH_TABLE,
     RECURRENCE_TABLES,
     SCOPE_TABLES,
     SCOPES_TABLE,
@@ -56,6 +57,12 @@ HANDOFF_REF = ArtifactRef(family="handoff", artifact_id="handoff-1", revision=1)
 EXPERIENCE_REF = ArtifactRef(family="experience", artifact_id="experience-1", revision=1)
 OTHER_EXPERIENCE_REF = ArtifactRef(family="experience", artifact_id="experience-1", revision=2)
 KEY = signature_key("openapi contract changed without regenerating the client")
+
+
+def test_recurrence_match_mode_column_fits_every_declared_mode() -> None:
+    column = RECURRENCE_MATCH_TABLE.c.candidate_set_mode
+
+    assert column.type.length >= max(len("handoff_citations"), len("scope_heads"))
 
 
 async def _seed_scope(connection: AsyncConnection) -> None:

@@ -63,6 +63,7 @@ from powercontext.http import (
     ApproveArtifactCandidateRequest,
     ArtifactCandidate,
     ArtifactCandidatePage,
+    ArtifactPage,
     ArtifactReference,
     CandidateFamily,
     CandidateStatus,
@@ -75,6 +76,7 @@ from powercontext.http import (
     DreamStatus,
     EnrollRemoteSkillTargetRequest,
     ExactScopeSelection,
+    ExperienceArtifact,
     ExperienceProposal,
     ExternalSkillImportMode,
     ExternalSkillResolution,
@@ -83,12 +85,14 @@ from powercontext.http import (
     GenerateExperienceRequest,
     GenerateSkillRequest,
     GetArtifactCandidateRequest,
+    GetExperienceRequest,
     GetSkillPackageRequest,
     GetSkillRequest,
     GetStatsRequest,
     HealthResponse,
     ImportExternalSkillRequest,
     ListArtifactCandidatesRequest,
+    ListArtifactsRequest,
     ListDreamRunsRequest,
     ListExternalSkillsRequest,
     ListExternalSkillsResponse,
@@ -127,7 +131,9 @@ _ClientResponse: TypeAlias = (
     | DreamRun
     | DreamRunPage
     | ArtifactCandidatePage
+    | ArtifactPage
     | Capabilities
+    | ExperienceArtifact
     | ExternalSkillResolution
     | GeneratedCandidateResponse
     | HealthResponse
@@ -216,7 +222,7 @@ candidate_revise_app = typer.Typer(
 experience_app = typer.Typer(
     name="experience",
     context_settings={"help_option_names": HELP_OPTION_NAMES},
-    help="Generate reviewed Experience Candidates.",
+    help="Read approved Experience and generate reviewed Experience Candidates.",
     no_args_is_help=True,
 )
 skill_app = typer.Typer(
@@ -505,6 +511,35 @@ def show_skill(
         artifact=ArtifactReference(family="skill", artifact_id=artifact_id, revision=revision),
     )
     asyncio.run(_execute(context, lambda client: client.get_skill(request)))
+
+
+@experience_app.command("list")
+def list_experiences(
+    context: typer.Context,
+    scope_id: Annotated[str, typer.Option(help="Application scope containing approved Experience.")],
+    cursor: Annotated[str | None, typer.Option(help="Opaque cursor from the previous page.")] = None,
+    limit: Annotated[int, typer.Option(min=1, max=100, help="Maximum Experience heads to return.")] = 50,
+) -> None:
+    """List current approved Experience heads."""
+
+    request = ListArtifactsRequest(cursor=cursor, limit=limit)
+    asyncio.run(_execute(context, lambda client: client.list_artifacts(scope_id, "experience", request)))
+
+
+@experience_app.command("show")
+def show_experience(
+    context: typer.Context,
+    scope_id: Annotated[str, typer.Option(help="Application scope containing the approved Experience.")],
+    artifact_id: Annotated[str, typer.Argument(help="Experience Artifact identity.")],
+    revision: Annotated[int, typer.Option(min=1, help="Exact approved Experience Revision.")],
+) -> None:
+    """Read one exact approved Experience Revision."""
+
+    request = GetExperienceRequest(
+        scope_id=scope_id,
+        artifact=ArtifactReference(family="experience", artifact_id=artifact_id, revision=revision),
+    )
+    asyncio.run(_execute(context, lambda client: client.get_experience(request)))
 
 
 @experience_app.command("generate")
@@ -1570,12 +1605,39 @@ def _print_dream_response(response: DreamRun | DreamRunPage) -> None:
         return
 
 
+def _print_artifact_page(response: ArtifactPage) -> None:
+    if not response.items:
+        typer.echo("No Experience artifacts found.")
+    for item in response.items:
+        title = "" if item.title is None else f"  {item.title}"
+        typer.echo(f"{item.artifact_id}@{item.revision}{title}")
+        if item.summary:
+            typer.echo(f"  {item.summary}")
+    if response.next_cursor:
+        typer.echo(f"Next cursor: {response.next_cursor}")
+
+
 def _print_human_response(response: _ClientResponse) -> None:
     if isinstance(response, (DreamRun, DreamRunPage)):
         _print_dream_response(response)
         return
     if isinstance(response, (ListRemoteSkillTargetsResponse, RemoteSkillPublication, RemoteSkillTarget)):
         _print_remote_response(response)
+        return
+    if isinstance(
+        response,
+        (
+            ArtifactCandidate,
+            ArtifactCandidatePage,
+            ExperienceArtifact,
+            ExternalSkillResolution,
+            GeneratedCandidateResponse,
+            ListExternalSkillsResponse,
+            ScanExternalSkillsResponse,
+            SkillArtifact,
+        ),
+    ):
+        typer.echo(response.model_dump_json(indent=2))
         return
     match response:
         case Capabilities():
@@ -1596,17 +1658,8 @@ def _print_human_response(response: _ClientResponse) -> None:
             typer.echo(f"Status: {response.status}")
         case ScopedStats():
             _print_stats(response)
-        case (
-            ArtifactCandidate()
-            | ArtifactCandidatePage()
-            | ExternalSkillResolution()
-            | GeneratedCandidateResponse()
-            | ListExternalSkillsResponse()
-            | ScanExternalSkillsResponse()
-        ):
-            typer.echo(response.model_dump_json(indent=2))
-        case SkillArtifact():
-            typer.echo(response.model_dump_json(indent=2))
+        case ArtifactPage():
+            _print_artifact_page(response)
 
 
 def _print_remote_response(

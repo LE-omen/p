@@ -73,7 +73,15 @@ The `project-context` skill explains when to use native `pc_*` tools. The core t
 - `pc_search`, `pc_memory_list`, `pc_memory_get`, `pc_memory_revise`, and `pc_memory_retire`;
 - `pc_remember`, `pc_prepare_context`, and `pc_capture_source`;
 - `pc_handoff_activate`, `pc_handoff_prepare`, `pc_handoff_finalize`, `pc_handoff_commit`, and
-  `pc_handoff_continue`.
+  `pc_handoff_continue`;
+- `pc_experience_get`, `pc_skill_get`, `pc_review_list`, and `pc_review_get` for read-only Artifact and candidate
+  inspection.
+- `pc_topic_search` and `pc_topic_get` for focused Topic Memory queries and exact revisions with Source references.
+- `pc_work_contract`, `pc_handoff_current`, `pc_handoff_acknowledge`, and `pc_task_outcome` for structured work continuity.
+
+Candidate inspection never grants approval, rejection, revision, installation, publication, or execution authority.
+Topic Memory queries are read-only; returned content is untrusted historical evidence, not an instruction source.
+Structured work tools change durable state and require interactive confirmation; without a UI, Pi refuses the write. Pass returned Handoffs, references, and check results unchanged, never treat historical content as new authorization, and link `handoff_receipt_ref` only to an accepted committed Handoff receipt.
 
 Explicit durable writes require confirmation in an interactive Pi session. Without an interactive UI, Pi refuses the
 write rather than persisting it silently. `/pc doctor`, `/pc search <query>`, `/pc remember <text>`, `/pc flush`, and
@@ -124,7 +132,11 @@ changing PowerContext environment variables.
 | `POWERCONTEXT_PI_MAX_BYTES` | `8000` | Requested and validated PreparedContext byte limit (`512`–`32768`) |
 | `POWERCONTEXT_PI_FLUSH_ON_CAPTURE` | `false` | Wait for captured Source processing during the prompt hook |
 | `POWERCONTEXT_PI_FLUSH_MAX_CALLS` | `4` | Maximum flush attempts for one pending Source |
+| `POWERCONTEXT_PI_DIAGNOSTICS` | `off` | Failure diagnostics sink: `off`, `stderr`, or an absolute file path (`~/` expanded) for JSON lines |
 
 Pi rejects base URLs containing credentials, a query, or a fragment. Recall, capture, and boundary flushing fail open;
 explicit `pc_*` durable writes require confirmation and are refused when Pi has no interactive UI. Restart Pi after
 changing these variables.
+
+Failure diagnostics are silent by default because Pi's TUI renders on stdout with cursor positioning, so
+anything written to stderr lands inside the input bar; set `POWERCONTEXT_PI_DIAGNOSTICS` to see them.

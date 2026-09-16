@@ -12,11 +12,18 @@ powercontext setup pi --source /path/to/powercontext
 ```
 
 Start `powercontext server run`, then open a new Pi session in the project. The package supplies the
-`project-context` skill, `pc_*` Memory and Handoff tools, and `/pc` diagnostics.
+`project-context` skill, `pc_*` Memory, Handoff, structured work-continuity, Experience, Skill, Topic Memory, and candidate-inspection tools, and `/pc`
+diagnostics. Candidate tools are read-only and never approve, reject, or revise artifacts.
 
 The package resolves an explicit Scope, a durable workspace binding, or the Server default. Use
 `POWERCONTEXT_PI_BASE_URL`, `POWERCONTEXT_PI_SCOPE_ID`, and `POWERCONTEXT_PI_CAPTURE_PROMPTS` to adjust the connection,
 explicit override, and automatic prompt capture.
+
+Failure diagnostics (for example `server_unavailable` after a 503) are silent by default: Pi's TUI renders on
+stdout with cursor positioning, so anything written to stderr corrupts the input bar. Set
+`POWERCONTEXT_PI_DIAGNOSTICS=stderr` to print them, or point it at an absolute path (`~/` is expanded; the
+parent directory is created) to append them as JSON lines. The keywords are case-insensitive; any other value
+keeps diagnostics off. `/pc` shows the current status either way.
 
 Remote HTTP is rejected by default. Explicitly allow it with `POWERCONTEXT_PI_ALLOW_INSECURE_HTTP=true`,
 or use `POWERCONTEXT_CLIENT_ALLOW_INSECURE_HTTP=true` as the common fallback. A host flag of `false` overrides

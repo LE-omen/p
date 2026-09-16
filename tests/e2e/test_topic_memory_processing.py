@@ -17,6 +17,8 @@ from __future__ import annotations
 import asyncio
 from collections import deque
 
+from powercontext.artifacts import ArtifactRef
+from powercontext.builtin.artifacts.prompt import PromptContent
 from powercontext.builtin.artifacts.topic_memory import (
     TOPIC_MEMORY_SOURCE_WINDOW_BINDING,
     TopicMemoryContent,
@@ -31,6 +33,7 @@ from powercontext.builtin.artifacts.topic_memory.generation import (
     TopicMemoryReconcileOutput,
 )
 from powercontext.builtin.inference import GenerationResult
+from powercontext.builtin.persistence.artifacts import RepositoryArtifactDraft
 from powercontext.builtin.persistence.cursors import SourceCursorRepository
 from powercontext.builtin.persistence.processing_intents import ArtifactProcessingIntentRepository
 from powercontext.builtin.persistence.sqlite import SQLiteConfig
@@ -102,6 +105,21 @@ def test_source_capture_to_multi_window_create_update_noop(tmp_path) -> None:
         )
         async with open_builtin_contexts(config) as contexts:
             scope = await contexts.get("scope-a")
+            async with contexts.database.transaction() as connection:
+                await contexts.repositories.artifacts.create(
+                    connection,
+                    "scope-a",
+                    "topic_memory.probe",
+                    RepositoryArtifactDraft(
+                        family="prompt",
+                        content=PromptContent(
+                            schema_version="powercontext.prompt.v1",
+                            mode="custom",
+                            instructions="Probe for durable topics only.",
+                            demonstrations=(),
+                        ),
+                    ),
+                )
             for index, content in enumerate(("create zircon", "update zircon", "no durable topic"), start=1):
                 await scope.sources.capture(ContentCapture(source_id=f"source-{index}", content=content))
             pending = contexts.repositories.processing_pending
@@ -152,6 +170,10 @@ def test_source_capture_to_multi_window_create_update_noop(tmp_path) -> None:
                     leases=contexts.repositories.processing_leases,
                 ),
                 id_factory=lambda: "topic-e2e",
+                prompt_refs={
+                    "probe": ArtifactRef(family="prompt", artifact_id="topic_memory.probe", revision=1),
+                    "planner": ArtifactRef(family="prompt", artifact_id="topic_memory.planner", revision=1),
+                },
             )
             binding = ArtifactProcessingBinding(
                 binding_name=TOPIC_MEMORY_SOURCE_WINDOW_BINDING,
@@ -214,6 +236,12 @@ def test_source_capture_to_multi_window_create_update_noop(tmp_path) -> None:
                 )
             assert [revision.content.title for revision in revisions] == ["created topic", "updated topic"]
             assert search.hits[0].artifact_ref.revision == 2
+            probe_ref = ArtifactRef(family="prompt", artifact_id="topic_memory.probe", revision=1)
+            assert revisions[0].lineage.artifacts == (probe_ref,)
+            assert revisions[1].lineage.artifacts == (
+                ArtifactRef(family="topic-memory", artifact_id="topic-e2e", revision=1),
+                probe_ref,
+            )
 
     asyncio.run(scenario())
 

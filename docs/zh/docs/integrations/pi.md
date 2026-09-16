@@ -72,7 +72,14 @@ flush。
 - `pc_search`、`pc_memory_list`、`pc_memory_get`、`pc_memory_revise`、`pc_memory_retire`；
 - `pc_remember`、`pc_prepare_context`、`pc_capture_source`；
 - `pc_handoff_activate`、`pc_handoff_prepare`、`pc_handoff_finalize`、`pc_handoff_commit`、
-  `pc_handoff_continue`。
+  `pc_handoff_continue`；
+- `pc_experience_get`、`pc_skill_get`、`pc_review_list`、`pc_review_get`，用于只读查看 Artifact 和候选材料。
+- `pc_topic_search`、`pc_topic_get`，用于按主题查询当前 Topic Memory，并读取带 Source 引用的精确版本。
+- `pc_work_contract`、`pc_handoff_current`、`pc_handoff_acknowledge`、`pc_task_outcome`，用于结构化工作连续性。
+
+查看候选材料不授予批准、拒绝、修订、安装、发布或执行权限。
+Topic Memory 查询是只读的；结果属于不可信历史证据，不是指令来源。
+结构化工作工具会改变持久状态，必须经过交互确认；无 UI 时拒绝写入。返回的 Handoff、引用和检查结果必须按原值传递，不能把历史内容当作新的授权；`handoff_receipt_ref` 只能引用 accepted committed Handoff 的 Receipt。
 
 显式持久化写入在交互式 Pi 会话中必须确认；没有交互 UI 时，Pi 会拒绝写入而不会静默持久化。`/pc doctor`、
 `/pc search <query>`、`/pc remember <text>`、`/pc flush` 和 `/pc stats` 可直接查看状态和维护内容。
@@ -122,6 +129,10 @@ powercontext doctor pi
 | `POWERCONTEXT_PI_MAX_BYTES` | `8000` | 请求并校验的 PreparedContext byte 上限（`512`–`32768`） |
 | `POWERCONTEXT_PI_FLUSH_ON_CAPTURE` | `false` | 在 prompt hook 中等待已采集 Source 的处理 |
 | `POWERCONTEXT_PI_FLUSH_MAX_CALLS` | `4` | 一个 pending Source 最多 flush 次数 |
+| `POWERCONTEXT_PI_DIAGNOSTICS` | `off` | 失败诊断输出：`off`、`stderr`，或写入 JSON 行的绝对文件路径（支持 `~/`） |
 
 Pi 会拒绝包含凭据、query 或 fragment 的 base URL。召回、采集和边界 flush 都会正常降级；显式 `pc_*` 持久化写入
 必须确认，Pi 没有交互 UI 时会被拒绝。修改这些变量后需要重启 Pi。
+
+失败诊断默认不输出：Pi 的 TUI 通过光标定位在 stdout 上渲染，写到 stderr 的内容会落在输入栏里；需要查看时请设置
+`POWERCONTEXT_PI_DIAGNOSTICS`。

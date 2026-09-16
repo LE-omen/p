@@ -30,6 +30,11 @@ from powercontext.builtin.artifacts.experience.recurrence import (
     failure_refs,
     normalize_match_text,
 )
+from powercontext.builtin.artifacts.handoff.models import (
+    HandoffArtifactCitation,
+    HandoffMemoryCitation,
+    HandoffSourceCitation,
+)
 from powercontext.builtin.artifacts.profile.models import ProfileCandidateProposal, ProfileWriteContent
 from powercontext.builtin.artifacts.profile.review import decide_profile, revise_profile
 from powercontext.builtin.artifacts.skill import Skill, SkillContent, SkillDraft, build_instruction_skill_package
@@ -479,7 +484,15 @@ class ReviewService:
         if (
             isinstance(proposal, ExperienceContent)
             and proposal.failure is not None
-            and not any(_source_has_failure_evidence(row, proposal.failure.signature.recall_cue) for row in source_rows)
+            and not await _has_resolved_failure_evidence(
+                self._sources,
+                self._artifacts,
+                self._evidence,
+                connection,
+                self._scope_id,
+                source_rows,
+                proposal.failure.signature.recall_cue,
+            )
         ):
             raise InvalidCandidateError(
                 "evidence",
@@ -572,23 +585,57 @@ def _validate_proposal_family(family: str, proposal: object) -> None:
         raise InvalidCandidateError("family", family)
 
 
-def _source_has_failure_evidence(row: StoredSource, cue: str) -> bool:
-    if not isinstance(row.value, ContentSource):
-        return False
-    value = row.value
-    if value.metadata.get("kind") != "task-outcome":
-        return False
-    try:
-        outcome = TaskOutcome.model_validate_json(value.content)
-    except ValidationError:
-        return False
+async def _has_resolved_failure_evidence(  # noqa: C901 - each citation kind has a distinct resolution boundary
+    sources: GenerationSourceAccess,
+    artifacts: ArtifactRepository,
+    evidence: EvidenceResolver | None,
+    connection: AsyncConnection,
+    scope_id: str,
+    rows: tuple[StoredSource, ...],
+    cue: str,
+    /,
+) -> bool:
     try:
         cue_key = normalize_match_text(cue)
     except ValueError:
         return False
-    for ref in failure_refs(outcome, row.ref):
-        items = outcome.checks if ref.item_kind == "check" else outcome.observations
-        if normalize_match_text(failure_item_text(items[ref.item_index])) == cue_key:
+    for row in rows:
+        if not isinstance(row.value, ContentSource) or row.value.metadata.get("kind") != "task-outcome":
+            continue
+        try:
+            outcome = TaskOutcome.model_validate_json(row.value.content)
+        except ValidationError:
+            continue
+        for ref in failure_refs(outcome, row.ref):
+            items = outcome.checks if ref.item_kind == "check" else outcome.observations
+            item = items[ref.item_index]
+            if normalize_match_text(failure_item_text(item)) != cue_key:
+                continue
+            citations = item.evidence
+            source_refs = tuple(
+                citation.source_ref for citation in citations if isinstance(citation, HandoffSourceCitation)
+            )
+            artifact_refs = tuple(
+                citation.artifact_ref for citation in citations if isinstance(citation, HandoffArtifactCitation)
+            )
+            memory_citations = tuple(
+                citation.memory_citation for citation in citations if isinstance(citation, HandoffMemoryCitation)
+            )
+            try:
+                await sources.require_for_generation(connection, scope_id, source_refs)
+                for artifact_ref in artifact_refs:
+                    await artifacts.get(connection, scope_id, artifact_ref)
+                if memory_citations:
+                    if evidence is None:
+                        continue
+                    await evidence.validate(
+                        connection,
+                        sources=(),
+                        artifacts=(),
+                        memory_citations=memory_citations,
+                    )
+            except (EvidenceResolutionError, RepositoryNotFoundError):
+                continue
             return True
     return False
 

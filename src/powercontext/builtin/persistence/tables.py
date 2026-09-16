@@ -1104,7 +1104,7 @@ RECURRENCE_MATCH_TABLE = Table(
     Column("failure_item_kind", String(16), nullable=False),
     Column("failure_item_index", Integer, nullable=False),
     Column("failure_item_digest", identity_string(71), nullable=False),
-    Column("candidate_set_mode", String(16), nullable=False),
+    Column("candidate_set_mode", String(32), nullable=False),
     Column("candidate_set_digest", identity_string(71), nullable=False),
     Column("result", String(16), nullable=False),
     Column("target_family", identity_string(MAX_ARTIFACT_FAMILY_LENGTH)),

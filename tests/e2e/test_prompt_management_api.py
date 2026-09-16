@@ -197,12 +197,19 @@ def test_prompt_http_history_generation_and_scoped_inference(
             if isinstance(part, UserPromptPart) and isinstance(part.content, str)
         )
         if "demonstration_count" in request:
-            value = {
-                "demonstrations": [
-                    {"input": {"evidence": [], "current_entries": []}, "expected_output": {"candidates": []}}
-                    for _ in range(request["demonstration_count"])
-                ]
-            }
+            if "Each probe cites" in info.instructions:
+                demonstration = {
+                    "input": {
+                        "evidence": [{"evidence_id": "e1", "source_type": "content", "content": "Ports are checked."}]
+                    },
+                    "expected_output": {"probes": [{"query": "port checks", "evidence_ids": ["e1"]}]},
+                }
+            else:
+                demonstration = {
+                    "input": {"evidence": [], "current_entries": []},
+                    "expected_output": {"candidates": []},
+                }
+            value = {"demonstrations": [demonstration for _ in range(request["demonstration_count"])]}
         elif "sources" in request:
             assert "PROFILE_ALPHA_RULE" in info.instructions
             value = {"content": "# Profile\n\n- Custom profile guidance applied."}
@@ -261,7 +268,7 @@ def test_prompt_http_history_generation_and_scoped_inference(
                 for label in ("Alpha", "Beta")
             ]
             capabilities = (await transport.get("/v1/capabilities")).json()
-            assert len(capabilities["prompts"]) == 7
+            assert len(capabilities["prompts"]) == 14
             assert capabilities["prompts"]["profile.generate"]["status"] == "supported"
             assert capabilities["prompts"]["memory.extract"]["status"] == "supported"
             scope = scopes[0]
@@ -296,6 +303,13 @@ def test_prompt_http_history_generation_and_scoped_inference(
             )
             assert len(generated.demonstrations) == 2
             assert await client.get_artifact(scope, "prompt", "memory.extract") == before
+            assert capabilities["prompts"]["topic_memory.probe"]["status"] == "supported"
+            topic_generated = await client.generate_prompt_demonstrations(
+                scope,
+                "topic_memory.probe",
+                GeneratePromptDemonstrationsRequest(instructions="Keep durable topic probes.", demonstration_count=1),
+            )
+            assert len(topic_generated.demonstrations) == 1
             with pytest.raises(ServerResponseError) as duplicate:
                 await client.create_artifact(
                     scope,

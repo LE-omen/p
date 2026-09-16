@@ -77,7 +77,8 @@ powercontext candidate show --scope-id "$POWERCONTEXT_SCOPE_ID" CANDIDATE_ID
 ```
 
 Approved current head 现在可以参与同 scope 的 `PreparedContext` 召回。Runtime 仍会根据 query 和共享输出预算选择内容，
-因此符合召回条件不代表一定被选中。Python Client 和 HTTP API 支持精确读取 Experience。
+因此符合召回条件不代表一定被选中。`powercontext experience list` 可以浏览当前 heads；
+`powercontext experience show --revision REVISION EXPERIENCE_ID`、Python Client 和 HTTP API 支持精确读取 Experience。
 
 ## 替换已有 Experience
 

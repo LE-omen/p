@@ -144,6 +144,8 @@ powercontext server run --env-file .env
 powercontext ready
 powercontext capabilities
 powercontext experience generate --scope-id "$POWERCONTEXT_SCOPE_ID" --source-ref content/SOURCE_ID
+powercontext experience list --scope-id "$POWERCONTEXT_SCOPE_ID"
+powercontext experience show --scope-id "$POWERCONTEXT_SCOPE_ID" --revision 1 EXPERIENCE_ID
 powercontext skill generate --scope-id "$POWERCONTEXT_SCOPE_ID" --origin experience \
   --artifact-ref experience/EXPERIENCE_ID@REVISION
 powercontext skill show --scope-id "$POWERCONTEXT_SCOPE_ID" --revision 1 SKILL_ID

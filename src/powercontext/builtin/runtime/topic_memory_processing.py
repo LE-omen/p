@@ -35,6 +35,7 @@ from typing_extensions import override
 
 from powercontext._logging import log_safely
 from powercontext.artifacts import ArtifactRef
+from powercontext.builtin.artifacts.prompt.service import current_prompt
 from powercontext.builtin.artifacts.search import analyze_text
 from powercontext.builtin.artifacts.topic_memory import (
     MAX_TOPIC_MEMORY_QUERY_LENGTH,
@@ -442,6 +443,7 @@ class TopicMemoryProcessor:
         history_rrf_threshold: int = 70,
         history_min_candidates: int = 5,
         id_factory: Callable[[], str] | None = None,
+        prompt_refs: Mapping[str, ArtifactRef] | None = None,
     ) -> None:
         self._database = database
         self._sources = sources
@@ -470,6 +472,21 @@ class TopicMemoryProcessor:
         self._history_threshold = history_rrf_threshold
         self._history_min = history_min_candidates
         self._id_factory = (lambda: str(uuid4())) if id_factory is None else id_factory
+        self._prompt_refs: Mapping[str, ArtifactRef] = prompt_refs or {}
+        self._used_stages: set[str] = set()
+
+    def _used_prompt_refs(self) -> tuple[ArtifactRef, ...]:
+        """Custom Prompt revisions of the stages this run actually invoked, in a stable order."""
+
+        refs: list[ArtifactRef] = []
+        for stage in ("probe", "global", "planner", "evolve", "temporary", "reduce", "reconcile"):
+            if (
+                stage in self._used_stages
+                and (reference := self._prompt_refs.get(stage)) is not None
+                and all(reference != existing for existing in refs)
+            ):
+                refs.append(reference)
+        return tuple(refs)
 
     async def process(
         self,
@@ -493,6 +510,7 @@ class TopicMemoryProcessor:
             fence=assignment.fence,
         )
         token = self._work_budget.set(budget)
+        self._used_stages.clear()
         try:
             await budget.begin()
             try:
@@ -519,6 +537,7 @@ class TopicMemoryProcessor:
         return ArtifactProcessingWorkerCompletion()
 
     async def _reserve_stage(self, value: BaseModel, stage: str) -> None:
+        self._used_stages.add(stage)
         if not self._stages.fits(value, stage):
             raise TopicMemoryGenerationError("input_budget_exceeded")
         # Reserve every structured retry's entire input + output/transcript
@@ -1065,7 +1084,7 @@ class TopicMemoryProcessor:
             draft = TopicMemoryDraft(
                 content=content,
                 sources=source_refs,
-                artifacts=artifact_lineage,
+                artifacts=artifact_lineage + self._used_prompt_refs(),
             )
             projection = await self._projection(content)
             operations.append(
@@ -1491,6 +1510,8 @@ async def _open_topic_memory_processor(spec: TopicMemoryWorkerSpec, scope_id: st
 
     from pydantic_ai.settings import ModelSettings
 
+    from powercontext.builtin.artifacts.prompt import PromptRegistry
+    from powercontext.builtin.artifacts.prompt.builtin import builtin_prompt_definitions
     from powercontext.builtin.artifacts.topic_memory.generation import (
         TOPIC_MEMORY_EVOLVE_INSTRUCTIONS,
         TOPIC_MEMORY_GLOBAL_INSTRUCTIONS,
@@ -1544,10 +1565,25 @@ async def _open_topic_memory_processor(spec: TopicMemoryWorkerSpec, scope_id: st
         raw_embedding, _ = await _embedding_models(inference, resources, None, disable_provider_retries=True)
         embedding = None if raw_embedding is None else UsageReportingEmbeddingModel(raw_embedding)
         contexts = await resources.enter_async_context(
-            open_builtin_contexts(config, embedding_model=embedding, _topic_memory_worker=True)
+            open_builtin_contexts(
+                config,
+                embedding_model=embedding,
+                _topic_memory_worker=True,
+                prompt_registry=PromptRegistry(
+                    builtin_prompt_definitions(config.runtime.memory_extraction_profile),
+                    supported=frozenset(
+                        f"topic_memory.{stage}"
+                        for stage in ("probe", "global", "planner", "evolve", "temporary", "reduce", "reconcile")
+                    ),
+                ),
+            )
         )
 
+        for stage_name in ("probe", "global", "planner", "evolve", "temporary", "reduce", "reconcile"):
+            await resources.enter_async_context(contexts.prompts.bind(scope_id, f"topic_memory.{stage_name}"))
+
         fixed_prompts: dict[str, str] = {}
+        prompt_refs: dict[str, ArtifactRef] = {}
 
         def stage(
             input_type: type[BaseModel],
@@ -1556,16 +1592,22 @@ async def _open_topic_memory_processor(spec: TopicMemoryWorkerSpec, scope_id: st
             name: str,
             stage_name: str,
         ):
-            fixed_prompt = topic_memory_stage_fixed_prompt(instructions, input_type, output_type)
+            prompt_key = f"topic_memory.{stage_name}"
+            selection = current_prompt(prompt_key)
+            if selection is not None and selection.artifact is not None:
+                prompt_refs[stage_name] = selection.artifact
+            selected_instructions = instructions if selection is None else selection.compiled_instructions
+            fixed_prompt = topic_memory_stage_fixed_prompt(selected_instructions, input_type, output_type)
             fixed_prompts[stage_name] = fixed_prompt
             raw = PydanticAIStructuredGenerator(
                 model=model,
-                instructions=instructions,
+                instructions=selected_instructions,
                 input_type=input_type,
                 output_type=output_type,
                 limits=limits,
                 model_settings=settings,
                 name=name,
+                prompt_key=prompt_key,
             )
             bounded = BudgetedTopicMemoryGenerator(
                 raw,
@@ -1672,6 +1714,7 @@ async def _open_topic_memory_processor(spec: TopicMemoryWorkerSpec, scope_id: st
             history_max_candidates=config.runtime.topic_memory_history_max_candidates,
             history_rrf_threshold=config.runtime.topic_memory_history_rrf_threshold,
             history_min_candidates=config.runtime.topic_memory_history_min_candidates,
+            prompt_refs=prompt_refs,
         )
         yield TopicMemoryScopeProcessor(
             contexts.database,

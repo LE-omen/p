@@ -883,29 +883,87 @@ def test_windows_loaded_registration_rejects_extra_task_elements(
 
 
 @pytest.mark.parametrize(
-    ("payload", "expected"),
+    ("status", "last_result", "expected"),
     [
-        ({"State": "Running", "LastTaskResult": 0}, ManagerState.ACTIVE),
-        ({"State": "Ready", "LastTaskResult": 0x41303}, ManagerState.INACTIVE),
-        ({"State": "Ready", "LastTaskResult": 1}, ManagerState.FAILED),
-        ({"State": "Disabled", "LastTaskResult": 0}, ManagerState.INACTIVE),
-        ({"State": "Running", "LastTaskResult": 0, "状态": "正在运行"}, ManagerState.ACTIVE),
+        ("Running", "0", ManagerState.ACTIVE),
+        ("Running", "267009", ManagerState.ACTIVE),
+        ("Ready", "267011", ManagerState.INACTIVE),
+        ("Ready", "1", ManagerState.FAILED),
+        ("Disabled", "0", ManagerState.INACTIVE),
+        # The status text is localized, but the running result code is stable.
+        ("正在运行", "267009", ManagerState.ACTIVE),
+        ("准备就绪", "0", ManagerState.INACTIVE),
+        ("unknown", "not-a-result", ManagerState.UNKNOWN),
     ],
 )
-def test_windows_manager_state_uses_locale_independent_task_info(
+def test_windows_manager_state_uses_schtasks_task_info(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    payload: dict[str, object],
+    status: str,
+    last_result: str,
     expected: ManagerState,
+) -> None:
+    adapter = WindowsTaskSchedulerAdapter(config_home=tmp_path)
+    output = f'"HOST","{adapter.identifier}","N/A","{status}","Interactive only","Never","{last_result}"\n'
+    monkeypatch.setattr(
+        adapter,
+        "_run_task_info",
+        Mock(return_value=subprocess.CompletedProcess(["schtasks.exe"], 0, output, "")),
+    )
+
+    assert adapter.manager_state() is expected
+
+
+def test_windows_manager_state_accepts_schtasks_csv_without_a_host_column(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = WindowsTaskSchedulerAdapter(config_home=tmp_path)
+    output = f'"{adapter.identifier}","N/A","Running","Interactive only","Never","0"\n'
+    monkeypatch.setattr(
+        adapter,
+        "_run_task_info",
+        Mock(return_value=subprocess.CompletedProcess(["schtasks.exe"], 0, output, "")),
+    )
+
+    assert adapter.manager_state() is ManagerState.ACTIVE
+
+
+def test_windows_manager_state_treats_a_missing_task_as_inactive(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     adapter = WindowsTaskSchedulerAdapter(config_home=tmp_path)
     monkeypatch.setattr(
         adapter,
         "_run_task_info",
-        Mock(return_value=subprocess.CompletedProcess(["powershell.exe"], 0, json.dumps(payload), "")),
+        Mock(return_value=subprocess.CompletedProcess(["schtasks.exe"], -2147024894, "", "")),
     )
 
-    assert adapter.manager_state() is expected
+    assert adapter.manager_state() is ManagerState.INACTIVE
+
+
+def test_windows_task_info_uses_schtasks_instead_of_powershell(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    adapter = WindowsTaskSchedulerAdapter(config_home=tmp_path)
+    run = Mock(return_value=subprocess.CompletedProcess(["schtasks.exe"], 0, "", ""))
+    monkeypatch.setattr(adapter, "_run", run)
+
+    adapter._run_task_info(check=False)
+
+    run.assert_called_once_with(
+        "/Query",
+        "/TN",
+        adapter.identifier,
+        "/FO",
+        "CSV",
+        "/NH",
+        "/V",
+        "/HRESULT",
+        check=False,
+    )
 
 
 def test_windows_uninstall_recovery_uses_scoped_task_commands(tmp_path: Path) -> None:
