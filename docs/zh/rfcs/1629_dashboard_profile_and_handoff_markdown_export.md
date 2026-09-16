@@ -1,6 +1,6 @@
 - Proposal Name: `dashboard_profile_and_handoff_markdown_export`
 - Start Date: 2026-09-16
-- RFC PR: 尚未创建。
+- RFC PR: [#1629](https://github.com/oceanbase/powercontext/pull/1629)
 - Design Baseline: [master / 534460e0](https://github.com/oceanbase/powercontext/tree/534460e068ef733ec22a672b838734635fa1677e)。
 - Related RFCs: [Handoff Artifact](0048_handoff_artifact.md)、[Handoff Report](0082_handoff_report.md)、[Source and Artifact REST API](1437_source_artifact_rest_api.md)、[Profile Artifact](1485_profile_artifact.md)。
 
@@ -16,7 +16,7 @@ Dashboard 已能阅读记忆、经验、技能、交接、提示词和主题记�
 
 现有交接详情能够展示工作目标、状态、下一步和遗漏，但不能直接下载 Markdown。手动复制页面容易丢失引用和精确版本，目录中的截短摘要也不能代替完整正文。
 
-`POST /v1/handoff-reports/get` 已支持 Markdown 下载，但选择的是各 Scope 最新 committed Handoff。目录中可以存在不同 Artifact，详情也可以打开历史 Revision；因此该报告接口不能直接作为“导出当前条目”的实现。用户正在阅读 `handoff/h1@3` 时，下载必须仍为 `h1@3`，即使之后产生 `h1@4` 或另一个 Handoff。
+`POST /v1/handoff-reports/get` 已支持 Markdown 下载，但选择的是各 Scope 最新 committed Handoff。当前 Handoff 写入采用 Scope 内单例，详情仍可打开历史 Revision；因此该报告接口不能直接作为“导出当前条目”的实现。用户正在阅读 `handoff/handoff@3` 时，下载必须仍为该版本，即使之后产生 Revision 4。
 
 ## Goals and non-goals
 

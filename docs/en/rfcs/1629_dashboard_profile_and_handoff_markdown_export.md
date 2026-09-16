@@ -1,6 +1,6 @@
 - Proposal Name: `dashboard_profile_and_handoff_markdown_export`
 - Start Date: 2026-09-16
-- RFC PR: Not yet opened.
+- RFC PR: [#1629](https://github.com/oceanbase/powercontext/pull/1629)
 - Design Baseline: [master / 534460e0](https://github.com/oceanbase/powercontext/tree/534460e068ef733ec22a672b838734635fa1677e).
 - Related RFCs: [Handoff Artifact](0048_handoff_artifact.md), [Handoff Report](0082_handoff_report.md),
   [Source and Artifact REST API](1437_source_artifact_rest_api.md), [Profile Artifact](1485_profile_artifact.md).
@@ -26,8 +26,8 @@ Handoff details show objectives, state, next actions, and omissions but cannot d
 manually can lose citations and exact identity; abbreviated collection previews cannot substitute for complete content.
 
 `POST /v1/handoff-reports/get` already downloads Markdown, but selects each Scope's latest committed Handoff.
-Collections can contain different artifacts, and details can show historical revisions. Reading `handoff/h1@3` must
-download `h1@3`, even after `h1@4` or another Handoff appears. The latest-report endpoint cannot implement that promise.
+New Handoff writes use a Scope singleton, while detail links can select historical revisions. Reading
+`handoff/handoff@3` must download revision 3 even after revision 4 appears. The latest-report endpoint cannot implement that promise.
 
 ## Goals and non-goals
 
