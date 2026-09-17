@@ -15,6 +15,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
+import { validateToolArguments, type Tool, type ToolCall } from '@earendil-works/pi-ai'
 import type { TSchema } from 'typebox'
 import { Value } from 'typebox/value'
 import powercontextPi from '../extensions/powercontext.ts'
@@ -47,13 +48,14 @@ function createRuntime(fetch: FetchFn): PluginRuntime {
 }
 
 type RegisteredTool<Params> = {
+  parameters?: TSchema
   execute: (
     id: string,
     params: Params,
     signal: AbortSignal,
     update: () => void,
     context: Record<string, unknown>,
-  ) => Promise<{ details: { code?: string; data?: unknown; ok: boolean } }>
+  ) => Promise<{ details: { code?: string; data?: unknown; message?: string; ok: boolean } }>
 }
 
 function registeredTool<Params>(tools: Array<Record<string, unknown>>, name: string): RegisteredTool<Params> {
@@ -76,6 +78,8 @@ describe('Pi native tool surface', () => {
       'pc_remember',
       'pc_memory_list',
       'pc_memory_get',
+      'pc_memory_changes',
+      'pc_stats',
       'pc_memory_revise',
       'pc_memory_retire',
       'pc_prepare_context',
@@ -91,10 +95,19 @@ describe('Pi native tool surface', () => {
       'pc_handoff_continue',
       'pc_experience_get',
       'pc_skill_get',
+      'pc_experience_generate',
+      'pc_skill_generate',
       'pc_topic_search',
       'pc_topic_get',
       'pc_review_list',
       'pc_review_get',
+      'pc_review_approve',
+      'pc_review_reject',
+      'pc_review_revise',
+      'pc_external_scan',
+      'pc_external_list',
+      'pc_external_resolve',
+      'pc_external_import',
     ]))
     expect(tools.map((tool) => tool.name)).not.toContain('pc_call')
   })
@@ -138,6 +151,61 @@ describe('Pi native tool surface', () => {
     })
   })
 
+  it('routes Memory Changes and Stats as read-only current-Scope operations', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: true })))
+    const runtime = createRuntime(fetch)
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, runtime)
+    const confirm = vi.fn(async () => true)
+    const context = { cwd: '/workspace/repo', hasUI: false, ui: { confirm } }
+    const signal = new AbortController().signal
+
+    await registeredTool<{ since_revision: number }>(registered, 'pc_memory_changes').execute(
+      'call-changes', { since_revision: 7 }, signal, () => undefined, context,
+    )
+    await registeredTool<{ period: string }>(registered, 'pc_stats').execute(
+      'call-stats', { period: '7d' }, signal, () => undefined, context,
+    )
+
+    expect(confirm).not.toHaveBeenCalled()
+    expect(fetch.mock.calls.map(([url, init]) => [url, JSON.parse(String(init?.body))])).toEqual([
+      ['http://127.0.0.1:8000/v1/memory/changes', { since_revision: 7, scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/stats', { period: '7d', selection: { mode: 'exact', scope_ids: ['project:demo'] } }],
+    ])
+  })
+
+  it('keeps the read-only tool schemas within the API contract', () => {
+    const registered: Array<Record<string, unknown>> = []
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, createRuntime(vi.fn()))
+    const changes = registeredTool<Record<string, unknown>>(registered, 'pc_memory_changes') as unknown as { parameters: TSchema }
+    const stats = registeredTool<Record<string, unknown>>(registered, 'pc_stats') as unknown as { parameters: TSchema }
+
+    expect(Value.Check(changes.parameters, {})).toBe(true)
+    expect(Value.Check(changes.parameters, { since_revision: 0 })).toBe(true)
+    expect(Value.Check(changes.parameters, { since_revision: null })).toBe(true)
+    expect(Value.Check(changes.parameters, { since_revision: -1 })).toBe(false)
+    expect(Value.Check(changes.parameters, { since_revision: 1.5 })).toBe(false)
+    expect(Value.Check(changes.parameters, { extra: true })).toBe(false)
+    expect(Value.Check(stats.parameters, {})).toBe(true)
+    expect(Value.Check(stats.parameters, { period: 'today' })).toBe(true)
+    expect(Value.Check(stats.parameters, { period: '7d' })).toBe(true)
+    expect(Value.Check(stats.parameters, { period: '90d' })).toBe(false)
+    expect(Value.Check(stats.parameters, { period: '30d', extra: true })).toBe(false)
+  })
+
+  it('preserves nullable revision cursors through Pi argument validation', () => {
+    const registered: Array<Record<string, unknown>> = []
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, createRuntime(vi.fn()))
+    const tool = registeredTool<Record<string, unknown>>(registered, 'pc_memory_changes') as unknown as Tool
+    const call = (since_revision: unknown): ToolCall => ({
+      type: 'toolCall', id: 'call-validation', name: 'pc_memory_changes', arguments: { since_revision },
+    })
+
+    expect(validateToolArguments(tool, call(null))).toEqual({ since_revision: null })
+    expect(validateToolArguments(tool, call(0))).toEqual({ since_revision: 0 })
+    expect(() => validateToolArguments(tool, call(1.5))).toThrow('Validation failed')
+  })
+
   it('requires confirmation and filters secrets for all structured work writes', async () => {
     const registered: Array<Record<string, unknown>> = []
     const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: true })))
@@ -177,6 +245,200 @@ describe('Pi native tool surface', () => {
     )
     expect(confirm).toHaveBeenCalled()
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('routes generation requests as scoped, confirmed candidate writes', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ status: 'pending', candidate: { id: 'candidate-1' } })))
+    const runtime = createRuntime(fetch)
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, runtime)
+    const context = { cwd: '/workspace/repo', hasUI: true, ui: { confirm: vi.fn(async () => true) } }
+    const signal = new AbortController().signal
+    const source = { name: 'git', source_id: 'commit-1' }
+    const artifact = { family: 'experience', artifact_id: 'exp-1', revision: 1 }
+
+    await registeredTool<Record<string, unknown>>(registered, 'pc_experience_generate').execute(
+      'call-experience', { source_refs: [source], artifact_refs: [artifact], target: null, reason: 'requested' },
+      signal, () => undefined, context,
+    )
+    await registeredTool<Record<string, unknown>>(registered, 'pc_skill_generate').execute(
+      'call-skill', { origin: 'experience', source_refs: [source], artifact_refs: [artifact], target: null, reason: 'requested' },
+      signal, () => undefined, context,
+    )
+
+    expect(context.ui.confirm).toHaveBeenCalledTimes(2)
+    expect(fetch.mock.calls.map(([url, init]) => [url, JSON.parse(String(init?.body))])).toEqual([
+      ['http://127.0.0.1:8000/v1/experience/generate', { source_refs: [source], artifact_refs: [artifact], target: null, reason: 'requested', scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/skill/generate', { origin: 'experience', source_refs: [source], artifact_refs: [artifact], target: null, reason: 'requested', scope_id: 'project:demo' }],
+    ])
+  })
+
+  it('uses the separate generation deadline and reports a timeout as an unknown write outcome', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    const runtime = createRuntime(async (_url, init) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), { once: true })
+    }))
+    runtime.config.generationTimeoutMs = 10
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, runtime)
+
+    const result = await registeredTool<Record<string, unknown>>(registered, 'pc_experience_generate').execute(
+      'call-timeout', { source_refs: [], artifact_refs: [] }, new AbortController().signal, () => undefined,
+      { cwd: '/workspace/repo', hasUI: true, ui: { confirm: vi.fn(async () => true) } },
+    )
+
+    expect(result.details).toMatchObject({ ok: false, code: 'unknown_write_outcome' })
+    expect(result.details.message).toContain('pc_review_list')
+  })
+
+  it('publishes generation fields through Pi top-level schemas and rejects excess combined evidence before dispatch', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, createRuntime(vi.fn()))
+    const source = { name: 'git', source_id: 'commit-1' }
+    const artifact = { family: 'experience', artifact_id: 'exp-1', revision: 1 }
+    const experienceSchema = registeredTool<Record<string, unknown>>(registered, 'pc_experience_generate').parameters
+    const skillSchema = registeredTool<Record<string, unknown>>(registered, 'pc_skill_generate').parameters
+    expect(experienceSchema).toMatchObject({
+      type: 'object', required: ['source_refs', 'artifact_refs'],
+      properties: { source_refs: expect.anything(), artifact_refs: expect.anything(), target: expect.anything(), reason: expect.anything() },
+    })
+    expect(skillSchema).toMatchObject({
+      type: 'object', required: ['origin', 'source_refs', 'artifact_refs'],
+      properties: { origin: expect.anything(), source_refs: expect.anything(), artifact_refs: expect.anything() },
+    })
+    expect(Value.Check(experienceSchema as TSchema, {
+      source_refs: Array.from({ length: 32 }, () => source),
+      artifact_refs: [],
+    })).toBe(true)
+    expect(Value.Check(experienceSchema as TSchema, {
+      source_refs: Array.from({ length: 32 }, () => source),
+      artifact_refs: [artifact],
+    })).toBe(true)
+
+    const overLimit = await registeredTool<Record<string, unknown>>(registered, 'pc_experience_generate').execute(
+      'call-over-limit', { source_refs: Array.from({ length: 32 }, () => source), artifact_refs: [artifact] },
+      new AbortController().signal, () => undefined, { cwd: '/workspace/repo', hasUI: true, ui: { confirm: vi.fn() } },
+    )
+    expect(overLimit.details).toMatchObject({ ok: false, code: 'invalid_request' })
+  })
+
+  it('validates candidate review parameters against the API limits', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, createRuntime(vi.fn()))
+
+    const approve = registeredTool<Record<string, unknown>>(registered, 'pc_review_approve') as unknown as { parameters: TSchema }
+    const reject = registeredTool<Record<string, unknown>>(registered, 'pc_review_reject') as unknown as { parameters: TSchema }
+    const revise = registeredTool<Record<string, unknown>>(registered, 'pc_review_revise') as unknown as { parameters: TSchema }
+
+    expect(Value.Check(approve.parameters, { candidate_id: 'candidate-1', expected_version: 1 })).toBe(true)
+    expect(Value.Check(approve.parameters, { candidate_id: '', expected_version: 1 })).toBe(false)
+    expect(Value.Check(approve.parameters, { candidate_id: 'candidate-1', expected_version: 0 })).toBe(false)
+    expect(Value.Check(approve.parameters, { candidate_id: 'candidate-1', expected_version: 1, extra: true })).toBe(false)
+    expect(Value.Check(reject.parameters, { candidate_id: 'candidate-1', expected_version: 1, reason: '   ' })).toBe(false)
+    expect(Value.Check(reject.parameters, { candidate_id: 'candidate-1', expected_version: 1, reason: 'x'.repeat(2001) })).toBe(false)
+    expect(Value.Check(revise.parameters, {
+      candidate_id: 'candidate-1',
+      expected_version: 1,
+      proposal: { situation: 'before', action: 'change', outcome: 'after', lesson: 'keep tests' },
+      memory_citations: null,
+      source_refs: [],
+      artifact_refs: [],
+    })).toBe(true)
+    expect(Value.Check(revise.parameters, {
+      candidate_id: 'candidate-1',
+      expected_version: 1,
+      proposal: { situation: 'before', action: 'change', outcome: 'after', lesson: 'keep tests', extra: 'reject' },
+      source_refs: [],
+      artifact_refs: [],
+    })).toBe(false)
+    expect(Value.Check(revise.parameters, {
+      candidate_id: 'candidate-1',
+      expected_version: 1,
+      proposal: { situation: 'before', action: 'change', outcome: 'after', lesson: 'keep tests' },
+      source_refs: Array.from({ length: 17 }, () => ({ name: 'test', source_id: 'source-1' })),
+      artifact_refs: Array.from({ length: 16 }, () => ({ family: 'experience', artifact_id: 'artifact-1', revision: 1 })),
+    })).toBe(true)
+    expect((revise.parameters as unknown as { type: string }).type).toBe('object')
+    await expect(registeredTool<Record<string, unknown>>(registered, 'pc_review_revise').execute(
+      'call-invalid-references', {
+        candidate_id: 'candidate-1',
+        expected_version: 1,
+        proposal: { situation: 'before', action: 'change', outcome: 'after', lesson: 'keep tests' },
+        source_refs: Array.from({ length: 17 }, () => ({ name: 'test', source_id: 'source-1' })),
+        artifact_refs: Array.from({ length: 16 }, () => ({ family: 'experience', artifact_id: 'artifact-1', revision: 1 })),
+      }, new AbortController().signal, () => undefined, { cwd: '/workspace/repo', hasUI: true, ui: { confirm: vi.fn() } },
+    )).rejects.toThrow('at most 32 references in total')
+  })
+
+  it('routes candidate review decisions through confirmed scoped operations', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ status: 'ok' })))
+    const runtime = createRuntime(fetch)
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, runtime)
+    const context = { cwd: '/workspace/repo', hasUI: true, ui: { confirm: vi.fn(async () => true) } }
+    const signal = new AbortController().signal
+    const proposal = { situation: 'before', action: 'change', outcome: 'after', lesson: 'keep tests' }
+    const common = { candidate_id: 'candidate-1', expected_version: 2 }
+
+    await registeredTool<Record<string, unknown>>(registered, 'pc_review_approve').execute(
+      'call-approve', common, signal, () => undefined, context,
+    )
+    await registeredTool<Record<string, unknown>>(registered, 'pc_review_reject').execute(
+      'call-reject', { ...common, reason: 'not applicable' }, signal, () => undefined, context,
+    )
+    await registeredTool<Record<string, unknown>>(registered, 'pc_review_revise').execute(
+      'call-revise', { ...common, proposal, source_refs: [], artifact_refs: [], target: null, reason: 'clarify' },
+      signal, () => undefined, context,
+    )
+
+    expect(context.ui.confirm).toHaveBeenCalledTimes(3)
+    expect(fetch.mock.calls.map(([url, init]) => [url, JSON.parse(String(init?.body))])).toEqual([
+      ['http://127.0.0.1:8000/v1/artifact-candidates/approve', { ...common, scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/artifact-candidates/reject', { ...common, reason: 'not applicable', scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/artifact-candidates/revise', {
+        ...common, proposal, source_refs: [], artifact_refs: [], target: null, reason: 'clarify', scope_id: 'project:demo',
+      }],
+    ])
+  })
+
+  it('keeps external skill discovery read-only and confirms imports', async () => {
+    const registered: Array<Record<string, unknown>> = []
+    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ ok: true })))
+    const runtime = createRuntime(fetch)
+    registerTools({ registerTool: (tool: Record<string, unknown>) => registered.push(tool) } as never, runtime)
+    const confirm = vi.fn(async () => true)
+    const context = { cwd: '/workspace/repo', hasUI: true, ui: { confirm } }
+    const signal = new AbortController().signal
+    const fingerprint = 'a'.repeat(64)
+
+    const denied = await registeredTool<Record<string, unknown>>(registered, 'pc_external_import').execute(
+      'call-import-no-ui', { external_skill_id: 'skill-1', fingerprint, mode: 'import' },
+      signal, () => undefined, { ...context, hasUI: false },
+    )
+    expect(denied.details).toMatchObject({ ok: false, code: 'confirmation_required' })
+
+    await registeredTool<Record<string, unknown>>(registered, 'pc_external_scan').execute(
+      'call-scan', {}, signal, () => undefined, context,
+    )
+    await registeredTool<{ include_unavailable: boolean }>(registered, 'pc_external_list').execute(
+      'call-list', { include_unavailable: true }, signal, () => undefined, context,
+    )
+    await registeredTool<{ external_skill_id: string; fingerprint: string }>(registered, 'pc_external_resolve').execute(
+      'call-resolve', { external_skill_id: 'skill-1', fingerprint }, signal, () => undefined, context,
+    )
+    await registeredTool<Record<string, unknown>>(registered, 'pc_external_import').execute(
+      'call-import', { external_skill_id: 'skill-1', fingerprint, mode: 'import', reason: null },
+      signal, () => undefined, context,
+    )
+
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(fetch.mock.calls.map(([url, init]) => [url, JSON.parse(String(init?.body))])).toEqual([
+      ['http://127.0.0.1:8000/v1/external-skills/scan', { scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/external-skills/list', { include_unavailable: true, scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/external-skills/resolve', { external_skill_id: 'skill-1', fingerprint, scope_id: 'project:demo' }],
+      ['http://127.0.0.1:8000/v1/external-skills/import', {
+        external_skill_id: 'skill-1', fingerprint, mode: 'import', reason: null, scope_id: 'project:demo',
+      }],
+    ])
   })
 
   it('routes structured work payloads to their scoped APIs unchanged after confirmation', async () => {

@@ -262,6 +262,7 @@ jobs:
               "SessionStart": "session_binding.py",
               "PreToolUse": "bind_tools.py",
               "UserPromptSubmit": "recall.py",
+              "Stop": "token_savings.py",
           }
           for event, script in hook_scripts.items():
               hook = hooks["hooks"][event][0]["hooks"][0]

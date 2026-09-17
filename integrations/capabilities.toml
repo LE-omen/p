@@ -151,6 +151,9 @@ capabilities = ["persistent_scope_binding"]
 id = "codex:UserPromptSubmit"
 capabilities = ["source_capture", "context_injection", "flush_or_checkpoint"]
 [[toolsets.tools]]
+id = "codex:Stop"
+non_profile_reason = "Reports scoped recall-token estimates after completed turns."
+[[toolsets.tools]]
 id = "claude-code:UserPromptSubmit"
 capabilities = ["source_capture", "context_injection", "flush_or_checkpoint"]
 [[toolsets.tools]]
@@ -435,6 +438,12 @@ capabilities = ["memory_read"]
 id = "pc_memory_get:get_memory_entry"
 capabilities = ["memory_read"]
 [[toolsets.tools]]
+id = "pc_memory_changes:list_memory_changes"
+non_profile_reason = "Memory change history is not a profile capability."
+[[toolsets.tools]]
+id = "pc_stats:get_stats"
+non_profile_reason = "Diagnostics are not a profile capability."
+[[toolsets.tools]]
 id = "pc_remember:remember_memory"
 capabilities = ["memory_write"]
 [[toolsets.tools]]
@@ -477,8 +486,14 @@ capabilities = ["acknowledge"]
 id = "pc_task_outcome:record_task_outcome"
 capabilities = ["task_outcome"]
 [[toolsets.tools]]
+id = "pc_experience_generate:generate_experience"
+capabilities = ["experience_read_or_generate"]
+[[toolsets.tools]]
 id = "pc_experience_get:get_experience"
 capabilities = ["experience_read_or_generate"]
+[[toolsets.tools]]
+id = "pc_skill_generate:generate_skill"
+capabilities = ["skill_read_or_generate"]
 [[toolsets.tools]]
 id = "pc_skill_get:get_skill"
 capabilities = ["skill_read_or_generate"]
@@ -494,6 +509,27 @@ capabilities = ["candidate_review"]
 [[toolsets.tools]]
 id = "pc_review_get:get_artifact_candidate"
 capabilities = ["candidate_review"]
+[[toolsets.tools]]
+id = "pc_review_approve:approve_artifact_candidate"
+capabilities = ["candidate_review"]
+[[toolsets.tools]]
+id = "pc_review_reject:reject_artifact_candidate"
+capabilities = ["candidate_review"]
+[[toolsets.tools]]
+id = "pc_review_revise:revise_artifact_candidate"
+capabilities = ["candidate_review"]
+[[toolsets.tools]]
+id = "pc_external_scan:scan_external_skills"
+non_profile_reason = "Pi Full profile promotion is deferred until dependent #1621 and #1625 are merged."
+[[toolsets.tools]]
+id = "pc_external_list:list_external_skills"
+non_profile_reason = "Pi Full profile promotion is deferred until dependent #1621 and #1625 are merged."
+[[toolsets.tools]]
+id = "pc_external_resolve:resolve_external_skill"
+non_profile_reason = "Pi Full profile promotion is deferred until dependent #1621 and #1625 are merged."
+[[toolsets.tools]]
+id = "pc_external_import:import_external_skill"
+non_profile_reason = "Pi Full profile promotion is deferred until dependent #1621 and #1625 are merged."
 
 [[toolsets]]
 id = "pi-command"

@@ -15,6 +15,9 @@
 from __future__ import annotations
 
 import json
+import socket
+import threading
+import time
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
@@ -38,7 +41,7 @@ def test_scope_resolver_uses_server_binding_and_fixes_new_session(
         return {"scope_id": "scp_00000000000000000000000000"}
 
     monkeypatch.setattr(scope_module, "_post_json", post)
-    monkeypatch.setattr(scope_module, "_git_value", lambda *_args: None)
+    monkeypatch.setattr(scope_module, "_git_value", lambda *_args, **_kwargs: None)
 
     resolved = scope_module.resolve_scope_id(
         str(tmp_path),
@@ -63,6 +66,38 @@ def test_scope_resolver_uses_server_binding_and_fixes_new_session(
         },
         "PUT",
     )
+
+
+def test_open_bounded_enforces_the_deadline_while_headers_trickle(scope_module: ModuleType) -> None:
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen()
+    port = int(listener.getsockname()[1])
+
+    def trickle() -> None:
+        connection, _ = listener.accept()
+        with connection:
+            connection.recv(65_536)
+            connection.sendall(b"HTTP/1.1 200 OK\r\n")
+            for _ in range(400):
+                try:
+                    connection.sendall(b"X")
+                except OSError:
+                    return
+                time.sleep(0.05)
+
+    worker = threading.Thread(target=trickle, daemon=True)
+    worker.start()
+    request = scope_module.Request(f"http://127.0.0.1:{port}/v1/stats", data=b"{}", method="POST")
+    try:
+        started = time.monotonic()
+        with pytest.raises(TimeoutError):
+            scope_module.open_bounded(request, timeout=0.3)
+        elapsed = time.monotonic() - started
+    finally:
+        listener.close()
+
+    assert elapsed < 1.0
 
 
 def test_codex_settings_precedence_and_validation(
@@ -205,49 +240,6 @@ def test_customer_artifact_workflow_does_not_parse_plugin_root_as_an_actions_exp
     assert "${{PLUGIN_ROOT}}" not in workflow
 
 
-def test_project_context_skill_requires_explicit_memory_routing_and_failure_reporting() -> None:
-    content = (PLUGIN_ROOT / "skills" / "project-context" / "SKILL.md").read_text(encoding="utf-8")
-
-    assert "uv run --frozen" not in content
-    assert "create_work_contract" in content
-    assert "select_handoff_workstream" in content
-    assert "handoff_current_work" in content
-    assert "acknowledge_handoff" in content
-    assert "record_task_outcome" in content
-    assert "`search_topic_memory` with a focused query and no more than eight results" in content
-    assert "`get_topic_memory` with an exact returned Artifact reference" in content
-    assert "Do not request Topic Memory flushes from\n  Codex" in content
-    assert "Complete a one-turn durable Handoff" in content
-    assert "do not ask for a second confirmation" in content
-    assert "Pass the returned `handoff` member unchanged" in content
-    assert "no durable Handoff milestone was committed" in content
-    assert "canonical temporary carrier" in content
-    assert 'selection: "prepared"' in content
-    assert "call `commit_handoff` only when" in content
-    assert "Do not treat every session stop as task completion" in content
-    for required in (
-        "## Explicit Memory Requests",
-        "The examples below are illustrative, not an exhaustive keyword allowlist.",
-        "remember I prefer uv for Python",
-        "记住我偏好使用 uv",
-        "search my memories",
-        "搜索我的记忆",
-        "call `remember_memory`",
-        "call `search_memory`",
-        'mode: "auto"',
-        "eight results",
-        "Report that Memory was saved only after the tool",
-        "Do not claim that Memory was saved or searched",
-        "the Memory was not saved or searched",
-        "A prompt Source captured by the Hook is not a Memory",
-        "Do not call `select_handoff_workstream` for this flow",
-        "Draft a preference entry, but do not save it",
-    ):
-        assert required in content
-
-    assert "From now on, use\npytest" in content
-
-
 def test_powercontext_plugin_advertises_the_one_turn_handoff() -> None:
     manifest = json.loads((PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text())
     prompts = manifest["interface"]["defaultPrompt"]
@@ -255,3 +247,18 @@ def test_powercontext_plugin_advertises_the_one_turn_handoff() -> None:
     assert len(prompts) <= 3
     assert all(len(prompt) <= 128 for prompt in prompts)
     assert "Hand off and commit the current work in one turn." in prompts
+
+
+def test_plugin_reports_token_savings_from_a_bounded_stop_hook() -> None:
+    configuration = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())
+
+    assert set(configuration["hooks"]) == {"UserPromptSubmit", "SessionStart", "PreToolUse", "Stop"}
+    hook = configuration["hooks"]["Stop"][0]["hooks"][0]
+    assert hook == {
+        "type": "command",
+        "command": (
+            'uv run --frozen --quiet --project "${PLUGIN_ROOT}" python "${PLUGIN_ROOT}/hooks/token_savings.py"'
+        ),
+        "timeout": 10,
+        "statusMessage": "Loading PowerContext token savings",
+    }

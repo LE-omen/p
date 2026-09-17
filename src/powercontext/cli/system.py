@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import subprocess
 from contextlib import suppress
 from dataclasses import asdict, dataclass
@@ -150,7 +151,7 @@ class SetupError(RuntimeError):
 
     @classmethod
     def incomplete_pi_package(cls, path: Path) -> SetupError:
-        return cls(f"PowerContext Pi package at {path} is missing its extension or project-context skill.")
+        return cls(f"PowerContext Pi package at {path} is missing its extension or powercontext-project-context skill.")
 
     @classmethod
     def missing_opencode_plugin(cls, path: Path) -> SetupError:
@@ -158,7 +159,10 @@ class SetupError(RuntimeError):
 
     @classmethod
     def incomplete_opencode_plugin(cls, path: Path) -> SetupError:
-        return cls(f"PowerContext OpenCode plugin at {path} is missing lib/index.js or project-context Skill.")
+        return cls(
+            f"PowerContext OpenCode plugin at {path} is missing lib/index.js, lib/tui.js,"
+            " or powercontext-project-context Skill."
+        )
 
     @classmethod
     def invalid_opencode_ref(cls, ref: str) -> SetupError:
@@ -1144,7 +1148,7 @@ def install_claude_code_plugin(
     marketplace_existed = marketplace is not None
 
     plugins = _run_claude_json("plugin", "list")
-    previous_plugin = _claude_plugin(plugins)
+    previous_plugin = _claude_plugin(plugins, scope="user")
     plugin_existed = previous_plugin is not None
     settings_snapshot = _snapshot_claude_settings()
     marketplace_added = False
@@ -1153,6 +1157,19 @@ def install_claude_code_plugin(
         if not marketplace_existed:
             _run_claude("plugin", "marketplace", "add", marketplace_source, "--scope", "user")
             marketplace_added = True
+        else:
+            # An existing marketplace and plugin keep their cached version until
+            # both are refreshed, so setup would otherwise configure a status
+            # line for a cache this release never wrote.
+            _run_claude("plugin", "marketplace", "update", CLAUDE_MARKETPLACE_NAME)
+        if plugin_existed:
+            _run_claude(
+                "plugin",
+                "update",
+                f"{PLUGIN_NAME}@{CLAUDE_MARKETPLACE_NAME}",
+                "--scope",
+                "user",
+            )
         _run_claude(
             "plugin",
             "install",
@@ -1162,9 +1179,12 @@ def install_claude_code_plugin(
         )
         plugin_added = not plugin_existed
         installed = _run_claude_json("plugin", "list")
-        plugin = _require_enabled_claude_plugin(installed)
+        plugin = _require_enabled_claude_plugin(installed, scope="user")
         _configure_claude_plugin(
-            server_url=server_url, capture_prompts=capture_prompts, allow_insecure_http=allow_insecure_http
+            plugin=plugin,
+            server_url=server_url,
+            capture_prompts=capture_prompts,
+            allow_insecure_http=allow_insecure_http,
         )
     except SetupError:
         if plugin_added:
@@ -1623,17 +1643,21 @@ def _describe_claude_marketplace_source(marketplace: dict[str, Any]) -> str:
     return json.dumps(fields, sort_keys=True)
 
 
-def _claude_plugin(value: object) -> dict[str, Any] | None:
+def _claude_plugin(value: object, *, scope: str | None = None) -> dict[str, Any] | None:
     if not isinstance(value, list):
         return None
     for item in value:
-        if isinstance(item, dict) and item.get("id") == f"{PLUGIN_NAME}@{CLAUDE_MARKETPLACE_NAME}":
+        if (
+            isinstance(item, dict)
+            and item.get("id") == f"{PLUGIN_NAME}@{CLAUDE_MARKETPLACE_NAME}"
+            and (scope is None or item.get("scope") == scope)
+        ):
             return cast(dict[str, Any], item)
     return None
 
 
-def _require_enabled_claude_plugin(value: object) -> dict[str, Any]:
-    plugin = _claude_plugin(value)
+def _require_enabled_claude_plugin(value: object, *, scope: str | None = None) -> dict[str, Any]:
+    plugin = _claude_plugin(value, scope=scope)
     if plugin is None or plugin.get("enabled") is not True:
         raise SetupError.claude_plugin_not_enabled()
     return plugin
@@ -1647,7 +1671,13 @@ def _snapshot_claude_settings() -> bytes | None:
         return None
 
 
-def _configure_claude_plugin(*, server_url: str, capture_prompts: bool, allow_insecure_http: bool = False) -> None:
+def _configure_claude_plugin(
+    *,
+    plugin: dict[str, Any],
+    server_url: str,
+    capture_prompts: bool,
+    allow_insecure_http: bool = False,
+) -> None:
     """Merge non-sensitive plugin options unsupported by the Claude install CLI."""
 
     settings_file = _claude_config_dir() / "settings.json"
@@ -1675,10 +1705,49 @@ def _configure_claude_plugin(*, server_url: str, capture_prompts: bool, allow_in
         "capture_prompts": capture_prompts,
         "allow_insecure_http": allow_insecure_http,
     })
+
+    install_path = _claude_plugin_install_path(plugin)
+    statusline_command = shlex.join([
+        "python3",
+        str(install_path / "scripts" / "statusline.py"),
+        "--server-url",
+        server_url,
+    ])
+    statusline = settings.get("statusLine")
+    if statusline is None or _is_powercontext_statusline(statusline):
+        settings["statusLine"] = {
+            "type": "command",
+            "command": statusline_command,
+            "refreshInterval": 30,
+        }
     try:
         _write_bytes_atomically(settings_file, (json.dumps(settings, indent=2) + "\n").encode())
     except OSError as error:
         raise SetupError.claude_settings_write(settings_file, error) from error
+
+
+def _claude_plugin_install_path(plugin: dict[str, Any]) -> Path:
+    install_path = plugin.get("installPath")
+    if isinstance(install_path, str) and install_path:
+        return Path(install_path)
+    version_value = _required_string(plugin, "version")
+    return _claude_config_dir() / "plugins" / "cache" / CLAUDE_MARKETPLACE_NAME / PLUGIN_NAME / version_value
+
+
+def _is_powercontext_statusline(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    command = value.get("command")
+    if not isinstance(command, str):
+        return False
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    return any(
+        Path(token).name == "statusline.py" and any("powercontext" in part.casefold() for part in Path(token).parts)
+        for token in tokens
+    )
 
 
 def _restore_claude_settings(snapshot: bytes | None) -> None:
