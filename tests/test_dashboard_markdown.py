@@ -90,6 +90,26 @@ def test_markdown_does_not_escape_punctuation_inside_indented_code():
     assert "<script>" not in MarkdownIt("commonmark", {"html": True}).render(result)
 
 
+@pytest.mark.parametrize(
+    "original",
+    [
+        "说明文字\n\n    return user.profile_id",
+        "\n    return user.profile_id",
+        "说明文字\n\n\treturn user.profile_id",
+        "说明文字\n\n  \treturn user.profile_id",
+        "    def read():\n\treturn user.profile_id\n````\n<script>alert(1)</script>",
+    ],
+)
+def test_markdown_preserves_multiline_indented_content(original):
+    result = handoff_markdown(_record(original), "en").decode()
+    parser = MarkdownIt("commonmark", {"html": True})
+    blocks = [token.content for token in parser.parse(result) if token.type == "fence" and not token.info]
+    assert original + "\n" in blocks
+    html = parser.render(result)
+    assert "<script>" not in html
+    assert "<img" not in html
+
+
 def test_oversized_export_fails_without_truncation(monkeypatch):
     monkeypatch.setattr("powercontext.server.dashboard.markdown.MAX_DOWNLOAD_BYTES", 100)
     with pytest.raises(ReadError) as caught:
