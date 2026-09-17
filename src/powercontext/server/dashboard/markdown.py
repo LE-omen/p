@@ -72,7 +72,7 @@ def _literal(value: str) -> str:
             for char in value
         )
         return f"{fence}\n{controls}\n{fence}"
-    special = set(r"\\`*_{}[]()#+-.!|>~:")
+    special = set(r"\\`*_{}[]()#+-.!|>~:=")
     result: list[str] = []
     for char in value:
         if char == "\n":

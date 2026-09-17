@@ -79,6 +79,22 @@ def test_markdown_preserves_ordinary_punctuation_after_rendering():
     assert "&#x27;" not in result
 
 
+@pytest.mark.parametrize("field", ["objective", "state", "next_action", "omissions"])
+def test_markdown_keeps_equals_lines_as_literal_text(field):
+    original = "记录正文\n===\nx=1"
+    record = _record("Plain state")
+    if field == "objective":
+        record["content"][field] = original
+    elif field == "next_action":
+        record["content"][field] = {**record["content"]["state"][0], "text": original}
+    else:
+        record["content"][field][0]["text"] = original
+    result = handoff_markdown(record, "en").decode()
+    html = MarkdownIt("commonmark", {"html": True}).render(result)
+    assert "<h1>记录正文</h1>" not in html
+    assert original in unescape(html)
+
+
 def test_markdown_does_not_escape_punctuation_inside_indented_code():
     original = '    print("literal")\n    if enabled: # keep this branch\n<script>alert(1)</script>'
     result = handoff_markdown(_record(original), "en").decode()
