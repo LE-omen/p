@@ -1633,6 +1633,7 @@ requires-dist = [
     { name = "jsonschema", marker = "extra == 'builtin'", specifier = ">=4.23,<5" },
     { name = "jsonschema", marker = "extra == 'seekdb'", specifier = ">=4.23,<5" },
     { name = "jsonschema", marker = "extra == 'server'", specifier = ">=4.23,<5" },
+    { name = "markdown-it-py", marker = "extra == 'server'", specifier = ">=4,<5" },
     { name = "opentelemetry-api", marker = "extra == 'cli'", specifier = ">=1.30,<2" },
     { name = "opentelemetry-api", marker = "extra == 'client'", specifier = ">=1.30,<2" },
     { name = "opentelemetry-api", marker = "extra == 'server'", specifier = ">=1.30,<2" },

@@ -154,6 +154,8 @@ def links(request: Request, ctx: dict[str, Any]):
 def reading_link_context(
     request: Request, ctx: dict[str, Any], destination: str, params: dict[str, Any], query: dict[str, Any]
 ) -> None:
+    if destination.startswith("evidence/") and ctx["page"] in {"profile", "handoff-detail"} and ctx.get("return_to"):
+        query["return_to"] = ctx["return_to"]
     if destination in {"handoff-detail", "handoff-download"}:
         source_return = (
             directory_context(request, ctx["scope"], "handoff", ctx["language"])

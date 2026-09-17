@@ -123,6 +123,62 @@ def test_profile_evidence_is_bound_to_the_exact_revision(dashboard):
     assert "Unrelated secret" not in rejected.text
 
 
+def test_profile_evidence_authentication_recovers_exact_revision(dashboard):
+    scope = create_scope(dashboard, "Profile evidence recovery")["scope_id"]
+    response = dashboard.put(
+        f"/v1/scopes/{scope}/profile-policy",
+        json={"generation_enabled": True, "activation_mode": "automatic", "expected_version": 0},
+    )
+    assert response.status_code == 200
+
+    class Generator:
+        async def generate(self, value):
+            return (
+                "# First profile\n\nUse Chinese."
+                if len(value.sources) == 1
+                else "# Current profile\n\nKeep the latest preferences."
+            )
+
+    dashboard.app.state.application.profiles.generator = Generator()
+    source = dashboard.post(f"/v1/scopes/{scope}/sources", json={"content": "I prefer Chinese."}).json()
+    generated = dashboard.post("/v1/profile/flush", json={"scope_id": scope})
+    assert generated.status_code == 200, generated.text
+    second_source = dashboard.post(f"/v1/scopes/{scope}/sources", json={"content": "Keep this history."}).json()
+    generated = dashboard.post("/v1/profile/flush", json={"scope_id": scope})
+    assert generated.status_code == 200, generated.text
+
+    history = dashboard.get("/dashboard/profile", params={"scope": scope, "view": "history", "lang": "en"})
+    profile_url = next(
+        url
+        for url in _links(history.text, "/dashboard/profile")
+        if parse_qs(urlsplit(url).query).get("revision") == ["1"]
+    )
+    profile = dashboard.get(profile_url)
+    evidence_url = next(url for url in _links(profile.text, f"/dashboard/evidence/{source['source_id']}"))
+    assert "revision=1" in evidence_url
+    token = dashboard.headers.pop("Authorization").removeprefix("Bearer ")
+    login = dashboard.get(evidence_url)
+    assert login.status_code == 401
+    next_field = re.search(r'name="next" value="([^"]+)"', login.text)
+    assert next_field is not None
+    next_url = unescape(next_field[1])
+    assert urlsplit(next_url).path == "/dashboard/profile"
+    assert parse_qs(urlsplit(next_url).query)["revision"] == ["1"]
+    assert parse_qs(urlsplit(next_url).query)["return_to"][0].startswith("/dashboard/profile?")
+    resumed = dashboard.post(
+        "/dashboard/session",
+        data={"token": token, "next": next_url},
+        headers={"Origin": "http://testserver"},
+        follow_redirects=False,
+    )
+    assert resumed.status_code == 303
+    assert resumed.headers["location"] == next_url
+    resumed_page = dashboard.get(next_url)
+    assert "<h1>First profile</h1>" in resumed_page.text
+    assert "Current profile" not in resumed_page.text
+    assert second_source["source_id"] not in next_url
+
+
 def test_handoff_download_stays_exact_and_retains_all_citations(dashboard):
     scope = create_scope(dashboard, "Exact downloads")["scope_id"]
     ref = commit_handoff(dashboard, scope)

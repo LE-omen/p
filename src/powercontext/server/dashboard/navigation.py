@@ -132,6 +132,29 @@ def reading_return(raw: str | None) -> str | None:
 
 def request_reading_return(request: Request) -> str | None:
     path = request.url.path
+    if path.startswith("/dashboard/evidence/"):
+        # Evidence is loaded in a modal, but authentication recovery must return
+        # to the exact record whose source was requested.  The evidence URL
+        # carries the record identity and origin; keep only fields accepted by
+        # the corresponding reading route before applying its normal validation.
+        pairs = request.query_params.multi_items()
+        if len(pairs) != len(dict(pairs)):
+            return None
+        query = dict(pairs)
+        origin = query.get("origin")
+        if origin == "profile":
+            try:
+                positive_revision(query.get("revision"))
+            except ReadError:
+                return None
+            path = "/dashboard/profile"
+            keys = ("scope", "period", "lang", "theme", "revision", "return_to")
+        elif origin == "handoff-detail":
+            path = "/dashboard/handoff-detail"
+            keys = ("scope", "period", "lang", "theme", "artifact", "revision", "return_to")
+        else:
+            return None
+        return reading_return(path + "?" + urlencode({key: query[key] for key in keys if key in query}))
     if path == "/dashboard/handoff-download":
         path = "/dashboard/handoff-detail"
     return reading_return(path + "?" + str(request.query_params))
